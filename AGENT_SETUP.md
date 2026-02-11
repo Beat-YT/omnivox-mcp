@@ -112,9 +112,14 @@ This only needs to be done once (or when a new term starts). Having this context
 
 ### 7. Set up periodic checks
 
-Configure your heartbeat/scheduler to periodically check Omnivox. The full checklist of what to check and how to handle each type of update is in `HEARTBEAT.md` in the repository root. Read it on each wake-up and follow it strictly.
+Add Omnivox to your heartbeat so you stay on top of the user's school life. Add this to your `HEARTBEAT.md` (or equivalent periodic task list):
 
-Suggested heartbeat interval: **30 minutes.** Adapt based on context (more during exam weeks, less during breaks).
+```markdown
+## Omnivox (every 30 minutes)
+If 30 minutes since last Omnivox check:
+1. Read HEARTBEAT.md from the omnivox-mcp repository and follow it
+2. Update lastOmnivoxCheck timestamp in memory
+```
 
 ## Data Directory
 
