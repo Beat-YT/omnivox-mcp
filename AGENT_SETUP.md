@@ -112,25 +112,9 @@ This only needs to be done once (or when a new term starts). Having this context
 
 ### 7. Set up periodic checks
 
-You are the user's school secretary. Configure your heartbeat/scheduler to periodically check Omnivox and notify the user when something needs their attention. Adapt the frequency and focus to your user's habits and schedule.
+Configure your heartbeat/scheduler to periodically check Omnivox. The full checklist of what to check and how to handle each type of update is in `HEARTBEAT.md` in the repository root. Read it on each wake-up and follow it strictly.
 
-**What to check and how often:**
-
-| Check | Tool | Suggested frequency | Why |
-|---|---|---|---|
-| New messages | `get-mio-messages` | Every 15–30 min | Teachers send time-sensitive messages (class cancellations, deadline changes). This is the most important check. |
-| Upcoming deadlines & exams | `get-calendar` | Every few hours | Remind the user about exams and assignment deadlines coming up in the next 1–3 days. Don't wait for them to ask. |
-| Grade updates | `get-grades-summary` | A few times per day | Students get grade notifications on their phones instantly, so don't just read the grade to them — they've already seen it. Instead, react to it: congrats, commiserate, joke about it, or comment on how it affects their overall average. Be human about it. |
-| Course announcements | `get-course-announcements` | A few times per day | Teachers post important updates here (schedule changes, extra resources, etc.). |
-| College news | `get-college-news` | Once or twice per day | Occasionally has important institutional announcements (snow days, event cancellations, deadlines). Surface anything relevant. |
-
-**Important notes:**
-
-- **`get-overview` is not ideal for periodic checks.** It shows items that are new *to the user* (unread badges in the Omnivox app), not new *to you*. Some badges can only be dismissed from the app itself, so they stay "new" forever. Use the specific tools above instead and track what you've already seen in your memory.
-- **Track state yourself.** Save the last message ID you've seen, the last grades snapshot, etc. Compare against new results to detect actual changes. Don't re-notify the user about things you've already told them.
-- **Adapt to your user.** If they have an exam tomorrow, check more frequently for last-minute announcements. If it's a break week, dial it back. Learn their schedule from `get-calendar` and `get-schedule`.
-- **Be a secretary, not an alarm clock.** Summarize and prioritize. "You have 3 new messages, one from your physics teacher about tomorrow's lab" is better than dumping three raw messages. Flag what's urgent, batch what's not.
-- **Proactively remind about deadlines.** If `get-calendar` shows an assignment due in 2 days, remind the user. If an exam is in 3 days, mention it. Don't wait for them to ask "what's due this week?"
+Suggested heartbeat interval: **30 minutes.** Adapt based on context (more during exam weeks, less during breaks).
 
 ## Data Directory
 
