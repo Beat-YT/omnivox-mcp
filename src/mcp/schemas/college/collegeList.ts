@@ -1,9 +1,14 @@
 import { z } from "zod"
 
-export const collegeItemSchema = z.object({
+export const CollegeItemSchema = z.object({
     code: z.string(),
     name: z.string(),
-    omnivoxUrl: z.string().optional(),
 })
 
-export type CollegeItem = z.infer<typeof collegeItemSchema>
+export const CollegeListResponseSchema = z.object({
+    count: z.number(),
+    colleges: z.array(CollegeItemSchema),
+})
+
+export type CollegeItem = z.infer<typeof CollegeItemSchema>
+export type CollegeListResponse = z.infer<typeof CollegeListResponseSchema>

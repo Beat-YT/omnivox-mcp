@@ -38,11 +38,13 @@ router.post('/mio/search', async (req, res) => {
 
 router.post('/mio/send', async (req, res) => {
     const { recipient_id, subject, message } = req.body;
-    if (typeof recipient_id !== 'string' || typeof subject !== 'string' || typeof message !== 'string') {
+    const validId = typeof recipient_id === 'string' || (Array.isArray(recipient_id) && recipient_id.every((id: any) => typeof id === 'string'));
+    if (!validId || typeof subject !== 'string' || typeof message !== 'string') {
         return res.status(400).json({ error: 'Invalid request body' });
     }
 
-    const result = await SendMessage(recipient_id, subject, message);
+    const to = Array.isArray(recipient_id) ? recipient_id.join(',') : recipient_id;
+    const result = await SendMessage(to, subject, message, !!req.body.hide_recipients);
     res.json({ success: result });
 });
 

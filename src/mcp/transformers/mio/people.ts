@@ -8,8 +8,10 @@ function mapType(raw: number) {
 }
 
 export function transformPeopleSearch(raw: MioSearch.IndividuItem[]): PeopleSearchResponse {
+    const sorted = [...raw].sort((a, b) => b.TypeIndividu - a.TypeIndividu || a.TitreAffiche.localeCompare(b.TitreAffiche));
     return {
-        results: raw.map(p => ({
+        count: sorted.length,
+        results: sorted.map(p => ({
             id: p.OID,
             number: p.Numero,
             name: p.TitreAffiche,

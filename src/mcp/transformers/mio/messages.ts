@@ -14,7 +14,6 @@ export function transformMioMessages(raw: MioModel.ResponseModel, currentFolder:
 
       subject: m.Sujet?.trim() || undefined,
       excerpt: extractHtmlPreview(m.Message),
-      body_html: m.Message || undefined,
 
       sent_at: toIso(m.TimestampDateEnvoi)!,
 
@@ -64,4 +63,51 @@ export function transformMioMessages(raw: MioModel.ResponseModel, currentFolder:
       folder: currentFolder
     }
   }
+}
+
+// --- Text transformers (model → text, no intermediate schema) ---
+
+/** Format a single message as a list item line */
+export function messageToText(m: MioModel.ListeMessage, opts?: { folder?: string }) {
+  const date = toIso(m.TimestampDateEnvoi)?.slice(0, 10) ?? '?'
+  const sender = m.NomCompletEnvoyeur || m.OIDEnvoyeur
+  const subject = m.Sujet?.trim() || '(no subject)'
+  const excerpt = extractHtmlPreview(m.Message)
+  const attachments = m.Attachements ?? []
+
+  const header = `${m.Unread ? '* ' : '  '}[${date}] ${sender}: ${subject}`
+  const details: string[] = []
+  if (excerpt) details.push(`  ${excerpt}`)
+  if (attachments.length) details.push(`  Attachments: ${attachments.map(a => a.NomFichier).join(', ')}`)
+  details.push(`  ID: ${m.Id}`)
+  if (opts?.folder) details.push(`  Folder: ${opts.folder}`)
+  return [header, ...details].join('\n')
+}
+
+/** Format meta line for a message list response */
+export function messagesMetaToText(raw: MioModel.ResponseModel) {
+  const count = raw.ListeMessages?.length ?? 0
+  const hasMore = count < (raw.NbMessagesTotal ?? 0)
+  return `${raw.NbMessagesNonLus ?? 0} unread / ${raw.NbMessagesTotal ?? 0} total — showing ${count} message(s).${hasMore ? ' Use last_id to load more.' : ''}\n* = unread`
+}
+
+/** Format a single message for full reading */
+export function messageDetailToText(m: MioModel.ListeMessage) {
+  const subject = m.Sujet?.trim() || '(no subject)'
+  const sender = `${m.NomCompletEnvoyeur}${m.NumeroEnvoyeur ? ` (${m.NumeroEnvoyeur})` : ''}`
+  const date = toIso(m.TimestampDateEnvoi) ?? '?'
+  const body = extractHtmlPreview(m.Message, 10000) || '(empty body)'
+  const attachments = (m.Attachements ?? []).map(a =>
+    `- ${a.NomFichier} (${a.ContentType}, ${Math.round(a.TailleOctet / 1024)}KB) [attachment_id: ${a.IDFichierAttachement}]`
+  )
+
+  return [
+    `Subject: ${subject}`,
+    `From: ${sender}`,
+    `Date: ${date}`,
+    m.IDMessageReply ? `Reply to: ${m.IDMessageReply}` : null,
+    attachments.length ? `Attachments:\n${attachments.join('\n')}` : null,
+    '',
+    body,
+  ].filter(l => l !== null).join('\n')
 }

@@ -18,6 +18,14 @@ mcpServer.registerTool('move-mio-message',
         },
     },
     async (args) => {
+        if (args.folder_id.startsWith('SEARCH_FOLDER_')) {
+            return {
+                content: [
+                    { type: 'text', text: 'Error: Cannot move message to a search folder.' },
+                ],
+            };
+        }
+
         const success = await CategoriseMessage(args.message_id, args.folder_id);
 
         return {

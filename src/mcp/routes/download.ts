@@ -1,6 +1,7 @@
 import * as express from 'express';
 import { consumeWebToken } from 'src/security/omniWebToken';
 import { GetDocumentFichier, GetEnonceTravailFichier, GetDepotTravailFichier, GetCopieCorrigeTravailFichier } from '@api/LeaDownload';
+import { GetMioAttachment } from '@api/Mio';
 import { DownloadResult } from 'src/omnivox-api/puppet';
 
 const router = express.Router();
@@ -59,6 +60,30 @@ router.get('/download/assignment-file', async (req, res) => {
             res.status(400).send('Error: Invalid role in token.');
             return;
     }
+
+    const disposition = result.contentDisposition?.replace('attachment;', 'inline;') || 'inline';
+
+    res.set('Content-Disposition', disposition);
+    res.set('Content-Type', result.contentType);
+    res.set('Cache-Control', 'private, max-age=600');
+    res.send(result.data);
+});
+
+router.get('/download/mio-attachment', async (req, res) => {
+    const token = typeof req.query.token === 'string' ? req.query.token : null;
+    if (!token) {
+        res.status(400).send('Error: Missing token query parameter');
+        return;
+    }
+
+    const dataToken = consumeWebToken(token);
+    if (!dataToken || dataToken.type !== 'mio-attachment') {
+        res.status(401).send('Error: Invalid or expired token. Please re-use the MIO attachment download tool to get a new link.');
+        return;
+    }
+
+    const { messageId, attachmentId } = dataToken;
+    const result = await GetMioAttachment(messageId, attachmentId);
 
     const disposition = result.contentDisposition?.replace('attachment;', 'inline;') || 'inline';
 

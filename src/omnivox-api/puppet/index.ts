@@ -30,7 +30,7 @@ export async function InitializePuppet() {
                 const pid = Number(fs.readFileSync(pidFile, 'utf-8').trim());
                 process.kill(pid);
                 console.warn(`Killed orphaned Chrome process (PID ${pid})`);
-            } catch {}
+            } catch { }
             fs.unlinkSync(pidFile);
         }
 
@@ -82,6 +82,20 @@ export async function waitForReady(): Promise<void> {
     return readyPromise;
 }
 
+async function recoverPage(): Promise<void> {
+    if (!page) throw new Error('Puppeteer page not initialized');
+
+    console.warn('Recovering detached page: re-navigating to DefaultPage...');
+    const config = getConfig();
+    await page.goto(config.DefaultPage);
+    await page.waitForFunction(() => (window as any).Skytech !== undefined, { timeout: 60000 });
+    console.warn('Page recovered successfully.');
+}
+
+function isDetachedFrameError(err: unknown): boolean {
+    return err instanceof Error && err.message.includes('detached Frame');
+}
+
 export async function makeSkytechRequest<T = any>(url: string, data: any = {}): Promise<T> {
     console.warn(`Making Skytech request to ${url} with data:`, data);
 
@@ -89,17 +103,37 @@ export async function makeSkytechRequest<T = any>(url: string, data: any = {}): 
 
     if (!page) throw new Error('Puppeteer page not initialized');
 
-    return page.evaluate((url: string, data: any) => {
-        return new Promise<any>((resolve, reject) => {
-            (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
-                (result: any) => resolve(result),
-                (error: any) => reject(error)
-            );
-        });
-    }, url, data);
+    try {
+        return await page.evaluate((url: string, data: any) => {
+            return new Promise<any>((resolve, reject) => {
+                (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
+                    (result: any) => resolve(result),
+                    (error: any) => reject(error)
+                );
+            });
+        }, url, data);
+    } catch (err) {
+        if (!isDetachedFrameError(err)) throw err;
+
+        await recoverPage();
+
+        return page.evaluate((url: string, data: any) => {
+            return new Promise<any>((resolve, reject) => {
+                (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
+                    (result: any) => resolve(result),
+                    (error: any) => reject(error)
+                );
+            });
+        }, url, data);
+    }
 }
 
-export async function loadPageInFrame(url: string): Promise<Frame> {
+export interface FrameHandle {
+    frame: Frame;
+    dispose: () => Promise<void>;
+}
+
+export async function loadPageInFrame(url: string): Promise<FrameHandle> {
     await waitForReady();
     if (!page) throw new Error('Puppeteer page not initialized');
 
@@ -128,7 +162,17 @@ export async function loadPageInFrame(url: string): Promise<Frame> {
 
     const frame = await elementHandle.contentFrame();
     if (!frame) throw new Error('Failed to get iframe content frame');
-    return frame;
+
+    const dispose = async () => {
+        try {
+            await elementHandle.evaluate((el) => el.remove());
+        } catch (e) {
+            console.warn('Failed to remove iframe element:', e);
+        }
+        elementHandle.dispose();
+    };
+
+    return { frame, dispose };
 }
 
 export async function getPage(): Promise<Page> {
@@ -141,25 +185,36 @@ export async function makePuppeteerDownload(url: string): Promise<DownloadResult
     await waitForReady();
     if (!page) throw new Error('Puppeteer page not initialized');
 
-    const { base64, contentType, contentDisposition } = await page.evaluate(async (fetchUrl: string) => {
-        const res = await fetch(fetchUrl, {
-            credentials: 'include',
-            headers: { 'X-Ovx-Download': '1' },
-        });
-        const ct = res.headers.get('content-type') || 'application/octet-stream';
-        const cd = res.headers.get('content-disposition') || '';
-        const buf = await res.arrayBuffer();
-        const bytes = new Uint8Array(buf);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) {
-            binary += String.fromCharCode(bytes[i]);
-        }
-        return { base64: btoa(binary), contentType: ct, contentDisposition: cd };
-    }, url);
+    const downloadEval = async () => {
+        return page!.evaluate(async (fetchUrl: string) => {
+            const res = await fetch(fetchUrl, {
+                credentials: 'include',
+                headers: { 'X-Ovx-Download': '1' },
+            });
+            const ct = res.headers.get('content-type') || 'application/octet-stream';
+            const cd = res.headers.get('content-disposition') || '';
+            const buf = await res.arrayBuffer();
+            const bytes = new Uint8Array(buf);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return { base64: btoa(binary), contentType: ct, contentDisposition: cd };
+        }, url);
+    };
+
+    let result;
+    try {
+        result = await downloadEval();
+    } catch (err) {
+        if (!isDetachedFrameError(err)) throw err;
+        await recoverPage();
+        result = await downloadEval();
+    }
 
     return {
-        data: Buffer.from(base64, 'base64'),
-        contentType,
-        contentDisposition,
+        data: Buffer.from(result.base64, 'base64'),
+        contentType: result.contentType,
+        contentDisposition: result.contentDisposition,
     };
 }

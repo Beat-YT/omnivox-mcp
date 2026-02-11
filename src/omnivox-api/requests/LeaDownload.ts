@@ -72,27 +72,31 @@ export async function GetWebListeEval(NotesDetailWeb: NotesDetailWebModel.Respon
     });
 
     const url = `https://${NotesDetailWeb.InfosAutoLoginCvir.UrlLea}/cvir/note/ListeEvalCVIR.ovx?${qs.toString()}`;
-    const frame = await loadPageInFrame(url);
+    const { frame, dispose } = await loadPageInFrame(url);
 
-    const evalsTable = await parseTable(frame, '.table-notes');
-    const summary = await getInnerText(frame, '.tb-sommaire');
-    const evolution = await frame.$$eval('.evo', (els) =>
-        els.map((el) => el.innerHTML.replace(/<br\s*\/?>/gi, ' | ').replace(/<[^>]*>/g, '').trim())
-            .filter(Boolean)
-            .join('\n')
-    );
+    try {
+        const evalsTable = await parseTable(frame, '.table-notes');
+        const summary = await getInnerText(frame, '.tb-sommaire');
+        const evolution = await frame.$$eval('.evo', (els) =>
+            els.map((el) => el.innerHTML.replace(/<br\s*\/?>/gi, ' | ').replace(/<[^>]*>/g, '').trim())
+                .filter(Boolean)
+                .join('\n')
+        );
 
-    return [
-        `## ${noCours} (Group ${noGroupe})`,
-        `Teacher: ${NotesDetailWeb.NoteEvaluationWeb.Enseignants.join(', ')}`,
-        '',
-        '### Evaluations',
-        evalsTable,
-        '',
-        '### Summary',
-        summary,
-        '',
-        '### Grade Evolution',
-        evolution,
-    ].join('\n');
+        return [
+            `## ${noCours} (Group ${noGroupe})`,
+            `Teacher: ${NotesDetailWeb.NoteEvaluationWeb.Enseignants.join(', ')}`,
+            '',
+            '### Evaluations',
+            evalsTable,
+            '',
+            '### Summary',
+            summary,
+            '',
+            '### Grade Evolution',
+            evolution || '---',
+        ].join('\n');
+    } finally {
+        await dispose();
+    }
 }

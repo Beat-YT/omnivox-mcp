@@ -1,16 +1,15 @@
 import { CollegeDef } from "@typings/college";
-import { collegeItemSchema } from "@schemas/college/collegeList";
+import { CollegeItemSchema, CollegeListResponse } from "@schemas/college/collegeList";
 
 export function transformCollegeList(
     response: CollegeDef[]
-) {
-    const list = response.map(college => {
-        return collegeItemSchema.parse({
+): CollegeListResponse {
+    const colleges = response.map(college => {
+        return CollegeItemSchema.parse({
             code: college.CodeCollege,
             name: college.NomCollege,
-            omnivoxUrl: college.UrlCollege
         });
     })
 
-    return list;
+    return { count: colleges.length, colleges };
 }

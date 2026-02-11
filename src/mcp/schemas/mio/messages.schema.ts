@@ -13,7 +13,6 @@ export const MessageSchema = z.object({
 
     subject: z.string().optional(),
     excerpt: z.string().optional(),
-    body_html: z.string().optional(),
 
     sent_at: z.string(),
 

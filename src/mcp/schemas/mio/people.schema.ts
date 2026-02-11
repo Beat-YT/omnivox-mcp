@@ -9,6 +9,7 @@ export const PersonSchema = z.object({
 })
 
 export const PeopleSearchResponseSchema = z.object({
+    count: z.number().optional(),
     results: z.array(PersonSchema),
 })
 

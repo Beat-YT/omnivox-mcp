@@ -1,7 +1,8 @@
 import { MioModel } from "@typings/Mio/Messages";
 import { MioSearch } from "@typings/Mio/Search";
-import { makeSkytechRequest } from "../puppet/index";
+import { makeSkytechRequest, makePuppeteerDownload, DownloadResult } from "../puppet/index";
 import { MioFolders } from "@typings/Mio/Folders";
+import { getConfig } from "../config";
 
 export function GetListeFoldersModel() {
     return makeSkytechRequest<MioFolders.ResponseModel>(
@@ -47,7 +48,7 @@ export function SearchMessages(folder: string, query: string, count = 21) {
     );
 }
 
-export function SendMessage(to: string, subject: string, message: string) {
+export function SendMessage(to: string, subject: string, message: string, cacheDestinataire = false) {
     return makeSkytechRequest<any>(
         '/Mobl/Mio/SendMessage',
         {
@@ -58,7 +59,7 @@ export function SendMessage(to: string, subject: string, message: string) {
             "Attachements": [],
             "IDMessageReply": "undefined",
             "derniereAction": "0",
-            "CacheDestinataire": false
+            "CacheDestinataire": cacheDestinataire
         }
     ).then(r => !!r);
 }
@@ -99,6 +100,26 @@ export function DeleteMessage(messageId: string) {
     ).then(r => !!r);
 }
 
+export function RestoreMessage(messageId: string) {
+    return makeSkytechRequest<any>(
+        '/Mobl/Mio/RestoreMessage',
+        {
+            "Id": messageId,
+            "Envoie": false
+        }
+    ).then(r => !!r);
+}
+
+export function SetMessageLu(messageId: string, isEnvoi = false) {
+    return makeSkytechRequest<any>(
+        '/Mobl/Mio/SetMessageLu',
+        {
+            "Id": messageId,
+            "IsEnvoi": isEnvoi
+        }
+    ).then(r => !!r);
+}
+
 export function RechercheIndividu(query: string) {
     return makeSkytechRequest<MioSearch.IndividuItem[]>(
         '/Mobl/Mio/RechercheIndividu',
@@ -113,4 +134,15 @@ export function AjoutCategorie(nomCategorie: string) {
             "nomCategorie": nomCategorie
         }
     ).then(r => !!r);
+}
+
+export function GetMioAttachment(messageId: string, attachmentId: string): Promise<DownloadResult> {
+    const config = getConfig();
+    const baseUrl = new URL(config.DefaultPage).origin;
+    const qs = new URLSearchParams({
+        IdMessage: messageId,
+        IdAttachement: attachmentId,
+    });
+
+    return makePuppeteerDownload(`${baseUrl}/Mobl/Mio/GetAttachement?${qs.toString()}`);
 }

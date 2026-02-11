@@ -15,7 +15,7 @@ function skytechCall(frame: any, method: string, ...args: any[]): Promise<any> {
     }, SVC, method, args);
 }
 
-// this is 100% going to break and be a nightmare to maintain but it is what it is. fuckass omnivox web. i want APIS!!!
+// this is 100% going to break and be a nightmare to maintain but it is what it is.
 export async function GetCoursePeople(courseId: string) {
     const [courseCode, courseGroup] = courseId.split('.');
     const page = await getPage();
@@ -36,64 +36,64 @@ export async function GetCoursePeople(courseId: string) {
     });
 
     // Intercept the POST response to extract categories from embedded JS
-    let resolveCategories: (data: any[]) => void;
-    const categoriesPromise = new Promise<any[]>((resolve) => { resolveCategories = resolve; });
-
-    const responseHandler = async (response: HTTPResponse) => {
-        const url = response.url();
-        if (response.request().method() !== 'POST') return;
-        if (!url.includes('Commun.SelectionIndividu/Prive') || !url.includes('eModeRecherche')) return;
-        try {
-            const body = await response.text();
-            const match = body.match(/var\s+categories\s*=\s*(\[[\s\S]*?\]);/);
-            if (match) {
-                resolveCategories(JSON.parse(match[1]));
+    const categoriesPromise = new Promise<any[]>((resolve, reject) => {
+        const responseHandler = async (response: HTTPResponse) => {
+            const url = response.url();
+            if (response.request().method() !== 'POST') return;
+            if (!url.includes('Commun.SelectionIndividu/Prive') || !url.includes('eModeRecherche')) return;
+            try {
+                const body = await response.text();
+                const match = body.match(/var\s+categories\s*=\s*(\[[\s\S]*?\]);/);
+                if (match) {
+                    resolve(JSON.parse(match[1]));
+                }
+            } catch { } 
+            finally {
+                page.off('response', responseHandler);
             }
-        } catch {}
-    };
-    page.on('response', responseHandler);
+        };
 
-    const frame = await loadPageInFrame(mioUrl);
-
-    // Click "One or many students or teachers from my classes" — triggers __doPostBack
-    await frame.waitForSelector('#uListeCategorie_lnk0', { timeout: 10000 });
-    await frame.evaluate(() => {
-        (document.querySelector('#uListeCategorie_lnk0') as HTMLElement).click();
+        page.on('response', responseHandler);
+        setTimeout(() => {
+            page.off('response', responseHandler);
+            reject(new Error('Timed out waiting for categories response'));
+        }, 10000);
     });
 
-    const categories = await categoriesPromise;
-    page.off('response', responseHandler);
+    const { frame, dispose } = await loadPageInFrame(mioUrl);
 
-    // Find matching category (NoCours: "2434K5EM", NoGroupe: " gr.01011")
-    const category = categories.find((c: any) =>
-        c.NoCours === courseCode && c.NoGroupe.includes(courseGroup)
-    );
-    if (!category) {
-        await page.evaluate(() => {
-            document.querySelector('iframe[style*="-9999px"]')?.remove();
+    try {
+        // Click "One or many students or teachers from my classes" — triggers __doPostBack
+        await frame.waitForSelector('#uListeCategorie_lnk0', { timeout: 10000 });
+        await frame.evaluate(() => {
+            (document.querySelector('#uListeCategorie_lnk0') as HTMLElement).click();
         });
-        console.error('Available categories:', categories);
-        throw new Error(`Course ${courseId} not found in categories`);
+
+        const categories = await categoriesPromise;
+
+        // Find matching category (NoCours: "2434K5EM", NoGroupe: " gr.01011")
+        const category = categories.find((c: any) =>
+            c.NoCours === courseCode && c.NoGroupe.includes(courseGroup)
+        );
+        if (!category) {
+            console.error('Available categories:', categories);
+            throw new Error(`Course ${courseId} not found in categories`);
+        }
+
+        const id = await frame.evaluate(() => (window as any).IdRechercheIndividu);
+
+        // Use Skytech proxy for all .asmx calls
+        await skytechCall(frame, 'AjouterItemSelectionneTousEtudiants', id, category);
+        await skytechCall(frame, 'Sauvegarder', id, id);
+
+        // Get the real recipient data from the mobile API
+        return await makeSkytechRequest<MioSearch.IndividuItem[]>(
+            '/Mobl/Mio/ObtenirDestinatiaresWeb',
+            { idRecherche: String(id) }
+        );
+    } finally {
+        await dispose();
     }
-
-    const id = await frame.evaluate(() => (window as any).IdRechercheIndividu);
-
-    // Use Skytech proxy for all .asmx calls
-    await skytechCall(frame, 'AjouterItemSelectionneTousEtudiants', id, category);
-    await skytechCall(frame, 'Sauvegarder', id, id);
-
-    // Get the real recipient data from the mobile API
-    const recipients = await makeSkytechRequest<MioSearch.IndividuItem[]>(
-        '/Mobl/Mio/ObtenirDestinatiaresWeb',
-        { idRecherche: String(id) }
-    );
-
-    // Clean up iframe
-    await page.evaluate(() => {
-        document.querySelector('iframe[style*="-9999px"]')?.remove();
-    });
-
-    return recipients;
 }
 
 interface OmnivoxUrlOptions {

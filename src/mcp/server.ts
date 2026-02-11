@@ -1,15 +1,17 @@
 import * as express from 'express';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
 import { getAccessKey } from '../security/accessKey.js';
 
 const mcpServer = new McpServer({
-    name: 'My MCP Server',
+    name: 'Omnivox MCP Server',
     version: '1.0.0',
-    description: 'An example MCP server using stateless Streamable HTTP transport',
-    title: 'Example MCP Server',
+    description: 'The user is a CEGEP student.',
+    title: 'Omnivox MCP Server',
+
 });
+
 
 const mcpRouter = express.Router();
 let statelessTransport: StreamableHTTPServerTransport;

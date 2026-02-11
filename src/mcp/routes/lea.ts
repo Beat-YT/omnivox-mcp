@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { GetAbsencesSommaireModel, GetCommuniquesListeModel, GetDefaultModel, GetDocumentsListeModel, GetNotesDetailWebModel, GetNotesSommaireModel, GetTravauxDetailModel, GetTravauxListeModel, GetTravauxSommaireModel } from '@api/Lea';
+import { GetAbsencesSommaireModel, GetCommuniquesListeModel, GetDefaultModel, GetDocumentsListeModel, GetEnseignantsSommaireModel, GetNotesDetailWebModel, GetNotesSommaireModel, GetTravauxDetailModel, GetTravauxListeModel, GetTravauxSommaireModel } from '@api/Lea';
 import { GetCopieCorrigeTravailFichier, GetDepotTravailFichier, GetDocumentFichier, GetEnonceTravailFichier, GetWebListeEval } from '@api/LeaDownload';
 import { DownloadResult } from 'src/omnivox-api/puppet';
 
@@ -11,16 +11,12 @@ import { transformAssignmentsList } from '@transformers/courses/assignments-list
 import { transformAssignmentDetail } from '@transformers/courses/assignment-detail';
 import { transformGradeItem, transformGradesSummary } from '@transformers/courses/grades-summary';
 import { transformLeaAbsences } from '@transformers/courses/absences';
+import { transformTeachers } from '@transformers/courses/teachers';
 import { transformTerms } from '@transformers/terms';
+import { getDefaultTermId } from '@common/omnivoxHelper';
 
 
 const router = express.Router();
-
-function getDefaultTerm() {
-    return GetDefaultModel().then(model => {
-        return model.AnSessionDisponible?.AnSessionDefault || model.AnSession;
-    });
-}
 
 router.get('/lea/terms', async (req, res) => {
     const model = await GetDefaultModel();
@@ -38,7 +34,7 @@ router.get('/lea/courses', async (req, res) => {
 });
 
 router.get('/lea/assignments', async (req, res) => {
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
 
     const model = await GetTravauxSommaireModel(term);
     const transformed = transformAssignmentsSummary(model);
@@ -46,14 +42,14 @@ router.get('/lea/assignments', async (req, res) => {
 });
 
 router.get('/lea/absences', async (req, res) => {
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
     const model = await GetAbsencesSommaireModel(term);
     res.json(transformLeaAbsences(model));
 });
 
 router.get('/lea/courses/:id', async (req, res) => {
     const courseId = req.params.id;
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
 
     const notes = await GetNotesSommaireModel(term);
     const course = notes.ListeInfosNotes.find(c => `${c.NoCours}.${c.NoGroupe}` === courseId);
@@ -70,23 +66,11 @@ router.get('/lea/courses/:id', async (req, res) => {
     })
 });
 
-router.get('/lea/courses/:id/teachers', async (req, res) => {
-    const courseId = req.params.id;
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
-    const [courseCode, groupCode] = courseId.split('.');
-    const model = await GetNotesDetailWebModel(courseCode, groupCode, term);
-    return res.json({
-        term_id: term,
-        course_id: courseId,
-        teachers: model.NoteEvaluationWeb.Enseignants
-    })
-});
-
 router.get('/lea/courses/:id/documents', async (req, res) => {
     const courseId = req.params.id;
     const term = typeof req.query.term_id === 'string'
         ? req.query.term_id
-        : await getDefaultTerm();
+        : await getDefaultTermId();
 
     const model = await GetDocumentsListeModel(courseId, term);
     const transformed = transformDocuments(model, term, courseId);
@@ -97,7 +81,7 @@ router.get('/lea/courses/:id/announcements', async (req, res) => {
     const courseId = req.params.id;
     const term = typeof req.query.term_id === 'string'
         ? req.query.term_id
-        : await getDefaultTerm();
+        : await getDefaultTermId();
 
     const model = await GetCommuniquesListeModel(courseId, term);
     const transformed = transformAnnouncements(model, term, courseId);
@@ -109,7 +93,7 @@ router.get('/lea/courses/:course_id/documents/:document_id/download', async (req
     const documentId = req.params.document_id;
     const term = typeof req.query.term_id === 'string'
         ? req.query.term_id
-        : await getDefaultTerm();
+        : await getDefaultTermId();
 
     const result = await GetDocumentFichier(courseId, documentId, term);
     res.set('Content-Disposition', result.contentDisposition);
@@ -122,7 +106,7 @@ router.get('/lea/courses/:id/assignments', async (req, res) => {
     const courseId = req.params.id;
     const term = typeof req.query.term_id === 'string'
         ? req.query.term_id
-        : await getDefaultTerm();
+        : await getDefaultTermId();
 
     const model = await GetTravauxListeModel(courseId, term);
     const transformed = transformAssignmentsList(model, term, courseId);
@@ -132,7 +116,7 @@ router.get('/lea/courses/:id/assignments', async (req, res) => {
 router.get('/lea/courses/:course_id/assignments/:assignment_id', async (req, res) => {
     const courseId = req.params.course_id;
     const assignmentId = req.params.assignment_id;
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
 
     const model = await GetTravauxDetailModel(courseId, assignmentId, term);
     const transformed = transformAssignmentDetail(model);
@@ -144,7 +128,7 @@ router.get('/lea/courses/:course_id/assignments/:assignment_id/file/:file_id', a
     const assignmentId = req.params.assignment_id;
     const fileId = req.params.file_id;
     const fileRole = req.query.role;
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
 
     if (typeof fileRole !== 'string') {
         res.status(400).json({ error: 'Missing role query parameter. Accepted values are: submission, teacher_document, correction.' });
@@ -182,7 +166,7 @@ router.get('/lea/courses/:course_id/assignments/:assignment_id/file/:file_id', a
 
 
 router.get('/lea/grades', async (req, res) => {
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
 
     const model = await GetNotesSommaireModel(term);
     const transformed = transformGradesSummary(model, term)
@@ -191,7 +175,7 @@ router.get('/lea/grades', async (req, res) => {
 
 router.get('/lea/grades/:course_id', async (req, res) => {
     const courseId = req.params.course_id;
-    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTerm();
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
 
     const [courseCode, courseGroup] = courseId.split('.');
 
@@ -199,6 +183,12 @@ router.get('/lea/grades/:course_id', async (req, res) => {
     const gradeText = await GetWebListeEval(webModel, courseCode, courseGroup, term);
 
     res.send(gradeText)
+});
+
+router.get('/lea/teachers', async (req, res) => {
+    const term = typeof req.query.term_id === 'string' ? req.query.term_id : await getDefaultTermId();
+    const model = await GetEnseignantsSommaireModel(term);
+    res.json(transformTeachers(model));
 });
 
 
