@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { GetHoraireModel } from '@api/Horaire';
-import { transformHoraireToSchedule } from '../transformers/schedule.js';
+import { transformHoraireToSchedule } from '@transformers/schedule';
 
 const router = express.Router();
 

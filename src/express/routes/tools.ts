@@ -29,7 +29,7 @@ router.get('/tools', (_req, res) => {
     res.json({ tools: list });
 });
 
-router.post('/tools/:toolName', express.json(), async (req, res) => {
+router.post('/tools/:toolName', express.json({ type: '*/*' }), async (req, res) => {
     const tools = getTools();
     const tool = tools[req.params.toolName];
 
@@ -41,6 +41,7 @@ router.post('/tools/:toolName', express.json(), async (req, res) => {
     }
 
     const args = req.body || {};
+    console.log(`Invoking tool "${req.params.toolName}" with args:`, args);
 
     if (tool.inputSchema) {
         const parsed = await safeParseAsync(tool.inputSchema, args) as { success: boolean; error?: any };
