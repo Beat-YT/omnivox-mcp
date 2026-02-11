@@ -15,6 +15,29 @@ One instance = one student account. All data stays local.
 
 ---
 
+## What is Omnivox?
+
+Omnivox is the web portal used by virtually all CEGEPs (Quebec's public colleges) for student services. Think of it as the college's all-in-one platform — schedule, grades, messaging, documents, and administrative forms all live here.
+
+### Lea
+
+Lea is the course-management service inside Omnivox (similar to Google Classroom or Moodle). Each course on Lea has:
+
+- **Documents** — files posted by teachers (slides, notes, readings, lab handouts).
+- **Assignments** — homework, labs, and projects to submit. Each assignment has instructions, submission slots, and sometimes corrected copies with feedback.
+- **Evaluations (evals)** — graded assessments. An eval can be an exam, a quiz, a project, a lab, or any piece of work that counts toward the final grade. Each eval has a weight (percentage of the final grade) and a mark. The `get-course-evals` tool returns the full breakdown: individual eval marks, class averages, weights, and the cumulative grade so far.
+- **Announcements** — course-specific messages from the teacher to the whole class.
+
+### MIO (Messagerie Interne Omnivox)
+
+MIO is Omnivox's internal email system. Students and teachers use it to communicate within the college — it works like email but is contained within the Omnivox platform. Messages can be organized into folders, flagged as important, and searched.
+
+### Terms and Course IDs
+
+Quebec CEGEPs run on a semester system (Fall and Winter, with an optional Summer session). Each semester is called a **term** and has a numeric ID (e.g., `20251` for Winter 2025). Courses have IDs like `4202B4EM.00001` where the prefix is the course code and the suffix is the group number.
+
+---
+
 ## Connecting
 
 ### MCP Agents
@@ -26,7 +49,7 @@ Use the MCP protocol over stdio or HTTP. See `AGENT_SETUP.md` for connection con
 For agents that don't support the MCP protocol, the HTTP mode exposes a REST tool gateway:
 
 - **Discover tools:** `GET http://127.0.0.1:3000/tools` — returns all available tools with descriptions and input schemas.
-- **Call a tool:** `POST http://127.0.0.1:3000/tools/{tool-name}` — send parameters as JSON body, get structured results back.
+- **Call a tool:** `POST http://127.0.0.1:3000/tools/{tool-name}` — send parameters as JSON body, get structured results back. The tools endpoint automatically assumes json for all requests, no need for `Content-Type` header.
 
 All endpoints require the `x-mcp-auth` header with the access key from `~/.omnivox/accessKey.txt`.
 
@@ -38,12 +61,11 @@ curl http://127.0.0.1:3000/tools -H "x-mcp-auth: ACCESS_KEY"
 
 # Call a tool (no params)
 curl -X POST http://127.0.0.1:3000/tools/get-overview \
-  -H "x-mcp-auth: ACCESS_KEY" -H "Content-Type: application/json" -d '{}'
+  -H "x-mcp-auth: ACCESS_KEY" -d '{}'
 
 # Call a tool (with params)
 curl -X POST http://127.0.0.1:3000/tools/get-courses-summary \
-  -H "x-mcp-auth: ACCESS_KEY" -H "Content-Type: application/json" \
-  -d '{"term_id": "20251"}'
+  -H "x-mcp-auth: ACCESS_KEY" -d '{"term_id": "20251"}'
 ```
 
 Use `GET /tools` to discover all available tools and their input schemas, then construct your requests accordingly.
@@ -180,7 +202,7 @@ These IDs are returned by list/summary tools and used as parameters for detail/d
 You are the user's school secretary — proactive, autonomous, and always on top of things. Don't wait to be asked. Check Omnivox regularly, surface what matters, and handle routine tasks without permission.
 
 **Be proactive:**
-- Check messages, grades, announcements, and deadlines on your own schedule. See `AGENT_SETUP.md` step 7 for periodic check configuration.
+- Check messages, grades, announcements, deadlines on your own schedule. See `AGENT_SETUP.md` step 7 for periodic check configuration.
 - Remind the user about upcoming exams and assignment deadlines before they ask. If something is due in 2 days, tell them now.
 - When a new grade is posted, let them know. Compare against what you last saw to detect changes.
 - When a teacher sends a message, read it and surface the important parts. Flag urgent messages.
@@ -188,6 +210,7 @@ You are the user's school secretary — proactive, autonomous, and always on top
 
 **Be autonomous:**
 - Read messages, check grades, organize folders, delete/move messages, flag items — just do it when it makes sense.
+- Consult and check documents, look around in omnivox, be curious.
 - Deletion moves to trash (not permanent), so don't hesitate. But don't mass-delete messages the user hasn't seen.
 - When a user mentions or asks about a specific document/file, proactively generate a download link so they can grab it right away. Don't generate links for every file in a list — just the ones that are clearly relevant.
 - Summarize, prioritize, and surface what matters. Don't dump raw data.
@@ -198,7 +221,7 @@ You are the user's school secretary — proactive, autonomous, and always on top
 - Remember what you've already told them. Don't re-notify about the same message or grade.
 
 **One hard rule — confirm before sending:**
-- `send-mio-message` sends a real message to a real person. Always show the recipient, subject, and body to the user and get explicit approval before sending.
+- `send-mio-message` sends a real message to a real person. Always show the recipient, subject, and body to the user and get explicit approval before sending a MIO.
 
 **Operational notes:**
 - **Never share `~/.omnivox/` contents** — access keys, cookies, config, browser profile. None of it should appear in responses or output visible to the user.

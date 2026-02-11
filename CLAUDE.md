@@ -17,7 +17,7 @@ Omnivox-MCP is an MCP (Model Context Protocol) server that exposes a Quebec coll
 The server supports two transport modes, selected at startup:
 
 - **stdio (default):** `npm start` — the MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key, no REST API. All logs go to stderr to keep stdout clean for the MCP protocol.
-- **HTTP:** `npm run start:http` — starts an Express server with the Streamable HTTP MCP transport at `/mcp?key=...`, REST API routes, and access key authentication.
+- **HTTP:** `npm run start:http` — starts an Express server with the Streamable HTTP MCP transport at `/mcp?key=...`, REST tool gateway, and access key authentication.
 
 ## Architecture
 
@@ -33,16 +33,17 @@ Both modes share the same entry point. The `--http` flag selects the transport:
 3. Connects `mcpServer` to a `StdioServerTransport`
 
 **HTTP mode (`--http` flag):**
-3. Access key (generates/loads API auth key)
-4. Express app with MCP router at `/mcp`
-5. Access key validation middleware
-6. Route files dynamically loaded from `src/mcp/routes/`
-7. Listens on `PORT` (default 3000)
+3. Calls `StartExpressServer()` from `src/express/server.ts`, which:
+   - Initializes the access key (generates/loads API auth key)
+   - Sets up Express app with MCP-over-HTTP router at `/mcp`
+   - Applies access key validation middleware
+   - Auto-discovers route files from `src/express/routes/`
+   - Listens on `PORT` (default 3000)
 
 ### Layer Architecture
 
 ```
-MCP Tools (src/mcp/tools/)     Express Routes (src/mcp/routes/) [HTTP mode only]
+MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode only]
         \                              /
          \                            /
     Transformers (src/mcp/transformers/) + Schemas (src/mcp/schemas/)
@@ -56,8 +57,19 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/mcp/routes/) [HTTP mode only]
 - **API Requests** (`src/omnivox-api/requests/`): Raw calls to Omnivox mobile API endpoints. POST/JSON requests use `makeSkytechRequest()` which runs `Skytech.Commun.Utils.HttpRequestWorker.PostJSON` inside `page.evaluate()`. Download requests use `makePuppeteerDownload()` which opens a new browser page and runs `fetch()` with a custom `X-Ovx-Download` header — the request interceptor strips this header and overrides with navigation headers so Omnivox sees a real browser navigation.
 - **Transformers** (`src/mcp/transformers/`): Convert raw API responses into validated Zod schemas. Each transformer maps to a specific schema.
 - **Schemas** (`src/mcp/schemas/`): Zod schemas defining the structured output shapes.
+- **MCP Server** (`src/mcp/server.ts`): Creates and exports the `mcpServer` instance.
 - **MCP Tools** (`src/mcp/tools/`): Register tools on the `mcpServer` instance (imported from `src/mcp/server.ts`). Auto-discovered at startup by scanning the directory.
-- **Routes** (`src/mcp/routes/`): Express routers providing REST API access to the same data. Auto-discovered at startup. Only used in HTTP mode.
+- **Express Server** (`src/express/server.ts`): Creates the Express app, MCP-over-HTTP transport, access key middleware, and route auto-discovery. Exports `StartExpressServer()`. Only used in HTTP mode.
+- **Routes** (`src/express/routes/`): Express routers auto-discovered at startup. Only used in HTTP mode. Includes the REST tool gateway (`tools.ts`) and resource-specific routes.
+
+### REST Tool Gateway (HTTP mode only)
+
+For agents that don't support the MCP protocol, the Express server exposes all MCP tools over plain HTTP:
+
+- **`GET /tools`** — returns all registered tools with descriptions and JSON Schema input definitions.
+- **`POST /tools/{tool-name}`** — calls a tool by name. Send parameters as JSON body, get structured results back.
+
+All endpoints require the `x-mcp-auth` header. This is implemented in `src/express/routes/tools.ts`, which reads from the `mcpServer` instance's internal tool registry and calls tool handlers directly — bypassing the MCP protocol entirely.
 
 ### Path Aliases (tsconfig.json)
 
@@ -101,7 +113,7 @@ All server logs use `console.warn` (stderr), not `console.log` (stdout). This ke
 ### Key Patterns
 
 - **ES Modules**: Project uses `"type": "module"` - all imports use ESM syntax.
-- **Mixed JS/TS**: Entry point (`index.js`) and security files are JavaScript; MCP layer (tools, schemas, transformers, routes) and API requests are TypeScript.
+- **Mixed JS/TS**: Entry point (`index.js`) and security files are JavaScript; MCP layer (tools, schemas, transformers), Express layer (server, routes), and API requests are TypeScript.
 - **All requests via Puppeteer**: POST/JSON uses `makeSkytechRequest()`, downloads use `makePuppeteerDownload()`, page rendering uses `loadPageInFrame()`. No axios or separate HTTP client.
 - **Plugin Discovery**: Both MCP tools and routes are auto-loaded by scanning their directories - no manual registration needed.
 - **Term ID Caching**: `src/common/omnivoxHelper.ts` caches the current term ID for 5 days to avoid redundant API calls. Most tools/routes accept an optional `term_id` parameter, falling back to cached current term.

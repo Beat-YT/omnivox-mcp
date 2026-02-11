@@ -21,7 +21,7 @@ function mapCategory(type: string): CalendarCategory {
 
     if (t === "ZZCR") return "course_meeting"
     if (t === "TRAV") return "assignment"
-    if (t === "EVAL") return "assessment"
+    if (t === "EVAL") return "eval"
 
     if (t === "DEBS") return "semester_start"
     if (t === "FINS") return "semester_end"

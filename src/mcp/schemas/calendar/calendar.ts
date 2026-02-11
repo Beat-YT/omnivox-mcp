@@ -5,8 +5,7 @@ import { z } from "zod"
  */
 export const CalendarCategorySchema = z.enum([
   "course_meeting",
-  "exam",
-  "assessment",
+  "eval",
   "assignment",
   "institutional",
   "semester_start",
