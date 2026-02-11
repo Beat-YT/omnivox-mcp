@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In</title>
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+    <div class="container">
+        <form class="login-card" method="POST"
+            action="https://mobl.omnivox.ca/intr/Module/Identification/Login/Mobile/LN.ashx">
+            <h1 class="title">Sign in</h1>
+            <p class="subtitle">Enter your identifier and date of birth to continue</p>
+
+            <input type="hidden" name="TypeUtilisateur" value="1" />
+
+            <div class="field">
+                <label for="identifier">Identifiant Omnivox</label>
+                <input type="text" id="identifier" name="n" placeholder="12345678" required />
+            </div>
+
+            <div class="field">
+                <label for="dob">Date of Birth</label>
+                <input type="date" id="dob" class="date-input" required />
+            </div>
+
+            <input type="hidden" name="d" id="dobFormatted" />
+            <input type="hidden" name="L" value="ANG" />
+            <input type="hidden" name="LangueAppareil" value="en-CA" />
+            <input type="hidden" name="typeAppareil" value="tablet" />
+
+            <button type="submit" class="btn-primary">
+                Continue
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const dob = document.getElementById("dob");
+        dob.addEventListener("click", () => dob.showPicker());
+
+        // set default date to 18 years ago
+        const currentYear = new Date().getFullYear();
+        dob.value = `${currentYear - 18}-01-01`;
+
+        // handle form submission
+        const form = document.querySelector("form");
+        form.addEventListener("submit", () => {
+            const dobFormatted = document.getElementById("dobFormatted");
+            dobFormatted.value = dob.value.replaceAll("-", "")
+        });
+    </script>
+</body>
+
+</html>

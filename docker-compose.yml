@@ -1,0 +1,11 @@
+services:
+  omnivox-mcp:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${OMNIVOX_DATA_DIR:-~/.omnivox}:/data/omnivox
+    environment:
+      - PORT=3000
+      - OMNIVOX_DATA_DIR=/data/omnivox
+      # - MCP_SERVER_URL=https://your-public-domain.com  # Optional: enables download link generation

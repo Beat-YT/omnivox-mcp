@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "baseUrl": "./",
+        "allowJs": true,
+        "checkJs": false,
+        "outDir": "./dist",
+        "paths": {
+            "@api/*": ["src/omnivox-api/requests/*"],
+            "@schemas/*": ["src/mcp/schemas/*"],
+            "@transformers/*": ["src/mcp/transformers/*"],
+            "@typings/*": ["src/omnivox-api/typings/*"],
+            "@common/*": ["src/common/*"]
+        }
+    }
+}
