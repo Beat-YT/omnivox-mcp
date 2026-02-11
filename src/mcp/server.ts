@@ -1,10 +1,10 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp';
 
 const mcpServer = new McpServer({
-    name: 'Omnivox MCP Server',
+    name: 'omnivox',
     version: '1.0.0',
-    description: 'The user is a CEGEP student.',
-    title: 'Omnivox MCP Server',
+    description: 'Access a Quebec CEGEP student portal (Omnivox/Lea). View courses, grades, assignments, schedule, calendar, absences, documents, and send/receive internal messages (MIO).',
+    title: 'Omnivox',
 });
 
 export { mcpServer };
