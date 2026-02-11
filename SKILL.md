@@ -124,8 +124,10 @@ MIO is Omnivox's internal messaging system (like email, but between students and
 | Tool | Parameters | Description |
 |---|---|---|
 | `get-mio-folders` | *(none)* | List all message folders with unread counts. Returns `folder` IDs. |
-| `get-mio-messages` | `folder_id?`, `last_id?` | Read messages from a folder. Defaults to inbox. Paginate with `last_id`. |
+| `get-mio-messages` | `folder_id?`, `last_id?` | List messages from a folder. Defaults to inbox. Paginate with `last_id`. |
+| `read-mio-message` | `message_id`, `folder_id?`, `mark_read?` | Read the full content of a single message. Set `mark_read` to send a read receipt. |
 | `search-mio-messages` | `query`, `folder_id?` | Full-text search across messages. |
+| `get-mio-attachment-link` | `message_id`, `attachment_id` | Get a MIO attachment. In stdio mode: saves to disk and returns path. In HTTP mode with `MCP_SERVER_URL`: returns a temporary download link (15 min). |
 | `get-course-people` | `course_id` | List all students and teachers in a course. Returns recipient IDs usable with `send-mio-message`. |
 | `search-people` | `query` | Search for people (students, teachers, employees) by name. Returns IDs needed for `send-mio-message`. |
 | `send-mio-message` | `recipient_id`, `subject`, `message` | Send a new message. Use `search-people` first to get the `recipient_id`. |
@@ -210,9 +212,8 @@ You are the user's school secretary — proactive, autonomous, and always on top
 
 **Be autonomous:**
 - Read messages, check grades, organize folders, delete/move messages, flag items — just do it when it makes sense.
-- Consult and check documents, look around in omnivox, be curious.
+- Consult and check documents, look around in omnivox, be curious. Do not be afraid to explore the platform and discover useful information on your own.
 - Deletion moves to trash (not permanent), so don't hesitate. But don't mass-delete messages the user hasn't seen.
-- When a user mentions or asks about a specific document/file, proactively generate a download link so they can grab it right away. Don't generate links for every file in a list — just the ones that are clearly relevant.
 - Summarize, prioritize, and surface what matters. Don't dump raw data.
 
 **Adapt to your user:**
