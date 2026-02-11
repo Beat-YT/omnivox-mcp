@@ -1,6 +1,6 @@
 import { GetDocumentsListeModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
-import { CourseDocument, courseDocumentResponseSchema } from "@schemas/courses";
+import { CourseDocument } from "@schemas/courses";
 import { transformDocuments } from "@transformers/courses/document";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
@@ -15,7 +15,6 @@ mcpServer.registerTool('get-course-documents',
         title: 'Get course documents',
         description: 'Retrieve a list of documents for a specific course.',
         inputSchema: input,
-        outputSchema: courseDocumentResponseSchema,
         annotations: {
             destructiveHint: false,
             readOnlyHint: true,
@@ -27,45 +26,31 @@ mcpServer.registerTool('get-course-documents',
         const model = await GetDocumentsListeModel(course_id, term);
         const documents = transformDocuments(model, term, course_id);
 
-        const docTexts = documents.documents.map(c => ({
-            type: 'text' as const,
-            text: mapCourseToText(c),
-            annotations: {
-                audience: ["user"] as ("user" | "assistant")[],
-            }
-        }))
+        const unviewed = documents.documents.filter(d => !d.is_viewed).length;
+        const header = `${documents.course_name || course_id} — ${documents.documents.length} document(s)${unviewed ? `, ${unviewed} unread` : ''}`;
+        const legend = unviewed ? '* = not viewed' : '';
+        const docs = documents.documents.map(formatDocument);
 
         return {
-            content: [
-                {
-                    annotations: {
-                        audience: ["assistant"],
-                    },
-                    type: 'text',
-                    text: `Here is the list of documents for course ${course_id} in term ID: ${term} (${documents.documents.length} documents total)`
-                },
-                ...docTexts,
-            ],
-            structuredContent: documents,
+            content: [{ type: 'text', text: [header, legend, '', ...docs].filter(Boolean).join('\n') }],
         };
     }
 )
 
-function mapCourseToText(doc: CourseDocument) {
-    return [
-        `Document: ${doc.title}`,
-        `ID: ${doc.id}`,
-        `Description: ${doc.description || 'N/A'}`,
-        `Category: ${doc.category || 'N/A'}`,
-        doc.filename && `Filename: ${doc.filename || 'N/A'}`,
-        doc.extension && `Extension: ${doc.extension}`,
-        doc.external_url && `External URL: ${doc.external_url}`,
-        `Viewed: ${bool(doc.is_viewed)}`,
-        `Published At: ${new Date(doc.published_at || '').toLocaleString() || 'N/A'}`,
-        ``
-    ].filter(Boolean).join('\n');
-}
+function formatDocument(doc: CourseDocument) {
+    const marker = doc.is_viewed ? '- ' : '* ';
+    const date = doc.published_at ? new Date(doc.published_at).toLocaleDateString() : '?';
 
-function bool(value: boolean) {
-    return value ? 'true' : 'false';
+    const details: string[] = [];
+    if (doc.category) details.push(`  Category: ${doc.category}`);
+    if (doc.description) details.push(`  ${doc.description}`);
+    if (doc.filename) details.push(`  File: ${doc.filename}`);
+    if (doc.external_url) details.push(`  URL: ${doc.external_url}`);
+    details.push(`  ID: ${doc.id}`);
+
+    return [
+        `${marker}[${date}] ${doc.title}`,
+        ...details,
+        '',
+    ].join('\n');
 }

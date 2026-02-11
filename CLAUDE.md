@@ -105,10 +105,25 @@ Separate Electron app that authenticates with Omnivox, captures session cookies,
 - `cookies.json` - Session cookies exported by the Electron auth app
 - `config.json` - Omnivox config (DefaultPage URL, auth Code, device ID)
 - `accessKey.txt` - API access key (HTTP mode only)
+- `deltaSnapshots.json` - Persisted delta tracker snapshots for "what changed since last call"
+
+### Delta Tracker (`src/common/deltaTracker.ts`)
+
+In-memory + persisted snapshot store that lets tools show what changed between calls. On subsequent calls, each item in the response gets an inline delta annotation like `[+3 total documents, +1 unread]`. First call has no delta. No changes shows `[No changes since last call]` in the header. Snapshots persist to `deltaSnapshots.json` across restarts.
+
+Tools with delta tracking:
+- `get-courses-summary` — 8 metrics per course (total/unread documents, announcements, assignments, evals/grades)
+- `get-grades-summary` — `new_evaluations_count`, `accumulated_weight` per course
+- `get-assignments-summary` — `total_assignments`, `new_assignments_count`, `new_correction_count` per course
+- `get-absences` — `total_hours_absent` per course
+- `get-mio-folders` — `unread_msg_count`, `total_msg_count` per folder
+- `get-overview` — `count` per service
 
 ### Logging
 
-All server logs use `console.warn` (stderr), not `console.log` (stdout). This keeps stdout clean for the MCP stdio protocol. Browser-context logs in `ovxInjection.js` use `console.log` since they run inside the Puppeteer page, not in Node.js.
+- **HTTP request logs**: Always on in HTTP mode (console + `server.log` file). Gated by `isHttpMode()`.
+- **OVX command logs** (`[OVX COMMAND]` in `ovxInjection.js`): Only logged when `--log` flag is passed.
+- All other server logs use `console.warn` (stderr), not `console.log` (stdout). This keeps stdout clean for the MCP stdio protocol.
 
 ### Key Patterns
 

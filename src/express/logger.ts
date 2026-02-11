@@ -27,12 +27,10 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
     res.on('finish', () => {
         const line = formatLine(req, res, Date.now() - start);
 
-        // Log to stdout only in HTTP mode (stdio mode reserves stdout for MCP)
         if (isHttpMode()) {
             console.log(line);
         }
 
-        // Always append to log file
         fs.appendFile(logFile, line + '\n', () => {});
     });
 

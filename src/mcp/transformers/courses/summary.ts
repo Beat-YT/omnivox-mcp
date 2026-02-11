@@ -15,10 +15,10 @@ export function transformCoursItem(cours: DefaultModel.ListeCour) {
         unread_announcements: cours.ListeModulesLea.Communiques.NotificationsNonConsultes,
         unread_assignments: cours.ListeModulesLea.Travaux.NotificationsNonConsultes,
         unread_grades: cours.ListeModulesLea.Notes.NotificationsNonConsultes,
-        has_documents: cours.ListeModulesLea.Documents.NotificationsTotal > 0,
-        has_announcements: cours.ListeModulesLea.Communiques.NotificationsTotal > 0,
-        has_assignments: cours.ListeModulesLea.Travaux.NotificationsTotal > 0,
-        has_grades: cours.ListeModulesLea.Notes.NotificationsTotal > 0,
+        total_documents: cours.ListeModulesLea.Documents.NotificationsTotal,
+        total_announcements: cours.ListeModulesLea.Communiques.NotificationsTotal,
+        total_assignments: cours.ListeModulesLea.Travaux.NotificationsTotal,
+        total_evals: cours.ListeModulesLea.Notes.NotificationsTotal,
     } as CourseItem)
 }
 

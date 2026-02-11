@@ -3,6 +3,7 @@ import { InitializeAccessKey, ValidateAccessKey } from '../security/accessKey.js
 import express from 'express';
 import mcpRouter from './mcpRouter.js';
 import { requestLogger } from './logger.js';
+import { dataDir } from '../common/dataDir.js';
 
 const app = express();
 app.set('etag', false);
@@ -26,5 +27,6 @@ export function StartExpressServer() {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
+        console.log(`Data directory: ${dataDir}`);
     });
 }

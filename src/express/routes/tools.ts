@@ -41,6 +41,8 @@ router.post('/tools/:toolName', express.json({ type: '*/*' }), async (req, res) 
     }
 
     const args = req.body || {};
+    console.log(args);
+
     if (tool.inputSchema) {
         const parsed = await safeParseAsync(tool.inputSchema, args) as { success: boolean; error?: any };
         if (!parsed.success) {
@@ -70,6 +72,7 @@ router.post('/tools/:toolName', express.json({ type: '*/*' }), async (req, res) 
 
         res.type('text/plain').send(text);
     } catch (err: any) {
+        console.error(`Error executing tool "${req.params.toolName}":`, err);
         res.status(500).json({ error: err.message || 'Internal tool error' });
     }
 });

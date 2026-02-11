@@ -1,4 +1,5 @@
 import { GetAppUpdates } from "@api/App";
+import { computeDelta, flattenSnapshot, itemDeltaText } from "@common/deltaTracker";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
@@ -41,12 +42,19 @@ mcpServer.registerTool('get-overview',
                 dismissable: u.IndicateurPeutDismiss,
             }));
 
+        const snapshot = flattenSnapshot(items, i => i.service_id, {
+            count: i => i.count,
+        });
+        const deltas = computeDelta('get-overview', snapshot);
+        const dt = itemDeltaText(deltas, m => m === 'count' ? '' : m.replace(/_/g, ' '));
+
         const lines = items.map(i => {
             const desc = i.description ? ` — ${i.description}` : '';
             // For Lea/MIO badge counts, the title is just the count number
             const showTitle = i.title && i.title !== String(i.count);
             const titlePart = showTitle ? `: ${i.title}` : '';
-            return `${i.label}: ${i.count}${titlePart}${desc}`;
+            const delta = dt?.items[i.service_id];
+            return `${i.label}: ${i.count}${titlePart}${desc}${delta ? ' ' + delta : ''}`;
         });
 
         if (lines.length === 0) {
@@ -55,7 +63,7 @@ mcpServer.registerTool('get-overview',
 
         return {
             content: [
-                { type: 'text', text: lines.join('\n') },
+                { type: 'text', text: [dt?.header, ...lines].filter(Boolean).join('\n') },
             ],
             structuredContent: {
                 items,

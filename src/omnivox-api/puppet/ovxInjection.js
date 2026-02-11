@@ -1,6 +1,7 @@
 import { Page } from "puppeteer";
 import { getConfig, updateConfig } from "../config";
 import { buildUserAgent } from "./userAgent";
+import { isLogMode } from "../../common/transportMode";
 
 /**
  * 
@@ -8,10 +9,10 @@ import { buildUserAgent } from "./userAgent";
  */
 export async function setupPageInjection(page) {
     await page.exposeFunction("Ovx_NatifCall", (command, args) => {
-        console.log("[OVX COMMAND]", `${command} called with:`, args);
+        if (isLogMode()) console.log("[OVX COMMAND]", `${command} called with:`, args);
         const callbackName = `${command}CallBack`;
         const callback = function (data) {
-            console.log("[OVX COMMAND]", `Executing callback ${callbackName} with data:`, data);
+            if (isLogMode()) console.log("[OVX COMMAND]", `Executing callback ${callbackName} with data:`, data);
             page.evaluate((_command, _data) => {
                 Ovx.ExecuteCallback(
                     _command,
@@ -45,11 +46,11 @@ export async function setupPageInjection(page) {
     * @param {(data: any) => void} callback
     */
     function handleCommand(command, args, callback) {
-        console.log("[OVX COMMAND]", `Handling command: ${command} with args:`, args);
+        if (isLogMode()) console.log("[OVX COMMAND]", `Handling command: ${command} with args:`, args);
 
         switch (command) {
             case 'Storage.SetCodeUserAgent': {
-                console.log("[OVX COMMAND]", `Set codeUserAgent to: ${args.Code}`);
+                if (isLogMode()) console.log("[OVX COMMAND]", `Set codeUserAgent to: ${args.Code}`);
                 const config = updateConfig({ Code: args.Code || "" });
                 const ua = buildUserAgent(config.IdAppareil, config.Code);
                 page.setUserAgent(ua);

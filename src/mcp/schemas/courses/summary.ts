@@ -11,10 +11,10 @@ export const courseItemSchema = z.object({
     unread_assignments: z.number().optional(),
     unread_grades: z.number().optional(),
 
-    has_documents: z.boolean().optional(),
-    has_announcements: z.boolean().optional(),
-    has_assignments: z.boolean().optional(),
-    has_grades: z.boolean().optional(),
+    total_documents: z.number().optional(),
+    total_announcements: z.number().optional(),
+    total_assignments: z.number().optional(),
+    total_evals: z.number().optional(),
 })
 
 export const coursesSummarySchema = z.object({

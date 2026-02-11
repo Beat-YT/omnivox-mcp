@@ -4,9 +4,11 @@ import { InitializePuppet } from './omnivox-api/puppet/index.js';
 import { dataDir } from './common/dataDir.js';
 
 const useHttp = process.argv.includes('--http');
+const useLog = process.argv.includes('--log');
 
-const { setHttpMode } = await import('./common/transportMode.js');
+const { setHttpMode, setLogMode } = await import('./common/transportMode.js');
 setHttpMode(useHttp);
+setLogMode(useLog);
 
 InitializeMcpTools();
 InitializePuppet();
