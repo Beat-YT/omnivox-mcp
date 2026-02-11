@@ -227,5 +227,6 @@ You are the user's school secretary — proactive, autonomous, and always on top
 **Operational notes:**
 - **Never share `~/.omnivox/` contents** — access keys, cookies, config, browser profile. None of it should appear in responses or output visible to the user.
 - **Never show the access key** — not in messages, code blocks, logs, or summaries. If the user asks for it, tell them to check `~/.omnivox/accessKey.txt` directly.
+- **Avoid storing the access key in your context.** When the server is local, prefer shell substitution to inject it at runtime: `-H "x-mcp-auth: $(cat ~/.omnivox/accessKey.txt)"`. If the server is remote, consider saving the key to `~/.omnivox/accessKey.txt` locally and using the same shell substitution — this keeps the key out of your conversation history.
 - In HTTP mode with `MCP_SERVER_URL`, download links expire in 15 minutes. Generate a fresh one if needed. In stdio mode, files are saved to `~/.omnivox/downloads/` — read them directly.
 - One server instance = one student account.

@@ -1,13 +1,14 @@
 # Omnivox MCP
 
-An [MCP](https://modelcontextprotocol.io/) server that exposes Quebec college student portals (Omnivox/Lea) through both MCP tools and a REST API.
+An [MCP](https://modelcontextprotocol.io/) server that exposes Quebec college student portals (Omnivox/Lea) through MCP tools and a REST tool gateway.
 
 It runs a persistent Puppeteer browser logged into Omnivox, executing requests through the site's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively.
 
 ## Features
 
-- **28 MCP tools** — courses, grades, schedule, calendar, messaging (MIO), college news
-- **REST API** — same data, accessible with a simple access key
+- **30 MCP tools** — courses, grades, schedule, calendar, messaging (MIO), documents, assignments, college news
+- **Two transport modes** — stdio (default, for MCP clients) or HTTP (Express server with MCP-over-HTTP + REST tool gateway)
+- **REST tool gateway** — all MCP tools exposed as plain HTTP endpoints for non-MCP agents
 - **File downloads** — direct binary or temporary browser-friendly links (15 min TTL)
 - **Internal messaging** — read, search, send, flag, move, and delete MIO messages
 - **Persistent session** — Chrome profile survives restarts, no repeated logins
@@ -27,10 +28,13 @@ npm install && npm start
 
 # 3. Start the server
 cd ..
-npm start
+npm start          # stdio mode (default) — for MCP clients
+npm run start:http # HTTP mode — Express server on port 3000
 ```
 
-The server runs on `http://localhost:3000` by default. Your access key is generated at `~/.omnivox/accessKey.txt`.
+**stdio mode** (default): The MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key needed.
+
+**HTTP mode**: Starts an Express server with MCP-over-HTTP at `/mcp?key=...` and a REST tool gateway. Access key is auto-generated at `~/.omnivox/accessKey.txt`.
 
 Each instance serves **one Omnivox account**. The server maintains a single browser session tied to the account you logged in with.
 
@@ -61,29 +65,38 @@ Set these as environment variables or in a `.env` file at the project root:
 
 ### MCP (for AI assistants)
 
-Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport. The AI gets access to all 28 tools — ask it about your grades, schedule, assignments, or messages in natural language.
+**stdio mode** (recommended): Add the server to your MCP client config — it launches the server as a subprocess. See `AGENT_SETUP.md` for connection config.
 
-### REST API
+**HTTP mode**: Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport.
 
-The same data is available as a plain JSON API. All you need is your access key:
+Either way, the AI gets access to all 30 tools — ask it about your grades, schedule, assignments, or messages in natural language.
+
+### REST Tool Gateway (HTTP mode)
+
+For agents or apps that don't support MCP, all tools are exposed as plain HTTP endpoints:
 
 ```bash
+# List all available tools
+curl http://localhost:3000/tools -H "x-mcp-auth: YOUR_KEY"
+
 # Get your courses
-curl -H "x-mcp-auth: YOUR_KEY" http://localhost:3000/lea/courses
+curl -X POST http://localhost:3000/tools/get-courses-summary \
+  -H "x-mcp-auth: YOUR_KEY" -d '{}'
 
 # Check your grades
-curl -H "x-mcp-auth: YOUR_KEY" http://localhost:3000/lea/grades
-
-# Get your weekly schedule
-curl -H "x-mcp-auth: YOUR_KEY" http://localhost:3000/schedule
+curl -X POST http://localhost:3000/tools/get-grades-summary \
+  -H "x-mcp-auth: YOUR_KEY" -d '{}'
 
 # Read your inbox
-curl -H "x-mcp-auth: YOUR_KEY" http://localhost:3000/mio/list
+curl -X POST http://localhost:3000/tools/get-mio-messages \
+  -H "x-mcp-auth: YOUR_KEY" -d '{}'
 ```
+
+The tools endpoint accepts JSON bodies regardless of `Content-Type` header — no need to set it explicitly.
 
 ### Build your own projects
 
-The REST API isn't just for AI — it's a full Omnivox API you can use in any project:
+The REST tool gateway isn't just for AI — it's a full Omnivox API you can use in any project:
 
 - **Grade dashboard** — pull your grades into a custom web app or spreadsheet
 - **Schedule widget** — display your weekly timetable on a home screen or desktop widget
@@ -92,7 +105,7 @@ The REST API isn't just for AI — it's a full Omnivox API you can use in any pr
 - **Mobile app** — build a custom Omnivox client with just the features you care about
 - **Data export** — archive your grades, documents, and messages for your own records
 
-Any language that can make HTTP requests works — Python, JavaScript, Swift, Kotlin, Go, whatever you prefer. See the full [REST API reference](https://github.com/Beat-YT/omnivox-mcp/wiki/REST-API) for all available endpoints.
+Any language that can make HTTP requests works — Python, JavaScript, Swift, Kotlin, Go, whatever you prefer. Use `GET /tools` to discover all available tools and their input schemas.
 
 ## Documentation
 
@@ -100,8 +113,8 @@ See the [Wiki](https://github.com/Beat-YT/omnivox-mcp/wiki) for full documentati
 
 - [Setup](https://github.com/Beat-YT/omnivox-mcp/wiki/Setup) — prerequisites, installation, environment variables
 - [Architecture](https://github.com/Beat-YT/omnivox-mcp/wiki/Architecture) — how the system is structured
-- [MCP Tools](https://github.com/Beat-YT/omnivox-mcp/wiki/MCP-Tools) — all 28 tools with parameters
-- [REST API](https://github.com/Beat-YT/omnivox-mcp/wiki/REST-API) — all endpoints with request/response formats
+- [MCP Tools](https://github.com/Beat-YT/omnivox-mcp/wiki/MCP-Tools) — all 30 tools with parameters
+- [REST Tool Gateway](https://github.com/Beat-YT/omnivox-mcp/wiki/REST-API) — using the tool gateway for non-MCP agents
 - [Authentication](https://github.com/Beat-YT/omnivox-mcp/wiki/Authentication) — access keys, web tokens, session management
 
 ## Is this safe?
