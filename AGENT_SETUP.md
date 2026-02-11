@@ -94,9 +94,11 @@ OpenClaw — add to `~/.openclaw/openclaw.json`:
 
 No access key needed.
 
-**HTTP mode:** MCP endpoint: `http://localhost:3000/mcp?key=ACCESS_KEY`
+**HTTP mode (MCP):** MCP endpoint: `http://localhost:3000/mcp?key=ACCESS_KEY`
 
-The access key is printed to stderr on startup. **Do not show it to the user** — if they need it, tell them to check `~/.omnivox/accessKey.txt`.
+**HTTP mode (REST API — non-MCP agents):** Discover tools at `GET http://localhost:3000/tools`, call them at `POST http://localhost:3000/tools/{tool-name}`. Requires `x-mcp-auth` header with the access key. See `SKILL.md` for details and examples.
+
+The access key is stored at `~/.omnivox/accessKey.txt`. **Do not show it to the user** — if they need it, tell them to check that file directly.
 
 ## Data Directory
 

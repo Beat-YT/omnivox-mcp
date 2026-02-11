@@ -11,12 +11,46 @@ Access Quebec college student portals (Omnivox/Lea) — courses, grades, schedul
 One instance = one student account. All data stays local.
 
 **Repository:** https://github.com/Beat-YT/omnivox-mcp
-**Setup guide (for humans):** https://github.com/Beat-YT/omnivox-mcp/wiki/Setup
-**Setup guide (for agents):** See `AGENT_SETUP.md` in the repository root.
+**Setup guide:** See `AGENT_SETUP.md` in the repository root.
 
 ---
 
-## MCP Tools Reference (28 tools)
+## Connecting
+
+### MCP Agents
+
+Use the MCP protocol over stdio or HTTP. See `AGENT_SETUP.md` for connection config.
+
+### Non-MCP Agents (REST API)
+
+For agents that don't support the MCP protocol, the HTTP mode exposes a REST tool gateway:
+
+- **Discover tools:** `GET http://127.0.0.1:3000/tools` — returns all available tools with descriptions and input schemas.
+- **Call a tool:** `POST http://127.0.0.1:3000/tools/{tool-name}` — send parameters as JSON body, get structured results back.
+
+All endpoints require the `x-mcp-auth` header with the access key from `~/.omnivox/accessKey.txt`.
+
+**Examples:**
+
+```bash
+# List all tools
+curl http://127.0.0.1:3000/tools -H "x-mcp-auth: ACCESS_KEY"
+
+# Call a tool (no params)
+curl -X POST http://127.0.0.1:3000/tools/get-overview \
+  -H "x-mcp-auth: ACCESS_KEY" -H "Content-Type: application/json" -d '{}'
+
+# Call a tool (with params)
+curl -X POST http://127.0.0.1:3000/tools/get-courses-summary \
+  -H "x-mcp-auth: ACCESS_KEY" -H "Content-Type: application/json" \
+  -d '{"term_id": "H25"}'
+```
+
+Use `GET /tools` to discover all available tools and their input schemas, then construct your requests accordingly.
+
+---
+
+## MCP Tools Reference
 
 All `term_id` parameters are optional and default to the current academic term.
 
@@ -87,22 +121,6 @@ MIO is Omnivox's internal messaging system (like email, but between students and
 
 ---
 
-## Quickstart
-
-```bash
-git clone https://github.com/Beat-YT/omnivox-mcp.git
-cd omnivox-mcp
-npm install
-cd omnivox-connection && npm install && npm start
-# User logs in through the Electron window → wait for success dialog → close
-cd .. && npm start
-```
-
-**Full setup guide:** https://github.com/Beat-YT/omnivox-mcp/wiki/Setup
-**Agent setup (step-by-step):** See `AGENT_SETUP.md` in the repository root.
-
----
-
 ## Key Identifiers
 
 These IDs are returned by list/summary tools and used as parameters for detail/download tools:
@@ -148,12 +166,25 @@ These IDs are returned by list/summary tools and used as parameters for detail/d
 ### "Send a message to my teacher"
 1. Call `search-people` with the teacher's name to find their ID.
 2. **Always confirm** the recipient, subject, and message body with the user before sending.
-3. Call `send-mio-message` with the person's `id` as `to`, plus `subject` and `message`.
+3. Call `send-mio-message` with the person's `id` as `recipient_id`, plus `subject` and `message`.
 
 ### "Read my messages"
 1. Call `get-mio-folders` to see folders and unread counts.
 2. Call `get-mio-messages` (defaults to inbox) to read messages.
 3. For more messages, pass the `last_id` from the last message to paginate.
+
+---
+
+## Building Your Skill
+
+If your agent builds its own skill definition rather than using `SKILL.md` directly, run these calls on first setup to populate user context:
+
+1. **College name:** Call `get-college-list` — remember the user's college name for future reference (e.g. "Cegep de l'Outaouais", "Dawson College").
+2. **Current term:** Call `get-terms` — store the current `term_id` and its human-readable name so you don't need to look it up every time.
+3. **Courses:** Call `get-courses-summary` — store the user's course names and `course_id` values so you can refer to them by name.
+4. **Tool discovery:** Call `GET /tools` (REST) or use the MCP `tools/list` method to get all available tools with their input schemas.
+
+Cache this information in your skill/memory so subsequent conversations start with context about who the user is and what courses they're taking.
 
 ---
 
