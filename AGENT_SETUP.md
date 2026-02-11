@@ -100,6 +100,16 @@ No access key needed.
 
 The access key is stored at `~/.omnivox/accessKey.txt`. **Do not show it to the user** — if they need it, tell them to check that file directly.
 
+### 6. Build user context
+
+Once connected, run these calls and save the results to your memory/persistence so you have context in future conversations:
+
+1. **College name:** Call `get-college-list` — remember the user's college name (e.g. "Cegep de l'Outaouais", "Dawson College").
+2. **Current term:** Call `get-terms` — store the current `term_id` and its human-readable name.
+3. **Courses:** Call `get-courses-summary` — store the user's course names and `course_id` values so you can refer to them by name.
+
+This only needs to be done once (or when a new term starts). Having this context saved means you don't need to look it up every conversation.
+
 ## Data Directory
 
 All runtime data lives in `~/.omnivox/` by default:

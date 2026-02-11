@@ -43,7 +43,7 @@ curl -X POST http://127.0.0.1:3000/tools/get-overview \
 # Call a tool (with params)
 curl -X POST http://127.0.0.1:3000/tools/get-courses-summary \
   -H "x-mcp-auth: ACCESS_KEY" -H "Content-Type: application/json" \
-  -d '{"term_id": "H25"}'
+  -d '{"term_id": "20251"}'
 ```
 
 Use `GET /tools` to discover all available tools and their input schemas, then construct your requests accordingly.
@@ -172,19 +172,6 @@ These IDs are returned by list/summary tools and used as parameters for detail/d
 1. Call `get-mio-folders` to see folders and unread counts.
 2. Call `get-mio-messages` (defaults to inbox) to read messages.
 3. For more messages, pass the `last_id` from the last message to paginate.
-
----
-
-## Building Your Skill
-
-If your agent builds its own skill definition rather than using `SKILL.md` directly, run these calls on first setup to populate user context:
-
-1. **College name:** Call `get-college-list` — remember the user's college name for future reference (e.g. "Cegep de l'Outaouais", "Dawson College").
-2. **Current term:** Call `get-terms` — store the current `term_id` and its human-readable name so you don't need to look it up every time.
-3. **Courses:** Call `get-courses-summary` — store the user's course names and `course_id` values so you can refer to them by name.
-4. **Tool discovery:** Call `GET /tools` (REST) or use the MCP `tools/list` method to get all available tools with their input schemas.
-
-Cache this information in your skill/memory so subsequent conversations start with context about who the user is and what courses they're taking.
 
 ---
 
