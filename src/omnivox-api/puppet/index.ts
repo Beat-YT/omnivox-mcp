@@ -29,7 +29,6 @@ export async function InitializePuppet() {
             try {
                 const pid = Number(fs.readFileSync(pidFile, 'utf-8').trim());
                 process.kill(pid);
-                console.warn(`Killed orphaned Chrome process (PID ${pid})`);
             } catch { }
             fs.unlinkSync(pidFile);
         }
@@ -51,7 +50,6 @@ export async function InitializePuppet() {
         // Import Electron cookies only on first run to bootstrap the session.
         // After that, Chrome's own storage keeps cookies alive across restarts.
         if (isFirstRun) {
-            console.warn('First run: importing Electron cookies into browser profile');
             const electronCookies = getElectronCookies();
             await browser.setCookie(...electronCookies);
         }
@@ -85,11 +83,9 @@ export async function waitForReady(): Promise<void> {
 async function recoverPage(): Promise<void> {
     if (!page) throw new Error('Puppeteer page not initialized');
 
-    console.warn('Recovering detached page: re-navigating to DefaultPage...');
     const config = getConfig();
     await page.goto(config.DefaultPage);
     await page.waitForFunction(() => (window as any).Skytech !== undefined, { timeout: 60000 });
-    console.warn('Page recovered successfully.');
 }
 
 function isDetachedFrameError(err: unknown): boolean {
@@ -97,8 +93,6 @@ function isDetachedFrameError(err: unknown): boolean {
 }
 
 export async function makeSkytechRequest<T = any>(url: string, data: any = {}): Promise<T> {
-    console.warn(`Making Skytech request to ${url} with data:`, data);
-
     await waitForReady();
 
     if (!page) throw new Error('Puppeteer page not initialized');
@@ -167,7 +161,6 @@ export async function loadPageInFrame(url: string): Promise<FrameHandle> {
         try {
             await elementHandle.evaluate((el) => el.remove());
         } catch (e) {
-            console.warn('Failed to remove iframe element:', e);
         }
         elementHandle.dispose();
     };

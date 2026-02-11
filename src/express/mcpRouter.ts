@@ -33,10 +33,6 @@ mcpRouter.all('/mcp', async (req, res) => {
             console.error('MCP Transport Error:', error);
         }
 
-        statelessTransport.onmessage = (message) => {
-            console.warn('MCP Transport Message:', message);
-        }
-
         await mcpServer.connect(statelessTransport);
     }
 

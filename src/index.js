@@ -3,8 +3,6 @@ import InitializeMcpTools from './mcp/tools.js';
 import { InitializePuppet } from './omnivox-api/puppet/index.js';
 import { dataDir } from './common/dataDir.js';
 
-console.warn(`Data directory: ${dataDir}`);
-
 const useHttp = process.argv.includes('--http');
 
 const { setHttpMode } = await import('./common/transportMode.js');
@@ -21,5 +19,4 @@ if (useHttp) {
     const { mcpServer } = await import('./mcp/server.js');
     const transport = new StdioServerTransport();
     await mcpServer.connect(transport);
-    console.warn('MCP server running on stdio transport');
 }

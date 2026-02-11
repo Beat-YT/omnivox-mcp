@@ -6,7 +6,6 @@ const router = express.Router();
 
 router.get('/calendar', async (req, res) => {
     const page = parseInt(req.query.page as string) || 0;
-    console.warn(`Fetching calendar for page: ${page}`);
     const model = await GetCalendrierModel(0);
     res.json(transformCalendarModel(model));
 });
