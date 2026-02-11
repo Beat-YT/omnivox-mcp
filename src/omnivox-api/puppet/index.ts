@@ -77,19 +77,29 @@ export async function InitializePuppet() {
 
 export async function waitForReady(): Promise<void> {
     if (!readyPromise) throw new Error('Puppeteer not initialized. Call InitializePuppet() first.');
-    return readyPromise;
+    await readyPromise;
 }
 
 async function recoverPage(): Promise<void> {
-    if (!page) throw new Error('Puppeteer page not initialized');
+    page = null;
+    readyPromise = null;
 
-    const config = getConfig();
-    await page.goto(config.DefaultPage);
-    await page.waitForFunction(() => (window as any).Skytech !== undefined, { timeout: 60000 });
+    return InitializePuppet();
 }
 
 function isDetachedFrameError(err: unknown): boolean {
     return err instanceof Error && err.message.includes('detached Frame');
+}
+
+function makeProxyRequest(url: string, data: any) {
+    return page.evaluate((url: string, data: any) => {
+        return new Promise<any>((resolve, reject) => {
+            (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
+                (result: any) => resolve(result),
+                (error: any) => reject(error)
+            );
+        });
+    }, url, data);
 }
 
 export async function makeSkytechRequest<T = any>(url: string, data: any = {}): Promise<T> {
@@ -98,27 +108,13 @@ export async function makeSkytechRequest<T = any>(url: string, data: any = {}): 
     if (!page) throw new Error('Puppeteer page not initialized');
 
     try {
-        return await page.evaluate((url: string, data: any) => {
-            return new Promise<any>((resolve, reject) => {
-                (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
-                    (result: any) => resolve(result),
-                    (error: any) => reject(error)
-                );
-            });
-        }, url, data);
+        return await makeProxyRequest(url, data);
     } catch (err) {
         if (!isDetachedFrameError(err)) throw err;
 
         await recoverPage();
-
-        return page.evaluate((url: string, data: any) => {
-            return new Promise<any>((resolve, reject) => {
-                (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
-                    (result: any) => resolve(result),
-                    (error: any) => reject(error)
-                );
-            });
-        }, url, data);
+        
+        return await makeProxyRequest(url, data);
     }
 }
 
