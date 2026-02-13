@@ -92,24 +92,7 @@ Never start the server manually in the background — always use pm2. If the ser
 
 ### 5. Connect
 
-**stdio mode:** Configure the MCP client to launch as a subprocess.
-
-OpenClaw — add to `~/.openclaw/openclaw.json`:
-
-```json
-{
-  "mcpServers": {
-    "omnivox": {
-      "command": "npx",
-      "args": ["tsx", "src/index"],
-      "cwd": "/path/to/omnivox-mcp",
-      "status": "active"
-    }
-  }
-}
-```
-
-No access key needed.
+**stdio mode:** Configure your MCP client to launch the server as a subprocess. Refer to your client's documentation for config format. No access key needed.
 
 **HTTP mode (MCP):** MCP endpoint: `http://localhost:3000/mcp?key=ACCESS_KEY`
 
