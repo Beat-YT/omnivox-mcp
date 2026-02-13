@@ -73,6 +73,23 @@ Express server on port 3000 (override with `PORT`). Auto-generates an access key
 
 You'll see `Server is running on port 3000` on stderr when ready.
 
+**Recommended: use pm2 for long-running HTTP servers:**
+
+```bash
+pm2 start npm --name omnivox-mcp -- run start:http
+```
+
+This keeps the server running across restarts and gives you easy management:
+
+```bash
+pm2 stop omnivox-mcp      # stop
+pm2 restart omnivox-mcp   # restart
+pm2 logs omnivox-mcp      # view logs
+pm2 show omnivox-mcp      # status + paths
+```
+
+Never start the server manually in the background — always use pm2. If the server seems unresponsive, check `lsof -i :3000` for rogue processes before restarting.
+
 ### 5. Connect
 
 **stdio mode:** Configure the MCP client to launch as a subprocess.
@@ -96,9 +113,17 @@ No access key needed.
 
 **HTTP mode (MCP):** MCP endpoint: `http://localhost:3000/mcp?key=ACCESS_KEY`
 
-**HTTP mode (REST API — non-MCP agents):** Discover tools at `GET http://localhost:3000/tools`, call them at `POST http://localhost:3000/tools/{tool-name}`. Requires `x-mcp-auth` header with the access key. See `SKILL.md` for details and examples.
+**HTTP mode (REST API — non-MCP agents):** Discover tools at `GET http://localhost:3000/tools`, call them at `POST http://localhost:3000/tools/{tool-name}`. All requests require the `x-mcp-auth` header (not `Authorization`, not a query param) with the access key.
 
-The access key is stored at `~/.omnivox/accessKey.txt`. **Do not show it to the user** — if they need it, tell them to check that file directly.
+```bash
+# Example — use shell substitution to keep the key out of your context
+curl -s -X POST http://localhost:3000/tools/get-courses-summary \
+  -H "x-mcp-auth: $(cat ~/.omnivox/accessKey.txt)" -d '{}'
+```
+
+**Important:** REST responses are human-readable text, not JSON. The only JSON endpoint is `GET /tools`. See `SKILL.md` for the full tool reference and gotchas.
+
+The access key is stored at `~/.omnivox/accessKey.txt`. **Do not store it in your conversation context** — always use `$(cat ~/.omnivox/accessKey.txt)` shell substitution. If the user needs the key, tell them to check that file directly.
 
 ### 6. Build user context
 
@@ -107,6 +132,7 @@ Once connected, run these calls and save the results to your memory/persistence 
 1. **College name:** Call `get-college-list` — remember the user's college name (e.g. "Cegep de l'Outaouais", "Dawson College").
 2. **Current term:** Call `get-terms` — store the current `term_id` and its human-readable name.
 3. **Courses:** Call `get-courses-summary` — store the user's course names and `course_id` values so you can refer to them by name.
+4. **Read course documents:** Call `get-course-documents` for each course, then download and read key documents (plans de cours, notes, lab handouts). Don't just count them — understand what the user is learning so you can actually help. **Note:** `get-document-link` marks documents as read on Omnivox as a side effect. Track what you've read in your memory.
 
 This only needs to be done once (or when a new term starts). Having this context saved means you don't need to look it up every conversation.
 
@@ -120,6 +146,8 @@ If 30 minutes since last Omnivox check:
 1. Read HEARTBEAT.md from the omnivox-mcp repository and follow it
 2. Update lastOmnivoxCheck timestamp in memory
 ```
+
+**Polling tip:** Use `get-courses-summary` as your primary "what's new" check — it has delta tracking and shows per-course unread counts. Don't rely on `get-overview` for polling; its counts only update when items are read through the Omnivox web app, not through this API. See the "Delta Tracking" section in `SKILL.md` for the full strategy.
 
 ## Data Directory
 
