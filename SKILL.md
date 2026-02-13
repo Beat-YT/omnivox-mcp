@@ -84,14 +84,14 @@ All `term_id` parameters are optional and default to the current academic term.
 
 | Tool | Required Params | Description |
 |---|---|---|
-| `get-overview` | — | **Start here.** Shows all new/unread items across every service. Cheap call — use it as a gate before drilling into specifics. |
+| `get-overview` | — | Shows unread counts from Omnivox's notification system. **Note:** these counts only change when items are read through Omnivox itself — if your agent reads MIO or docs via this API, the counts won't update. Use `get-courses-summary` instead for reliable "what's new" checks. |
 | `get-terms` | — | List available terms with human-readable names and the current default. |
 
 ### Courses & Grades
 
 | Tool | Required Params | Description |
 |---|---|---|
-| `get-courses-summary` | — | List all courses for a term. Returns `course_id` values needed by other tools. Also shows unread doc/announcement/assignment counts per course. |
+| `get-courses-summary` | — | **Best first call.** Lists all courses with unread doc/announcement/assignment counts per course. Returns `course_id` values needed by other tools. With delta tracking, it tells you exactly what changed since your last call. |
 | `get-course-info` | `course_id` | Details on one course — teacher names, grade summary. |
 | `get-grades-summary` | — | Grade overview across all courses — current marks, class averages, remaining weight. |
 | `get-course-evals` | `course_id` | Full eval breakdown — individual marks, weights, class stats, grade evolution. |
@@ -153,19 +153,19 @@ All `term_id` parameters are optional and default to the current academic term.
 
 Many tools support delta tracking — if nothing changed since your last call, the response starts with `[No changes since last call]`. This is extremely useful for efficient polling:
 
-1. Call `get-overview` first — it's cheap and shows unread counts.
-2. Only drill into specific tools if the counts indicate something new.
-3. Tools like `get-courses-summary`, `get-grades-summary`, and `get-mio-messages` will tell you when nothing changed, saving you from re-processing identical data.
+1. Call `get-courses-summary` first — it shows per-course unread counts and delta tracking tells you exactly what changed.
+2. Only drill into specific tools (docs, assignments, evals) for courses that show new items.
+3. Tools like `get-grades-summary`, `get-mio-messages`, and others also support delta tracking, telling you when nothing changed.
 
-**Polling strategy:** Don't hammer every endpoint on every check. Use `get-overview` as a gate, then only call the specific tools for services that show new items.
+**Polling strategy:** Don't hammer every endpoint on every check. Use `get-courses-summary` as a gate, then only call specific tools for courses with changes. Avoid relying on `get-overview` for polling — its counts only update when items are read through the Omnivox web app, not through this API.
 
 ---
 
 ## Common Workflows
 
 ### "What's new?"
-1. `get-overview` → see unread counts across all services.
-2. Drill into whatever has updates.
+1. `get-courses-summary` → see unread counts per course, with delta tracking showing what changed since last check.
+2. Drill into whatever has updates (docs, announcements, assignments).
 
 ### "What are my grades?"
 1. `get-grades-summary` → all courses at a glance.
