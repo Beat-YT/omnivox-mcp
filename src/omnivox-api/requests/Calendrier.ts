@@ -1,11 +1,11 @@
 import { makeSkytechRequest } from "../puppet/index";
 import { CalendrierModel } from "@typings/Calendrier/CalendrierModel";
 
-export function GetCalendrierModel(page: number = 0, testCours = false) {
+export function GetCalendrierModel(page: number = 0) {
     return makeSkytechRequest<CalendrierModel.ResponseModel>(
         '/Mobl/Calendrier/GetCalendrierModel',
         {
-            "decalagePagination": 0,
+            "decalagePagination": page,
             "typeCalendrier": "scolaire",
             "anSession": "",
             "coursGroupe": "",
@@ -19,7 +19,7 @@ export function GetCalendrierModel(page: number = 0, testCours = false) {
             "filtresDisabled[3].Key": "Communaute",
             "filtresDisabled[3].Value": true,
             "filtresDisabled[4].Key": "Cours",
-            "filtresDisabled[4].Value": testCours,
+            "filtresDisabled[4].Value": false,
             "filtresDisabled[5].Key": "Examen",
             "filtresDisabled[5].Value": true,
             "filtresDisabled[6].Key": "RendezVous",
