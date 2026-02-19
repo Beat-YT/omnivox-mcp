@@ -1,6 +1,6 @@
 ---
 name: omnivox-mcp
-description: Access Quebec college student portals (Omnivox/Lea) — courses, grades, schedule, messaging, documents, and more.
+description: Access Quebec college student data (Omnivox/Lea) — courses, grades, daily/weekly schedule, school calendar, assignments, updates, MIO messaging, documents, and more.
 metadata: {"openclaw":{"emoji":"🎓","requires":{"bins":["node","npm","git"]},"install":[{"id":"git","kind":"download","url":"https://github.com/Beat-YT/omnivox-mcp.git","extract":false,"label":"Clone from GitHub"}]}}
 ---
 
