@@ -7,7 +7,7 @@ It runs a persistent Puppeteer browser logged into Omnivox, executing requests t
 ## Features
 
 - **30 MCP tools** — courses, grades, schedule, calendar, messaging (MIO), documents, assignments, college news
-- **Two transport modes** — stdio (default, for MCP clients) or HTTP (Express server with MCP-over-HTTP + REST tool gateway)
+- **Two transport modes** — HTTP (default, Express server with MCP-over-HTTP + REST tool gateway) or stdio (for MCP clients)
 - **REST tool gateway** — all MCP tools exposed as plain HTTP endpoints for non-MCP agents
 - **File downloads** — direct binary or temporary browser-friendly links (15 min TTL)
 - **Internal messaging** — read, search, send, flag, move, and delete MIO messages
@@ -28,13 +28,13 @@ npm install && npm start
 
 # 3. Start the server
 cd ..
-npm start          # stdio mode (default) — for MCP clients
-npm run start:http # HTTP mode — Express server on port 3000
+npm start              # HTTP mode (default) — Express server on port 3000
+npm run start:stdio    # stdio mode — for MCP clients
 ```
 
-**stdio mode** (default): The MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key needed.
+**HTTP mode** (default): Starts an Express server with MCP-over-HTTP at `/mcp?key=...` and a REST tool gateway. Access key is auto-generated at `~/.omnivox/accessKey.txt`.
 
-**HTTP mode**: Starts an Express server with MCP-over-HTTP at `/mcp?key=...` and a REST tool gateway. Access key is auto-generated at `~/.omnivox/accessKey.txt`.
+**stdio mode**: The MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key needed.
 
 Each instance serves **one Omnivox account**. The server maintains a single browser session tied to the account you logged in with.
 
@@ -65,7 +65,7 @@ Set these as environment variables or in a `.env` file at the project root:
 
 ### MCP (for AI assistants)
 
-**stdio mode** (recommended): Add the server to your MCP client config — it launches the server as a subprocess. See `AGENT_SETUP.md` for connection config.
+**stdio mode**: Add the server to your MCP client config — it launches the server as a subprocess. Use `npm run start:stdio`. See `AGENT_SETUP.md` for connection config.
 
 **HTTP mode**: Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport.
 

@@ -8,16 +8,16 @@ Omnivox-MCP is an MCP (Model Context Protocol) server that exposes a Quebec coll
 
 ## Commands
 
-- **Start server (stdio):** `npm start` — default mode, communicates over stdin/stdout for MCP clients like Claude Desktop
-- **Start server (HTTP):** `npm run start:http` — Express server on port 3000 (or `PORT` env var) with REST API and MCP-over-HTTP
+- **Start server (HTTP):** `npm start` — default mode, Express server on port 3000 (or `PORT` env var) with REST API and MCP-over-HTTP
+- **Start server (stdio):** `npm run start:stdio` — communicates over stdin/stdout for MCP clients like Claude Desktop
 - **No test suite or build step configured.** The project runs TypeScript directly via `tsx`.
 
 ## Transport Modes
 
 The server supports two transport modes, selected at startup:
 
-- **stdio (default):** `npm start` — the MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key, no REST API. All logs go to stderr to keep stdout clean for the MCP protocol.
-- **HTTP:** `npm run start:http` — starts an Express server with the Streamable HTTP MCP transport at `/mcp?key=...`, REST tool gateway, and access key authentication.
+- **HTTP (default):** `npm start` — starts an Express server with the Streamable HTTP MCP transport at `/mcp?key=...`, REST tool gateway, and access key authentication.
+- **stdio:** `npm run start:stdio` — the MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key, no REST API. All logs go to stderr to keep stdout clean for the MCP protocol.
 
 ## Architecture
 

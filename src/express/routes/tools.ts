@@ -41,8 +41,6 @@ router.post('/tools/:toolName', express.json({ type: '*/*' }), async (req, res) 
     }
 
     const args = req.body || {};
-    console.log(args);
-
     if (tool.inputSchema) {
         const parsed = await safeParseAsync(tool.inputSchema, args) as { success: boolean; error?: any };
         if (!parsed.success) {
@@ -68,7 +66,7 @@ router.post('/tools/:toolName', express.json({ type: '*/*' }), async (req, res) 
         const text = (result.content || [])
             .filter((c: any) => c.type === 'text')
             .map((c: any) => c.text)
-            .join('\n');
+            .join('\n\n');
 
         res.type('text/plain').send(text);
     } catch (err: any) {

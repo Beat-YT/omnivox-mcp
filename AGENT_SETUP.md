@@ -6,8 +6,8 @@ The server supports two modes:
 
 | Mode | Command | Use case |
 |---|---|---|
-| **Local (stdio)** | `npm start` | MCP client on the same machine launches the server as a child process. Default. |
-| **Public HTTP server** | `npm run start:http` | Remote clients connect over the network. Exposes REST API + MCP-over-HTTP. |
+| **HTTP server** | `npm start` | Express server with REST API + MCP-over-HTTP. Default. |
+| **Local (stdio)** | `npm run start:stdio` | MCP client on the same machine launches the server as a child process. |
 
 ## Prerequisites
 
@@ -53,31 +53,31 @@ If the MCP server runs on a different machine, the user needs to copy `cookies.j
 cd ..
 ```
 
-**Option A — Local stdio mode (default):**
+**Option A — HTTP server (default):**
 
 ```bash
 npm start
-```
-
-Communicates over stdin/stdout. All logs go to stderr. An MCP client should launch this as a subprocess — no HTTP server, no access key, no REST API.
-
-You'll see `MCP server running on stdio transport` on stderr when ready.
-
-**Option B — Public HTTP server:**
-
-```bash
-npm run start:http
 ```
 
 Express server on port 3000 (override with `PORT`). Auto-generates an access key at `~/.omnivox/accessKey.txt`. All logs go to stderr.
 
 You'll see `Server is running on port 3000` on stderr when ready.
 
-**Recommended: use pm2 for long-running HTTP servers:**
+**Recommended: use pm2 for long-running servers:**
 
 ```bash
-pm2 start npm --name omnivox-mcp -- run start:http
+pm2 start npm --name omnivox-mcp -- start
 ```
+
+**Option B — Local stdio mode:**
+
+```bash
+npm run start:stdio
+```
+
+Communicates over stdin/stdout. All logs go to stderr. An MCP client should launch this as a subprocess — no HTTP server, no access key, no REST API.
+
+You'll see `MCP server running on stdio transport` on stderr when ready.
 
 This keeps the server running across restarts and gives you easy management:
 
@@ -92,9 +92,9 @@ Never start the server manually in the background — always use pm2. If the ser
 
 ### 5. Connect
 
-**stdio mode:** Configure your MCP client to launch the server as a subprocess. Refer to your client's documentation for config format. No access key needed.
-
 **HTTP mode (MCP):** MCP endpoint: `http://localhost:3000/mcp?key=ACCESS_KEY`
+
+**stdio mode:** Configure your MCP client to launch the server with `npm run start:stdio` as a subprocess. Refer to your client's documentation for config format. No access key needed.
 
 **HTTP mode (REST API — non-MCP agents):** Discover tools at `GET http://localhost:3000/tools`, call them at `POST http://localhost:3000/tools/{tool-name}`. All requests require the `x-mcp-auth` header (not `Authorization`, not a query param) with the access key.
 
@@ -130,7 +130,7 @@ If 30 minutes since last Omnivox check:
 2. Update lastOmnivoxCheck timestamp in memory
 ```
 
-**Polling tip:** Use `get-courses-summary` as your primary "what's new" check — it has delta tracking and shows per-course unread counts. Don't rely on `get-overview` for polling; its counts only update when items are read through the Omnivox web app, not through this API. See the "Delta Tracking" section in `SKILL.md` for the full strategy.
+**Polling tip:** Use `get-overview` as your primary "what's new" check — it has delta tracking for per-course unread counts and new MIO messages, plus upcoming evals and featured news. See the "Delta Tracking" section in `SKILL.md` for the full strategy.
 
 ## Data Directory
 

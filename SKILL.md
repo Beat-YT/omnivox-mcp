@@ -1,6 +1,6 @@
 ---
 name: omnivox-mcp
-description: Access Quebec college student data (Omnivox/Lea) — courses, grades, daily/weekly schedule, school calendar, assignments, updates, MIO messaging, documents, and more.
+description: Access Quebec college student data (Omnivox/Lea/Mio) — courses, grades, daily/weekly schedule, school calendar, assignments, updates, MIO messaging, documents, and more.
 metadata: {"openclaw":{"emoji":"🎓","requires":{"bins":["node","npm","git"]},"install":[{"id":"git","kind":"download","url":"https://github.com/Beat-YT/omnivox-mcp.git","extract":false,"label":"Clone from GitHub"}]}}
 ---
 
@@ -61,7 +61,7 @@ curl -s -X POST http://127.0.0.1:3000/tools/get-courses-summary \
 - Responses are **human-readable text**, not JSON (in most cases). Don't try to JSON-parse them.
 - `GET /tools` returns JSON with all tool names, descriptions, and input schemas. Use it to discover what's available.
 
-### Server Management
+### Server Management (recommended)
 
 Use **pm2** to manage the server process:
 
@@ -84,14 +84,14 @@ All `term_id` parameters are optional and default to the current academic term.
 
 | Tool | Required Params | Description |
 |---|---|---|
-| `get-overview` | — | Shows unread counts from Omnivox's notification system. **Note:** these counts only change when items are read through Omnivox itself — if your agent reads MIO or docs via this API, the counts won't update. Use `get-courses-summary` instead for reliable "what's new" checks. |
+| `get-overview` | — | **Best first call.** Per-course new items (docs, announcements, assignments, grades) with delta tracking, new MIO messages (delta on inbox total, not unread), next 3 upcoming evals, featured/urgent college news, plus events and forms. Combines five APIs in parallel for a single comprehensive snapshot. |
 | `get-terms` | — | List available terms with human-readable names and the current default. |
 
 ### Courses & Grades
 
 | Tool | Required Params | Description |
 |---|---|---|
-| `get-courses-summary` | — | **Best first call.** Lists all courses with unread doc/announcement/assignment counts per course. Returns `course_id` values needed by other tools. With delta tracking, it tells you exactly what changed since your last call. |
+| `get-courses-summary` | — | Lists all courses with unread doc/announcement/assignment counts and totals per course. Returns `course_id` values needed by other tools. With delta tracking, it tells you exactly what changed since your last call. |
 | `get-course-info` | `course_id` | Details on one course — teacher names, grade summary. |
 | `get-grades-summary` | — | Grade overview across all courses — current marks, class averages, remaining weight. |
 | `get-course-evals` | `course_id` | Full eval breakdown — individual marks, weights, class stats, grade evolution. |
@@ -153,18 +153,18 @@ All `term_id` parameters are optional and default to the current academic term.
 
 Many tools support delta tracking — if nothing changed since your last call, the response starts with `[No changes since last call]`. This is extremely useful for efficient polling:
 
-1. Call `get-courses-summary` first — it shows per-course unread counts and delta tracking tells you exactly what changed.
+1. Call `get-overview` first — it shows per-course new items, new MIO messages, and other services, all with delta tracking.
 2. Only drill into specific tools (docs, assignments, evals) for courses that show new items.
-3. Tools like `get-grades-summary`, `get-mio-messages`, and others also support delta tracking, telling you when nothing changed.
+3. Tools like `get-courses-summary`, `get-grades-summary`, `get-mio-folders`, and others also support delta tracking independently.
 
-**Polling strategy:** Don't hammer every endpoint on every check. Use `get-courses-summary` as a gate, then only call specific tools for courses with changes. Avoid relying on `get-overview` for polling — its counts only update when items are read through the Omnivox web app, not through this API.
+**Polling strategy:** Don't hammer every endpoint on every check. Use `get-overview` as a gate, then only call specific tools for courses with changes.
 
 ---
 
 ## Common Workflows
 
 ### "What's new?"
-1. `get-courses-summary` → see unread counts per course, with delta tracking showing what changed since last check.
+1. `get-overview` → per-course new items, new MIO messages, events, and forms — all with delta tracking.
 2. Drill into whatever has updates (docs, announcements, assignments).
 
 ### "What are my grades?"
@@ -199,6 +199,8 @@ Many tools support delta tracking — if nothing changed since your last call, t
 
 ## Gotchas & Tips
 
+- **Not all professors upload their syllabus to Lea.** Some only distribute it in class or via MIO. If a course syllabus isn't in `get-course-documents`, it doesn't mean one doesn't exist.
+- **Not all eval dates appear on Lea.** Some professors don't publish exam/quiz dates to the calendar. The eval list from `get-overview` or `get-calendar` may be incomplete — check the course syllabus for the full schedule.
 - **`get-document-link` marks documents as read** on Omnivox as a side effect. If you're just checking what's new, use `get-course-documents` (which only lists them) before deciding to download.
 - **`course_id` is required** on `get-document-link` even though `document_id` seems like it should be enough. Always pass both.
 - **MIO message IDs are UUIDs** (e.g. `C762D65C-1F1B-4317-840E-A3C8DCF459D6`), not simple numbers.
