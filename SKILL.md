@@ -84,7 +84,7 @@ All `term_id` parameters are optional and default to the current academic term.
 
 | Tool | Required Params | Description |
 |---|---|---|
-| `get-overview` | — | **Best first call.** Per-course new items (docs, announcements, assignments, grades) with delta tracking, new MIO messages (delta on inbox total, not unread), next 3 upcoming evals, featured/urgent college news, plus events and forms. Combines five APIs in parallel for a single comprehensive snapshot. |
+| `get-overview` | — | **Best first call.** Dashboard of what's actionable right now: today's schedule, per-course new items (docs, announcements, assignments, grades) with delta tracking, new MIO messages, upcoming evals, notifications, and featured college news. |
 | `get-terms` | — | List available terms with human-readable names and the current default. |
 
 ### Courses & Grades

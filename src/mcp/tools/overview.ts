@@ -12,6 +12,7 @@ import {
     formatServiceUpdates,
     formatCourseNewItems,
     formatMioInbox,
+    formatTodaySchedule,
     formatUpcomingEvals,
     formatFeaturedNews,
     CourseNewCounts,
@@ -22,10 +23,6 @@ import { z } from "zod";
 // Services already covered by GetDefaultModel (per-course) or GetListeFoldersModel (MIO)
 const REDUNDANT_SERVICES = new Set(['cvir_docu', 'cvir_comm', 'cvir_trav', 'cvir_note', 'mio']);
 
-const SERVICE_LABELS: Record<string, string> = {
-    cvir_even: 'New events',
-    FRME: 'Forms to complete',
-};
 
 const input = z.object({
     term_id: z.string().optional(),
@@ -34,7 +31,7 @@ const input = z.object({
 mcpServer.registerTool('get-overview',
     {
         title: 'Get Overview',
-        description: 'Get a summary of all new and unread items across all services: per-course new documents, announcements, assignments, and grades with delta tracking, new MIO messages (delta on inbox total), upcoming evals, featured college news, plus events and college forms. This is the best starting point to see what needs attention.',
+        description: 'Dashboard of what\'s actionable right now: today\'s schedule, per-course new items (documents, announcements, assignments, grades) with delta tracking, new MIO messages, upcoming evals, notifications, and featured college news. Best starting point to see what needs attention.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,
@@ -55,7 +52,7 @@ mcpServer.registerTool('get-overview',
             .filter(u => u.NbNotifications > 0 && !REDUNDANT_SERVICES.has(u.IdService))
             .map(u => ({
                 service_id: u.IdService,
-                label: SERVICE_LABELS[u.IdService] || u.NomRetour || u.IdService,
+                label: u.NomRetour || u.IdService,
                 count: u.NbNotifications,
                 title: u.Nom?.trim() || undefined,
                 description: u.Description?.trim() || undefined,
@@ -73,6 +70,7 @@ mcpServer.registerTool('get-overview',
             total_announcements: c => c.total_announcements ?? 0,
             total_assignments: c => c.total_assignments ?? 0,
             total_evals: c => c.total_evals ?? 0,
+            total_documents: c => c.total_documents ?? 0,
         });
         const courseDeltas = computeDelta(`get-overview:courses:${courseSummary.term_id}`, courseSnapshot);
 
@@ -83,10 +81,11 @@ mcpServer.registerTool('get-overview',
                 const sepIdx = d.key.indexOf(':');
                 const courseId = d.key.substring(0, sepIdx);
                 const metric = d.key.substring(sepIdx + 1);
-                if (!courseNewCounts[courseId]) courseNewCounts[courseId] = { announcements: 0, assignments: 0, grades: 0 };
+                if (!courseNewCounts[courseId]) continue;//courseNewCounts[courseId] = { announcements: 0, assignments: 0, grades: 0, documents: 0 };
                 if (metric === 'total_announcements') courseNewCounts[courseId].announcements = d.diff;
                 if (metric === 'total_assignments') courseNewCounts[courseId].assignments = d.diff;
                 if (metric === 'total_evals') courseNewCounts[courseId].grades = d.diff;
+                if (metric === 'total_documents') courseNewCounts[courseId].documents = d.diff;
             }
         }
 
@@ -107,6 +106,7 @@ mcpServer.registerTool('get-overview',
         const news = transformCollegeNews(newsData);
 
         const sections = [
+            formatTodaySchedule(calPage.events),
             formatServiceUpdates(serviceItems, serviceDt),
             formatCourseNewItems(courseSummary.courses, courseNewCounts),
             formatMioInbox(mioDt),

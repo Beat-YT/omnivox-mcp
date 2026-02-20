@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Omnivox-MCP is an MCP (Model Context Protocol) server that exposes a Quebec college student portal (Omnivox/Lea) through both MCP tools and REST API endpoints. It scrapes and transforms data from Omnivox's mobile API into structured, validated responses.
+Omnivox-MCP is an MCP (Model Context Protocol) server that exposes a Quebec college student portal (Omnivox/Lea) through both MCP tools and REST API endpoints. It scrapes and transforms data from Omnivox's mobile API into structured, validated responses. See `SKILL.md` for tool descriptions and usage documentation.
 
 ## Commands
 

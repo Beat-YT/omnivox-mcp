@@ -13,14 +13,17 @@ export interface ServiceUpdate {
 }
 
 export function formatServiceUpdates(items: ServiceUpdate[], dt: DeltaText): string | null {
-    if (items.length === 0) return null;
+    if (items.length === 0) {
+        if (dt?.header) return `## Notifications: ${dt.header}`;
+        return null;
+    }
 
     const lines = items.map(i => {
         const desc = i.description ? ` — ${i.description}` : '';
         const showTitle = i.title && i.title !== String(i.count);
         const titlePart = showTitle ? `: ${i.title}` : '';
         const delta = dt?.items[i.service_id];
-        return `${i.label} (${i.count})${titlePart}${desc}${delta ? ' ' + delta : ''}`;
+        return `- ${i.label} (${i.count})${titlePart}${desc}${delta ? ' ' + delta : ''}`;
     });
 
     return ['## Notifications:', ...lines].join('\n');
@@ -31,6 +34,7 @@ export type CourseNewCounts = Record<string, {
     announcements: number;
     assignments: number;
     grades: number;
+    documents: number;
 }>;
 
 export function formatCourseNewItems(courses: CourseItem[], newCounts: CourseNewCounts | null): string | null {
@@ -40,7 +44,7 @@ export function formatCourseNewItems(courses: CourseItem[], newCounts: CourseNew
         const parts: string[] = [];
 
         // "unread" = Omnivox native unread count (documents only)
-        if (c.unread_documents) parts.push(`${c.unread_documents} unread docs`);
+       // if (c.unread_documents) parts.push(`${c.unread_documents} unread docs`);
 
         // "new" = delta since last call (only positive)
         const nc = newCounts?.[c.id];
@@ -48,14 +52,18 @@ export function formatCourseNewItems(courses: CourseItem[], newCounts: CourseNew
             if (nc.announcements > 0) parts.push(`+${nc.announcements} new announcements`);
             if (nc.assignments > 0)   parts.push(`+${nc.assignments} new assignments`);
             if (nc.grades > 0)        parts.push(`+${nc.grades} new grades`);
+            if (nc.documents > 0) parts.push(`+${nc.documents} new docs`);
         }
 
         if (parts.length > 0) {
-            entries.push(`* ${c.title} (${c.id}): ${parts.join(', ')}`);
+            entries.push(`- ${c.title} (${c.id}): ${parts.join(', ')}`);
         }
     }
 
-    if (entries.length === 0) return null;
+    if (entries.length === 0) {
+        if (newCounts !== null) return '## Per-course updates: [No changes since last call]';
+        return null;
+    }
 
     return ['## Per-course updates:', ...entries].join('\n');
 }
@@ -63,8 +71,32 @@ export function formatCourseNewItems(courses: CourseItem[], newCounts: CourseNew
 export function formatMioInbox(dt: DeltaText): string | null {
     if (!dt) return null;
     const delta = dt.items['inbox'];
-    if (delta) return `## New MIO messages: ${delta}`;
+    if (delta) return `## MIO messages: ${delta} new messages`;
+    if (dt.header) return `## MIO messages: ${dt.header}`;
     return null;
+}
+
+export function formatTodaySchedule(events: CalendarEvent[]): string | null {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+
+    const today = events.filter(e => {
+        if (e.allDay) return e.start.slice(0, 10) === todayStr;
+        return e.start.slice(0, 10) === todayStr || (e.end && e.end.slice(0, 10) === todayStr);
+    });
+
+    if (today.length === 0) return '## Today\'s calendar: [Nothing on calendar today]';
+
+    const lines = ['## Today\'s calendar:'];
+    for (const e of today) {
+        const fmt = (iso: string) => new Date(iso).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const time = e.allDay ? 'All day' : e.end ? `${fmt(e.start)}–${fmt(e.end)}` : fmt(e.start);
+        const course = e.course?.name ?? e.course?.course_id ?? '';
+        const loc = e.location ? ` — ${e.location}` : '';
+        const tag = e.category === 'eval' ? ' [EVAL]' : e.category === 'assignment' ? ' [DUE]' : '';
+        lines.push(`- ${time} — ${e.title}${tag}${course ? `, ${course}` : ''}${loc}`);
+    }
+    return lines.join('\n');
 }
 
 export function formatUpcomingEvals(events: CalendarEvent[]): string | null {
@@ -72,7 +104,7 @@ export function formatUpcomingEvals(events: CalendarEvent[]): string | null {
         .filter(e => e.category === 'eval' && e.status === 'upcoming')
         .slice(0, 3);
 
-    if (upcoming.length === 0) return null;
+    if (upcoming.length === 0) return '## Upcoming evals: [No upcoming evals on calendar]\nNote: Some professors do not post eval dates on Lea. Check course syllabus for the full schedule.';
 
     const lines = ['## Upcoming evals:'];
     for (const e of upcoming) {
@@ -82,6 +114,7 @@ export function formatUpcomingEvals(events: CalendarEvent[]): string | null {
         const weight = e.weight ? ` (${e.weight / 100}%)` : '';
         lines.push(`- ${date}${time} — ${e.title}${weight}${course ? `, ${course}` : ''}`);
     }
+    
     lines.push('Note: Some professors do not post eval dates on Lea. Check course syllabus for the full schedule.');
     return lines.join('\n');
 }
