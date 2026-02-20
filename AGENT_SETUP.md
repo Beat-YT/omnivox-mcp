@@ -109,9 +109,7 @@ Add Omnivox to your heartbeat so you stay on top of the user's school life:
 
 ```markdown
 ## Omnivox (every 30 minutes)
-If 30 minutes since last Omnivox check:
 1. Read HEARTBEAT.md from the omnivox-mcp repository and follow it
-2. Update lastOmnivoxCheck timestamp in memory
 ```
 
 Use `get-overview` as your primary "what's new" check — it has delta tracking across all sections. Only drill into specific tools for courses that show changes.
