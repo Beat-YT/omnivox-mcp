@@ -99,7 +99,7 @@ All `term_id` parameters are optional and default to the current academic term.
 | Tool | Params | What it does |
 |---|---|---|
 | `get-college-news` | — | College news and announcements. |
-| `get-college-list` | — | Colleges in the Omnivox network. |
+| `get-college-list` | — | Get the user's college name. |
 
 ---
 
