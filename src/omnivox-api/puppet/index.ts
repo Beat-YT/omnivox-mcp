@@ -1,4 +1,4 @@
-import puppeteer, { Browser, ElementHandle, Frame, KnownDevices, Page } from 'puppeteer';
+import puppeteer, { Browser, ElementHandle, Frame, Page } from 'puppeteer';
 import { getConfig, getElectronCookies } from '../config';
 import { setupPageInterceptors } from './interceptors';
 import { setupPageInjection } from './ovxInjection';
@@ -6,6 +6,7 @@ import { buildUserAgent } from './userAgent';
 import * as fs from 'fs';
 import * as path from 'path';
 import { dataDir } from '@common/dataDir';
+import { device } from '@common/constants';
 
 const browserDataDir = path.join(dataDir, 'browser');
 const pidFile = path.join(dataDir, 'chrome.pid');
@@ -13,6 +14,26 @@ const pidFile = path.join(dataDir, 'chrome.pid');
 let browser: Browser | null = null;
 let page: Page | null = null;
 let readyPromise: Promise<void> | null = null;
+
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+function resetIdleTimer() {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(sleep, IDLE_TIMEOUT_MS);
+}
+
+async function sleep() {
+    idleTimer = null;
+    if (browser) {
+        console.warn('[Puppet] Sleeping after idle timeout');
+        try { await browser.close(); } catch { }
+        browser = null;
+        page = null;
+        readyPromise = null;
+        if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile);
+    }
+}
 
 export interface DownloadResult {
     data: Buffer;
@@ -36,6 +57,26 @@ export async function InitializePuppet() {
         browser = await puppeteer.launch({
             headless: true,
             userDataDir: browserDataDir,
+            defaultViewport: null,
+            args: [
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--disable-extensions',
+                '--disable-component-update',
+                '--disable-sync',
+                '--disable-background-networking',
+                '--disable-default-apps',
+                '--disable-translate',
+                '--metrics-recording-only',
+                '--no-first-run',
+                '--no-default-browser-check',
+                '--mute-audio',
+                // Memory limits
+                '--js-flags=--max-old-space-size=256,--max-semi-space-size=2,--optimize-for-size',
+                '--renderer-process-limit=1',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--disable-backgrounding-occluded-windows',
+            ],
         });
 
         // Save Chrome PID for cleanup on next startup
@@ -59,10 +100,11 @@ export async function InitializePuppet() {
 
         page = await browser.newPage();
 
-        await page.emulate(KnownDevices['iPad Pro 11']);
+        await page.setViewport(device.viewport);
         await page.setUserAgent({
             userAgent: userAgent,
-            platform: 'MacIntel',
+            platform: device.platform,
+            userAgentMetadata: device.userAgentMetadata,
         });
 
         await setupPageInterceptors(page);
@@ -70,14 +112,20 @@ export async function InitializePuppet() {
 
         await page.goto(config.DefaultPage);
         await page.waitForFunction(() => (window as any).Skytech !== undefined, { timeout: 60000 });
+
+        resetIdleTimer();
     })();
 
     return readyPromise;
 }
 
 export async function waitForReady(): Promise<void> {
-    if (!readyPromise) throw new Error('Puppeteer not initialized. Call InitializePuppet() first.');
+    if (!readyPromise) {
+        console.warn('[Puppet] Waking up from sleep');
+        await InitializePuppet();
+    }
     await readyPromise;
+    resetIdleTimer();
 }
 
 async function recoverPage(): Promise<void> {

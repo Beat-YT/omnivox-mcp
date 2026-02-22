@@ -4,8 +4,10 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 
-app.commandLine.appendSwitch("disable-features", "OutOfBlinkCors");
+const { omnivoxVer, deviceInfo } = require("../shared/constants.cjs");
+const { staticResponses, nullCallbackCommands, silentCommands } = require("../shared/nativeCommands.cjs");
 
+app.commandLine.appendSwitch("disable-features", "OutOfBlinkCors");
 
 // ~/.omnivox/ for same-machine setups (MCP server reads from here)
 const homeDir = path.join(os.homedir(), ".omnivox");
@@ -14,17 +16,19 @@ const cwdDir = process.cwd();
 // Browser profile cleanup
 const browserDir = path.join(homeDir, "browser");
 
-let idAppareil = crypto.randomBytes(20).toString("hex")
+let idAppareil = crypto.randomBytes(20).toString("hex");
 let codeUserAgent = "";
 
+// In-memory stores for native command emulation
+const kvStore = new Map();
+let themeStore = null;
+
 function getUserAgent() {
-    return `OVX InfoDevice=iOS-26.2_iPad13,1 AppVer=3.11.3 IdAppareil=${idAppareil} Code=${codeUserAgent}`;
+    return `OVX InfoDevice=${deviceInfo} AppVer=${omnivoxVer} IdAppareil=${idAppareil} Code=${codeUserAgent}`;
 }
 
 async function createWindow() {
-    // Delete stale browser profile so the MCP server re-imports fresh cookies
-
-    const ses = session.fromPartition("persist:main")
+    const ses = session.fromPartition("persist:main");
 
     ses.webRequest.onBeforeRequest((details, callback) => {
         const lowerUrl = details.url.toLowerCase();
@@ -33,12 +37,12 @@ async function createWindow() {
             return;
         }
         callback({});
-    })
+    });
 
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
         details.requestHeaders["User-Agent"] = getUserAgent();
-        callback({ requestHeaders: details.requestHeaders })
-    })
+        callback({ requestHeaders: details.requestHeaders });
+    });
 
     const win = new BrowserWindow({
         width: 1000,
@@ -59,7 +63,6 @@ async function createWindow() {
     }
 
     async function dumpCookies() {
-        // Clean up browser profile to ensure MCP server imports fresh cookies on next run
         if (fs.existsSync(browserDir)) {
             fs.rmSync(browserDir, { recursive: true, force: true });
             console.log(`Deleted browser profile at ${browserDir}`);
@@ -74,56 +77,110 @@ async function createWindow() {
         }
     }
 
+    /**
+     * Fires a native callback on the page via IPC → preload → Ovx.ExecuteCallback
+     */
+    function fireCallback(command, data) {
+        win.webContents.send("Ovx-Callback", command + "CallBack", data);
+    }
+
     function handleOvxCommand(command, args) {
-        console.log("[OVX Command]", `Received command '${command}' with args:`, args);
+        console.log("[OVX Command]", command, args);
 
-        if (command === "Storage.SetCodeUserAgent") {
-            console.log("[OVX Command]", `Set codeUserAgent to: ${args.Code}`);
-            codeUserAgent = args.Code || "";
+        // Static responses
+        if (staticResponses[command]) {
+            fireCallback(command, staticResponses[command]);
+            return;
+        }
 
-            const ua = getUserAgent();
-            win.webContents.setUserAgent(ua);
-            ses.setUserAgent(ua);
+        // UI acknowledgments
+        if (nullCallbackCommands.has(command)) {
+            fireCallback(command, null);
+            return;
+        }
 
-            win.webContents.send("Ovx-CodeUserAgentCallback", {
-                UserAgentRequete: ua
-            });
-        } else if (command === "WebUI.SetDefaultPage") {
-            if (!args?.Url) {
-                console.warn("No Url in SetDefaultPage command");
-                return;
+        // Fire-and-forget
+        if (silentCommands.has(command)) return;
+
+        // Commands with custom logic
+        switch (command) {
+            case 'Storage.SetCodeUserAgent': {
+                codeUserAgent = args.Code || "";
+                const ua = getUserAgent();
+                win.webContents.setUserAgent(ua);
+                ses.setUserAgent(ua);
+                fireCallback(command, { UserAgentRequete: ua });
+                break;
             }
 
-            const url = new URL(decodeURIComponent(args.Url));
-            url.hash = "";
-
-            const config = {
-                DefaultPage: url.href,
-                Code: codeUserAgent,
-                IdAppareil: idAppareil
+            case 'Storage.SetInfo': {
+                console.log("[OVX Command]", `Storage.SetInfo: ${args.Key} = ${args.Value}`);
+                kvStore.set(args.Key, args.Value);
+                fireCallback(command, { UserAgentRequete: getUserAgent() });
+                break;
             }
 
-            const content = JSON.stringify(config, null, 2);
-            writeToAll("config.json", content);
-
-            console.log(`Config saved to ${path.join(homeDir, "config.json")}`);
-            if (cwdDir !== homeDir) {
-                console.log(`  Also copied to ${path.join(cwdDir, "config.json")}`);
+            case 'Storage.GetInfo': {
+                const val = kvStore.get(args.Key) || '';
+                console.log("[OVX Command]", `Storage.GetInfo: ${args.Key} → ${val}`);
+                fireCallback(command, { Key: args.Key, Value: val });
+                break;
             }
-            dumpCookies().then(() => {
-                const locations = [`  ${homeDir}`];
-                if (cwdDir !== homeDir) locations.push(`  ${cwdDir}`);
 
-                dialog.showMessageBox(win, {
-                    type: "info",
-                    title: "Authentification complétée",
-                    message: "Session Omnivox capturée avec succès.",
-                    detail: `cookies.json et config.json sauvegardés dans :\n${locations.join("\n")}\n\nVous pouvez fermer cette fenêtre.`,
-                    buttons: ["Fermer"],
+            case 'Theme.SetTheme': {
+                themeStore = { ...args };
+                fireCallback(command, themeStore);
+                break;
+            }
+
+            case 'Theme.GetTheme': {
+                fireCallback(command, themeStore);
+                break;
+            }
+
+            case 'WebUI.SetDefaultPage': {
+                if (!args?.Url) {
+                    console.warn("No Url in SetDefaultPage command");
+                    return;
+                }
+
+                const url = new URL(decodeURIComponent(args.Url));
+                url.hash = "";
+
+                const config = {
+                    DefaultPage: url.href,
+                    Code: codeUserAgent,
+                    IdAppareil: idAppareil
+                };
+
+                writeToAll("config.json", JSON.stringify(config, null, 2));
+                console.log(`Config saved to ${path.join(homeDir, "config.json")}`);
+                if (cwdDir !== homeDir) {
+                    console.log(`  Also copied to ${path.join(cwdDir, "config.json")}`);
+                }
+
+                fireCallback(command, null);
+
+                dumpCookies().then(() => {
+                    const locations = [`  ${homeDir}`];
+                    if (cwdDir !== homeDir) locations.push(`  ${cwdDir}`);
+
+                    dialog.showMessageBox(win, {
+                        type: "info",
+                        title: "Authentification complétée",
+                        message: "Session Omnivox capturée avec succès.",
+                        detail: `cookies.json et config.json sauvegardés dans :\n${locations.join("\n")}\n\nVous pouvez fermer cette fenêtre.`,
+                        buttons: ["Fermer"],
+                    });
+                }).catch(err => {
+                    console.error("Error dumping cookies:", err);
                 });
-            }).catch(err => {
-                console.error("Error dumping cookies:", err);
-            });
+                break;
+            }
+
+            default:
+                console.warn("[OVX Command]", `Unhandled: ${command}`);
+                break;
         }
     }
 
@@ -131,14 +188,13 @@ async function createWindow() {
         if (typeof args === 'string') {
             args = JSON.parse(args);
         }
-
         handleOvxCommand(command, args);
     });
 
     ipcMain.on('DumpCookies', () => {
         dumpCookies().catch(err => {
             console.error("Error dumping cookies:", err);
-        })
+        });
     });
 
     win.webContents.setUserAgent(getUserAgent());
@@ -153,7 +209,7 @@ async function createWindow() {
         idAppareil = config.IdAppareil || idAppareil;
         win.loadURL(config.DefaultPage);
     } else {
-        win.loadFile("content/index.html")
+        win.loadFile("content/index.html");
     }
 }
 
