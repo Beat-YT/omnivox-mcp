@@ -9,11 +9,7 @@ const { staticResponses, nullCallbackCommands, silentCommands } = require("../sh
 
 app.commandLine.appendSwitch("disable-features", "OutOfBlinkCors");
 
-// ~/.omnivox/ for same-machine setups (MCP server reads from here)
 const homeDir = path.join(os.homedir(), ".omnivox");
-// cwd for cross-machine setups (human can easily find and transfer)
-const cwdDir = process.cwd();
-// Browser profile cleanup
 const browserDir = path.join(homeDir, "browser");
 
 let idAppareil = crypto.randomBytes(20).toString("hex");
@@ -54,12 +50,9 @@ async function createWindow() {
         }
     });
 
-    function writeToAll(filename, content) {
-        const targets = [homeDir, cwdDir];
-        for (const dir of targets) {
-            fs.mkdirSync(dir, { recursive: true });
-            fs.writeFileSync(path.join(dir, filename), content, "utf8");
-        }
+    function writeFile(filename, content) {
+        fs.mkdirSync(homeDir, { recursive: true });
+        fs.writeFileSync(path.join(homeDir, filename), content, "utf8");
     }
 
     async function dumpCookies() {
@@ -70,11 +63,8 @@ async function createWindow() {
 
         const cookies = await ses.cookies.get({});
         const content = JSON.stringify(cookies, null, 2);
-        writeToAll("cookies.json", content);
+        writeFile("cookies.json", content);
         console.log(`Cookies saved to ${path.join(homeDir, "cookies.json")}`);
-        if (cwdDir !== homeDir) {
-            console.log(`  Also copied to ${path.join(cwdDir, "cookies.json")}`);
-        }
     }
 
     /**
@@ -153,25 +143,19 @@ async function createWindow() {
                     IdAppareil: idAppareil
                 };
 
-                writeToAll("config.json", JSON.stringify(config, null, 2));
+                writeFile("config.json", JSON.stringify(config, null, 2));
                 console.log(`Config saved to ${path.join(homeDir, "config.json")}`);
-                if (cwdDir !== homeDir) {
-                    console.log(`  Also copied to ${path.join(cwdDir, "config.json")}`);
-                }
 
                 fireCallback(command, null);
 
                 dumpCookies().then(() => {
-                    const locations = [`  ${homeDir}`];
-                    if (cwdDir !== homeDir) locations.push(`  ${cwdDir}`);
-
                     dialog.showMessageBox(win, {
                         type: "info",
                         title: "Authentification complétée",
                         message: "Session Omnivox capturée avec succès.",
-                        detail: `cookies.json et config.json sauvegardés dans :\n${locations.join("\n")}\n\nVous pouvez fermer cette fenêtre.`,
+                        detail: `cookies.json et config.json sauvegardés dans :\n  ${homeDir}`,
                         buttons: ["Fermer"],
-                    });
+                    }).then(() => app.quit());
                 }).catch(err => {
                     console.error("Error dumping cookies:", err);
                 });
@@ -200,9 +184,8 @@ async function createWindow() {
     win.webContents.setUserAgent(getUserAgent());
     ses.setUserAgent(getUserAgent());
 
-    const configPath = [path.join(homeDir, "config.json"), path.join(cwdDir, "config.json")]
-        .find(p => fs.existsSync(p));
-    if (configPath) {
+    const configPath = path.join(homeDir, "config.json");
+    if (fs.existsSync(configPath)) {
         const configData = fs.readFileSync(configPath, "utf8");
         const config = JSON.parse(configData);
         codeUserAgent = config.Code || "";
