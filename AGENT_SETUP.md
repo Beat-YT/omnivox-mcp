@@ -36,11 +36,11 @@ npm start
 
 This opens a browser window with the official Omnivox login page. **Tell the user to log in with their Omnivox credentials.** You cannot do this step — it requires their password on Omnivox's site.
 
-**Login is complete when a success dialog appears** confirming that `cookies.json` and `config.json` have been saved. The user can close the window after that.
+**Note:** Omnivox will show the login as coming from a **Samsung Galaxy Tab S8** — this is expected. The server emulates an Android tablet to access Omnivox's mobile API.
 
-The files are saved to:
-- `~/.omnivox/` — the MCP server reads from here automatically
-- The current working directory — for easy transfer if the server runs elsewhere
+**Login is complete when a success dialog appears** confirming that `cookies.json` and `config.json` have been saved. The app closes automatically after that.
+
+The files are saved to `~/.omnivox/` — the MCP server reads from here automatically.
 
 ### 5. Start the server
 
@@ -126,7 +126,7 @@ cd omnivox-connection && npm start
 cd .. && npm start
 ```
 
-`npm run reset` clears `~/.omnivox/browser/`, `cookies.json`, and `config.json`. A new access key is generated on next launch.
+`npm run reset` clears `~/.omnivox/browser/`, `cookies.json`, `config.json`, and the Electron app's session data. A new access key is generated on next launch.
 
 ## Data Directory
 

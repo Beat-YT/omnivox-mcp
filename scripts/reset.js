@@ -5,7 +5,7 @@ import os from 'os';
 const dataDir = process.env.OMNIVOX_DATA_DIR || path.join(os.homedir(), '.omnivox');
 const electronDataDir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'omnivox-connection');
 
-const targets = ['browser', 'cookies.json', 'config.json'];
+const targets = ['browser', 'cookies.json', 'config.json', 'accessKey.txt'];
 
 for (const target of targets) {
     const fp = path.join(dataDir, target);
