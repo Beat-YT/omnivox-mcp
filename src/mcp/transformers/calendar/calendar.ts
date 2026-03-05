@@ -94,7 +94,7 @@ export function transformCalendarEvent(raw: CalendrierModel.ListeEvenement): Cal
 
         course: details.NoCours && details.NoGroupe
             ? {
-                course_id: `${details.NoCours}.${details.NoGroupe}`,
+                course_id: `${details.NoCours.replace(/-/g, '')}.${details.NoGroupe}`,
                 term_id: details.AnSession || undefined,
                 name: details.NomCours || undefined
             }

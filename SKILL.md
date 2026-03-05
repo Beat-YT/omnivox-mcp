@@ -73,7 +73,7 @@ All `term_id` parameters are optional and default to the current academic term.
 
 | Tool | Params | What it does |
 |---|---|---|
-| `get-calendar` | — | Real day-by-day schedule with holidays, day swaps, cancelled classes, and deadlines. Paginated via `page`. |
+| `get-calendar` | `page`, `range` | Real day-by-day schedule with holidays, day swaps, cancelled classes, and deadlines. range: `today`, `week`, `month`, or `all` (default). Paginated via optinal `page`. |
 | `get-schedule` | — | Static weekly timetable. Does **not** reflect holidays or day swaps. |
 
 ### Messaging (MIO)

@@ -5,7 +5,8 @@ import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    page: z.number().optional(),
+    page: z.number().default(0),
+    range: z.enum(["today", "week", "month", "all"]).optional(),
 });
 
 mcpServer.registerTool('get-calendar',
@@ -23,8 +24,27 @@ mcpServer.registerTool('get-calendar',
         const model = await GetCalendrierModel(args.page ?? 0);
         const page = transformCalendarModel(model);
 
+        // Apply range filter
+        if (args.range && args.range !== "all") {
+            const now = new Date();
+            let cutoff: Date;
+            if (args.range === "today") {
+                cutoff = new Date(now);
+                cutoff.setHours(23, 59, 59, 999); // End of today
+                page.events = page.events.filter(e => new Date(e.start) <= cutoff && new Date(e.start).toDateString() === now.toDateString());
+            } else {
+                cutoff = new Date(now);
+                if (args.range === "week") {
+                    cutoff.setDate(cutoff.getDate() + 7);
+                } else if (args.range === "month") {
+                    cutoff.setDate(cutoff.getDate() + 30);
+                }
+                page.events = page.events.filter(e => new Date(e.start) <= cutoff);
+            }
+        }
+
         // Group events by date for readable text output
-        const grouped = new Map<string, CalendarEvent[]>();
+        let grouped = new Map<string, CalendarEvent[]>();
         for (const e of page.events) {
             const day = formatDate(e.start);
             if (!grouped.has(day)) grouped.set(day, []);
@@ -82,7 +102,7 @@ function mapEventToText(e: CalendarEvent): string {
     }
 
     if (e.classType) parts.push(` type: ${e.classType}`);
-    if (e.course) parts.push(`  course: ${e.course.name ?? e.course.course_id}`);
+    if (e.course) parts.push(`  course: ${e.course.course_id}`);
     if (e.weight) parts.push(`  weight: ${e.weight / 100}%`);
     if (e.description) parts.push(`  ${e.description}`);
     if (e.status === 'past') parts.push(`  (past)`);
