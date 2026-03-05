@@ -20,10 +20,6 @@ import {
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
-// Services already covered by GetDefaultModel (per-course) or GetListeFoldersModel (MIO)
-const REDUNDANT_SERVICES = new Set(['cvir_docu', 'cvir_comm', 'cvir_trav', 'cvir_note', 'mio']);
-
-
 const input = z.object({
     term_id: z.string().optional(),
 });
@@ -39,7 +35,7 @@ mcpServer.registerTool('get-overview',
         },
     },
     async (args) => {
-        const [data, leaModel, mioModel, calModel, newsData] = await Promise.all([
+        const [notifications, leaModel, mioModel, calModel, newsData] = await Promise.all([
             GetAppUpdates(args.term_id),
             GetDefaultModel(args.term_id),
             GetListeFoldersModel(),
@@ -47,9 +43,11 @@ mcpServer.registerTool('get-overview',
             GetListeActualite(),
         ]);
 
+        console.log(notifications)
+
         // --- Service-level updates ---
-        const serviceItems = data.ListeUpdates
-            .filter(u => u.NbNotifications > 0 && !REDUNDANT_SERVICES.has(u.IdService))
+        const serviceItems = notifications.ListeUpdates
+            .filter(u => u.NbNotifications > 0 && !u.ModuleMobile)
             .map(u => ({
                 service_id: u.IdService,
                 label: u.NomRetour || u.IdService,
@@ -81,13 +79,15 @@ mcpServer.registerTool('get-overview',
                 const sepIdx = d.key.indexOf(':');
                 const courseId = d.key.substring(0, sepIdx);
                 const metric = d.key.substring(sepIdx + 1);
-                if (!courseNewCounts[courseId]) continue;//courseNewCounts[courseId] = { announcements: 0, assignments: 0, grades: 0, documents: 0 };
+                if (!courseNewCounts[courseId]) courseNewCounts[courseId] = { announcements: 0, assignments: 0, grades: 0, documents: 0 };
                 if (metric === 'total_announcements') courseNewCounts[courseId].announcements = d.diff;
                 if (metric === 'total_assignments') courseNewCounts[courseId].assignments = d.diff;
                 if (metric === 'total_evals') courseNewCounts[courseId].grades = d.diff;
                 if (metric === 'total_documents') courseNewCounts[courseId].documents = d.diff;
             }
         }
+
+        console.log('Course new counts:', courseNewCounts);
 
         // --- MIO inbox ---
         const mioFolders = transformMioFolders(mioModel);
