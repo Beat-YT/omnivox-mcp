@@ -13,6 +13,7 @@ export const CalendarCategorySchema = z.enum([
   "grades_deadline",
   "holiday",
   "private_event",
+  "student_access_exam",
   "other"
 ])
 

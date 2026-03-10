@@ -21,9 +21,9 @@ export function GetCalendrierModel(page: number = 0) {
             "filtresDisabled[4].Key": "Cours",
             "filtresDisabled[4].Value": false,
             "filtresDisabled[5].Key": "Examen",
-            "filtresDisabled[5].Value": true,
+            "filtresDisabled[5].Value": false,
             "filtresDisabled[6].Key": "RendezVous",
-            "filtresDisabled[6].Value": true
+            "filtresDisabled[6].Value": false
         }
     );
 }

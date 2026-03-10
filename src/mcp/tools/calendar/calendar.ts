@@ -24,6 +24,8 @@ mcpServer.registerTool('get-calendar',
         const model = await GetCalendrierModel(args.page ?? 0);
         const page = transformCalendarModel(model);
 
+        page
+
         // Apply range filter
         if (args.range && args.range !== "all") {
             const now = new Date();
@@ -99,9 +101,10 @@ function mapEventToText(e: CalendarEvent): string {
     } else {
         const time = `${formatTime(e.start)}–${e.end ? formatTime(e.end) : '?'}`;
         parts.push(`${time} ${e.title}${e.location ? ` (${e.location})` : ''}`);
+        if (e.category == 'student_access_exam') parts.push(`  Exam with the Student Access Service`);
     }
 
-    if (e.classType) parts.push(` type: ${e.classType}`);
+    if (e.classType) parts.push(`  type: ${e.classType}`);
     if (e.course) parts.push(`  course: ${e.course.course_id}`);
     if (e.weight) parts.push(`  weight: ${e.weight / 100}%`);
     if (e.description) parts.push(`  ${e.description}`);

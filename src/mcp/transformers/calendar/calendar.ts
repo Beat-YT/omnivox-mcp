@@ -27,6 +27,7 @@ function mapCategory(type: string): CalendarCategory {
     if (t === "FINS") return "semester_end"
     if (t === "FINC") return "grades_deadline"
     if (t === "EVLEA") return "private_event"
+    if (t === "SRAE") return "student_access_exam"
 
     if (["JFER"].includes(t)) return "holiday"
 
@@ -120,6 +121,13 @@ export function transformCalendarEvent(raw: CalendrierModel.ListeEvenement): Cal
  */
 export function transformCalendarModel(raw: CalendrierModel.ResponseModel): CalendarPage {
     const events = (raw.ListeEvenements ?? []).map(transformCalendarEvent)
+    events.sort((a, b) => {
+        if (a.start === b.start && a.end && b.end) {
+            return Date.parse(a.end) - Date.parse(b.end)
+        }
+
+        return Date.parse(a.start) - Date.parse(b.start);
+    });
 
     return {
         events,
