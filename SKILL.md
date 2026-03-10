@@ -34,6 +34,11 @@ Omnivox is the web portal used by virtually all CEGEPs (Quebec's public colleges
 
 All `term_id` parameters are optional and default to the current academic term.
 
+### Tool Discovery (for the cli)
+| Tool | Params | What it does |
+|---|---|---|
+| `tools` | `names` (optional, comma-separated) | Discover available tools. Without `names`, returns all tools. With `names`, returns only matching tools by name. Includes each tool's description and input schema. |
+
 ### Dashboard
 
 | Tool | Params | What it does |

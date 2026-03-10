@@ -9,10 +9,13 @@ const EMPTY_OBJECT_JSON_SCHEMA = { type: 'object' as const, properties: {} };
 
 const getTools = () => (mcpServer as any)._registeredTools as Record<string, any>;
 
-router.get('/tools', (_req, res) => {
+router.get('/tools', (req, res) => {
+    const toolNames = req.query.names ? String(req.query.names).split(',') : null;
+    console.log('Fetching tools with filter:', toolNames);
+
     const tools = getTools();
     const list = Object.entries(tools)
-        .filter(([, tool]) => tool.enabled)
+        .filter(([name, tool]) => tool.enabled && (!toolNames || toolNames.includes(name)))
         .map(([name, tool]) => {
             const normalized = normalizeObjectSchema(tool.inputSchema);
             return {
