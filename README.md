@@ -4,6 +4,8 @@ An [MCP](https://modelcontextprotocol.io/) server that exposes Quebec college st
 
 It runs a persistent Puppeteer browser logged into Omnivox, executing requests through the site's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively.
 
+[![omnivox-mcp MCP server](https://glama.ai/mcp/servers/Beat-YT/omnivox-mcp/badges/card.svg)](https://glama.ai/mcp/servers/Beat-YT/omnivox-mcp)
+
 ## Features
 
 - **30 MCP tools** — courses, grades, schedule, calendar, messaging (MIO), documents, assignments, college news
