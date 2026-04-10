@@ -1,18 +1,11 @@
 import { CalendarEvent } from "@schemas/calendar/calendar";
 import { CourseItem } from "@schemas/courses/summary";
 import { CollegeNewsItem } from "@schemas/college/college-news";
+import { NotificationItem } from "@schemas/overview/notifications";
 
 type DeltaText = { header: string; items: Record<string, string> } | null;
 
-export interface ServiceUpdate {
-    service_id: string;
-    label: string;
-    count: number;
-    title?: string;
-    description?: string;
-}
-
-export function formatServiceUpdates(items: ServiceUpdate[], dt: DeltaText): string | null {
+export function formatServiceUpdates(items: NotificationItem[], dt: DeltaText): string | null {
     if (items.length === 0) {
         if (dt?.header) return `## Notifications: ${dt.header}`;
         return null;
@@ -26,7 +19,7 @@ export function formatServiceUpdates(items: ServiceUpdate[], dt: DeltaText): str
         return `- ${i.label} (${i.count})${titlePart}${desc}${delta ? ' ' + delta : ''}`;
     });
 
-    return ['## Notifications:', ...lines].join('\n');
+    return [`## What's new?`, ...lines].join('\n');
 }
 
 /** Per-course delta counts (new items since last call), keyed by course ID. */
@@ -115,7 +108,7 @@ export function formatUpcomingEvals(events: CalendarEvent[]): string | null {
         lines.push(`- ${date}${time} — ${e.title}${weight}${course ? `, ${course}` : ''}`);
     }
     
-    lines.push('Note: Some professors do not post eval dates on Lea. Check course syllabus for the full schedule.');
+    lines.push('Important: Some professors do not post eval dates on Lea. Check course syllabus for the full schedule.');
     return lines.join('\n');
 }
 

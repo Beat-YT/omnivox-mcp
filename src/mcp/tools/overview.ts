@@ -16,6 +16,7 @@ import {
     formatUpcomingEvals,
     formatFeaturedNews,
     CourseNewCounts,
+    transformNotifications,
 } from "@transformers/overview";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
@@ -43,24 +44,14 @@ mcpServer.registerTool('get-overview',
             GetListeActualite(),
         ]);
 
-        console.log(notifications)
-
         // --- Service-level updates ---
-        const serviceItems = notifications.ListeUpdates
-            .filter(u => u.NbNotifications > 0 && !u.ModuleMobile)
-            .map(u => ({
-                service_id: u.IdService,
-                label: u.NomRetour || u.IdService,
-                count: u.NbNotifications,
-                title: u.Nom?.trim() || undefined,
-                description: u.Description?.trim() || undefined,
-            }));
+        const { notifications: serviceItems } = transformNotifications(notifications);
 
         const serviceSnapshot = flattenSnapshot(serviceItems, i => i.service_id, {
             count: i => i.count,
         });
         const serviceDeltas = computeDelta('get-overview', serviceSnapshot);
-        const serviceDt = itemDeltaText(serviceDeltas, m => m === 'count' ? '' : m.replace(/_/g, ' '));
+        const serviceDt = itemDeltaText(serviceDeltas, m => '');
 
         // --- Per-course updates (delta on totals = genuinely new items) ---
         const courseSummary = transformCoursesSummary(leaModel);
@@ -87,7 +78,6 @@ mcpServer.registerTool('get-overview',
             }
         }
 
-        console.log('Course new counts:', courseNewCounts);
 
         // --- MIO inbox ---
         const mioFolders = transformMioFolders(mioModel);

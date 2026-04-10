@@ -70,7 +70,8 @@ export function itemDeltaText(
         const parts = itemDeltas.map(d => {
             const metric = d.key.substring(d.key.indexOf(':') + 1);
             const sign = d.diff > 0 ? '+' : '';
-            return `${sign}${d.diff} ${metricLabelFn(metric)}`;
+            const label = metricLabelFn(metric);
+            return label ? `${sign}${d.diff} ${label}` : `${sign}${d.diff}`;
         });
         items[id] = `[${parts.join(', ')}]`;
     }
