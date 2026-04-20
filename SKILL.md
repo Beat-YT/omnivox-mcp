@@ -53,7 +53,7 @@ All `term_id` parameters are optional and default to the current academic term.
 | `get-courses-summary` | — | All courses with counts and totals. Returns `course_id` values. Delta tracked. |
 | `get-course-info` | `course_id` | One course — teacher names, grade summary. |
 | `get-grades-summary` | — | Marks, class averages, remaining weight across all courses. Delta tracked. |
-| `get-course-evals` | `course_id` | Full eval breakdown — marks, weights, class stats, grade evolution. |
+| `get-course-evals` | `course_id` | Full eval breakdown — marks, weights, class stats, grade evolution. **Incomplete**: unposted exams won't appear here; reconcile with the syllabus. |
 | `get-course-announcements` | `course_id` | Teacher announcements for a course. |
 | `get-absences` | — | Absence records for all courses. Delta tracked. |
 | `get-teachers` | — | All teachers with contact info. Prefer `get-course-people` for per-course. |
@@ -70,7 +70,7 @@ All `term_id` parameters are optional and default to the current academic term.
 | Tool | Params | What it does |
 |---|---|---|
 | `get-assignments-summary` | — | Per-course assignment overview. Delta tracked. |
-| `get-course-assignments` | `course_id` | List assignments. Returns `assignment_id` values. |
+| `get-course-assignments` | `course_id` | List assignments. Returns `assignment_id` values. **Incomplete**: many teachers never post assignments here — always cross-check the syllabus via `get-course-documents`. |
 | `get-assignment-detail` | `course_id`, `assignment_id` | Full details — instructions, submissions, corrections. Returns `file_id` values. |
 | `get-assignment-file-link` | `course_id`, `assignment_id`, `file_id`, `role` | Download an assignment file. `role`: `teacher_document`, `submission`, or `correction`. |
 
@@ -78,7 +78,7 @@ All `term_id` parameters are optional and default to the current academic term.
 
 | Tool | Params | What it does |
 |---|---|---|
-| `get-calendar` | `page`, `range` | Real day-by-day schedule with holidays, day swaps, cancelled classes, and deadlines. range: `today`, `week`, `month`, or `all` (default). Paginated via optinal `page`. |
+| `get-calendar` | `page`, `range` | Real day-by-day schedule with holidays, day swaps, cancelled classes, and deadlines. range: `today`, `week`, `month`, or `all` (default). Paginated via optinal `page`. **Incomplete for deadlines**: exam and assignment dates only show up if the teacher entered them — read the syllabus for the full picture. |
 | `get-schedule` | — | Static weekly timetable. Does **not** reflect holidays or day swaps. |
 | `get-cancelled-classes` | — | Upcoming cancelled class sessions with teacher notes. |
 
@@ -115,11 +115,28 @@ Many tools track changes between calls. If nothing changed, the response says `[
 
 ---
 
+## Syllabi Are the Source of Truth
+
+**Omnivox is not a complete record of coursework.** Many teachers never enter assignments, evaluations, or exam dates into Lea at all — they announce them in class, hand out paper, or bury them in the syllabus. Treat the structured tools as *incomplete by default*:
+
+- `get-course-assignments` returning nothing does **not** mean there is no homework.
+- `get-calendar` and `get-course-evals` missing an exam does **not** mean the exam isn't scheduled.
+- An empty `get-assignments-summary` does **not** mean the student is caught up.
+
+**To get the real picture, you must read the course syllabus.** For any question about what's due, upcoming exams, project milestones, grading breakdown, or course policies:
+
+1. Call `get-course-documents` for the course.
+2. Find the syllabus (usually called *plan de cours*, *course outline*, *syllabus*, or similar — often posted at the start of term).
+3. Call `get-document-link` and actually read it. Cross-reference its dates and weights against what Lea shows.
+4. If no syllabus is posted on Lea, say so explicitly — don't pretend Lea's data is the full answer.
+
+Only after reading the syllabus can you confidently tell the user what's coming up or what's graded.
+
 ## Gotchas
 
+- **Lea data is incomplete.** See "Syllabi Are the Source of Truth" above — always reconcile assignments, evals, and deadlines against the course syllabus from `get-course-documents`.
 - **`get-document-link` marks documents as read** on Omnivox. Use `get-course-documents` first if you're just browsing.
-- **Not all professors post eval dates on Lea.** The calendar may be incomplete — check course syllabi.
-- **Not all professors upload syllabi to Lea.** Some distribute them in class or via MIO.
+- **Not all professors upload syllabi to Lea.** Some distribute them in class or via MIO. If a syllabus isn't on Lea, check MIO attachments and tell the user it's missing from the portal.
 - **MIO message IDs are UUIDs**, not numbers.
 - **MIO folder IDs** are string constants like `SEARCH_FOLDER_MioRecu`. Use `get-mio-folders` to discover them.
 - **`course_id` is always required** on document/assignment downloads, even though the document ID seems sufficient.
