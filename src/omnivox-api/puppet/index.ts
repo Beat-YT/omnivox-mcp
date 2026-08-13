@@ -15,10 +15,12 @@ let browser: Browser | null = null;
 let page: Page | null = null;
 let readyPromise: Promise<void> | null = null;
 
+const sleepEnabled = process.env.BROWSER_SLEEP === 'true';
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
 function resetIdleTimer() {
+    if (!sleepEnabled) return;
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(sleep, IDLE_TIMEOUT_MS);
 }

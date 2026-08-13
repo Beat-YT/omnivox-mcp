@@ -60,6 +60,7 @@ Set these as environment variables or in a `.env` file at the project root:
 | `PORT` | `3000` | Server port |
 | `OMNIVOX_DATA_DIR` | `~/.omnivox` | Data directory for config, cookies, browser profile, and access key |
 | `MCP_SERVER_URL` | *(none)* | Optional. Public base URL that enables download link generation (`get-document-link` / `get-assignment-file-link`). Set to your public domain (e.g. `https://omnivox.example.com`). |
+| `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. |
 
 ## Usage
 
