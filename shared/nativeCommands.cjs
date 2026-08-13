@@ -37,7 +37,6 @@ const staticResponses = {
 // Commands that fire callback(null) — UI acknowledgments
 const nullCallbackCommands = new Set([
     'WebUI.SetWindowOption',
-    'WebUI.ResetSession',
     'Display.SetBrightness',
     'Display.Authenticate',
     'Display.OpenCamera',
@@ -53,7 +52,6 @@ const silentCommands = new Set([
     'WebUI.NavigateToStore',
     'Display.SetLanguage',
     'Display.ViewDocument',
-    'Display.ViewLogin',
     'Display.ViewStudentEmployee',
     'Display.ViewInfo',
     'Display.ViewCommunicationError',

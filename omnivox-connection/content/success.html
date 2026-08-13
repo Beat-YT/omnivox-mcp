@@ -27,7 +27,7 @@
 
             configBtn.disabled = false;
             cookiesBtn.disabled = false;
-            hint.textContent = 'Download both files and place them in ~/.omnivox/';
+            hint.textContent = 'Download both files and place them in your omnivox data folder (default ~/.omnivox/)';
 
             configBtn.addEventListener('click', async () => {
                 if (await AuthData.saveFile('config.json', data.config)) {

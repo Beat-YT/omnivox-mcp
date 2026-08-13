@@ -107,6 +107,25 @@ async function createWindow() {
                 break;
             }
 
+            case 'WebUI.ResetSession': {
+                codeUserAgent = "";
+                idAppareil = crypto.randomBytes(20).toString("hex");
+                kvStore.clear();
+                themeStore = null;
+                const ua = getUserAgent();
+                win.webContents.setUserAgent(ua);
+                ses.setUserAgent(ua);
+                ses.clearStorageData().then(() => {
+                    fireCallback(command, null);
+                });
+                break;
+            }
+
+            case 'Display.ViewLogin': {
+                win.loadFile("content/index.html");
+                break;
+            }
+
             case 'WebUI.SetDefaultPage': {
                 if (!args?.Url) {
                     console.warn("No Url in SetDefaultPage command");
