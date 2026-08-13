@@ -7,7 +7,7 @@ It runs a persistent Puppeteer browser logged into Omnivox, executing requests t
 ## Features
 
 - **30 MCP tools** — courses, grades, schedule, calendar, messaging (MIO), documents, assignments, college news
-- **Two transport modes** — HTTP (default, Express server with MCP-over-HTTP + REST tool gateway) or stdio (for MCP clients)
+- **Two transport modes** — HTTP (default, Express server with MCP-over-HTTP + REST tool gateway) or stdio *(deprecated, not recommended)*
 - **REST tool gateway** — all MCP tools exposed as plain HTTP endpoints for non-MCP agents
 - **File downloads** — direct binary or temporary browser-friendly links (15 min TTL)
 - **Internal messaging** — read, search, send, flag, move, and delete MIO messages
@@ -29,12 +29,12 @@ npm install && npm start
 # 3. Start the server
 cd ..
 npm start              # HTTP mode (default) — Express server on port 3000
-npm run start:stdio    # stdio mode — for MCP clients
+npm run start:stdio    # stdio mode (deprecated, not recommended)
 ```
 
 **HTTP mode** (default): Starts an Express server with MCP-over-HTTP at `/mcp?key=...` and a REST tool gateway. Access key is auto-generated at `~/.omnivox/accessKey.txt`.
 
-**stdio mode**: The MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key needed.
+**stdio mode** *(deprecated, not recommended)*: The MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key needed.
 
 Each instance serves **one Omnivox account**. The server maintains a single browser session tied to the account you logged in with.
 
@@ -66,7 +66,7 @@ Set these as environment variables or in a `.env` file at the project root:
 
 ### MCP (for AI assistants)
 
-**stdio mode**: Add the server to your MCP client config — it launches the server as a subprocess. Use `npm run start:stdio`. See `AGENT_SETUP.md` for connection config.
+**stdio mode** *(deprecated, not recommended)*: Add the server to your MCP client config — it launches the server as a subprocess. Use `npm run start:stdio`. See `AGENT_SETUP.md` for connection config.
 
 **HTTP mode**: Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport.
 
@@ -94,6 +94,18 @@ curl -X POST http://localhost:3000/tools/get-mio-messages \
 ```
 
 The tools endpoint accepts JSON bodies regardless of `Content-Type` header — no need to set it explicitly.
+
+### Omnivox Proxy (HTTP mode)
+
+The server exposes a pass-through proxy at `/Mobl/*` that forwards requests directly to Omnivox's mobile API through the authenticated browser session. Any HTTP method and content type is supported.
+
+```bash
+# Example: hit an Omnivox mobile API endpoint directly
+curl http://localhost:3000/Mobl/some/endpoint \
+  -H "x-mcp-auth: YOUR_KEY" -H "Content-Type: application/json" -d '{}'
+```
+
+This is useful when you need to call an Omnivox endpoint that isn't wrapped by an MCP tool.
 
 ### Build your own projects
 

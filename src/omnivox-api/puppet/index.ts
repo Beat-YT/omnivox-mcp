@@ -240,7 +240,7 @@ export async function getHealthStatus(): Promise<{ ok: boolean; browser: boolean
 
     let omnivoxReady = false;
     try {
-        omnivoxReady = await page.evaluate(() => typeof (window as any).Skytech !== 'undefined');
+        omnivoxReady = await page!.evaluate(() => typeof (window as any).Skytech !== 'undefined');
     } catch {}
 
     return { ok: omnivoxReady, browser: true, page: true, omnivox: omnivoxReady, sleeping: false };

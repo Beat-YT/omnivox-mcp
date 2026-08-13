@@ -9,7 +9,7 @@ Omnivox-MCP is an MCP (Model Context Protocol) server that exposes a Quebec coll
 ## Commands
 
 - **Start server (HTTP):** `npm start` — default mode, Express server on port 3000 (or `PORT` env var) with REST API and MCP-over-HTTP
-- **Start server (stdio):** `npm run start:stdio` — communicates over stdin/stdout for MCP clients like Claude Desktop
+- **Start server (stdio):** `npm run start:stdio` — communicates over stdin/stdout for MCP clients like Claude Desktop *(deprecated, not recommended)*
 - **No test suite or build step configured.** The project runs TypeScript directly via `tsx`.
 
 ## Transport Modes
@@ -17,7 +17,7 @@ Omnivox-MCP is an MCP (Model Context Protocol) server that exposes a Quebec coll
 The server supports two transport modes, selected at startup:
 
 - **HTTP (default):** `npm start` — starts an Express server with the Streamable HTTP MCP transport at `/mcp?key=...`, REST tool gateway, and access key authentication.
-- **stdio:** `npm run start:stdio` — the MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key, no REST API. All logs go to stderr to keep stdout clean for the MCP protocol.
+- **stdio (deprecated, not recommended):** `npm run start:stdio` — the MCP client launches the server as a subprocess and communicates over stdin/stdout. No Express server, no access key, no REST API. All logs go to stderr to keep stdout clean for the MCP protocol.
 
 ## Architecture
 
@@ -29,7 +29,7 @@ Both modes share the same entry point. The `--http` flag selects the transport:
 1. MCP tools (auto-discovered from `src/mcp/tools/`)
 2. Puppeteer browser instance
 
-**stdio mode (default — no `--http` flag):**
+**stdio mode (default — no `--http` flag) (deprecated, not recommended):**
 3. Connects `mcpServer` to a `StdioServerTransport`
 
 **HTTP mode (`--http` flag):**
@@ -61,6 +61,10 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode o
 - **MCP Tools** (`src/mcp/tools/`): Register tools on the `mcpServer` instance (imported from `src/mcp/server.ts`). Auto-discovered at startup by scanning the directory.
 - **Express Server** (`src/express/server.ts`): Creates the Express app, MCP-over-HTTP transport, access key middleware, and route auto-discovery. Exports `StartExpressServer()`. Only used in HTTP mode.
 - **Routes** (`src/express/routes/`): Express routers auto-discovered at startup. Only used in HTTP mode. Includes the REST tool gateway (`tools.ts`) and resource-specific routes.
+
+### Omnivox Proxy (HTTP mode only)
+
+The `/Mobl/*` route (`src/express/routes/proxy.ts`) is a pass-through proxy to Omnivox's mobile API. Any HTTP method and content type is accepted. It uses `makeProxyFetch()` from the Puppeteer module to execute a `fetch()` inside the logged-in browser page, forwarding the request with Omnivox's session cookies and returning the raw response (status, content type, body). This lets external clients hit Omnivox endpoints directly through the server's authenticated session without going through an MCP tool.
 
 ### REST Tool Gateway (HTTP mode only)
 
