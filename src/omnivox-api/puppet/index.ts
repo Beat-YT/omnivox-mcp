@@ -221,6 +221,31 @@ export async function getPage(): Promise<Page> {
     return page;
 }
 
+export async function getHealthStatus(): Promise<{ ok: boolean; browser: boolean; page: boolean; omnivox: boolean; sleeping: boolean }> {
+    const sleeping = !browser && !readyPromise;
+
+    if (sleeping) {
+        return { ok: true, browser: false, page: false, omnivox: false, sleeping: true };
+    }
+
+    const browserConnected = !!browser?.connected;
+    if (!browserConnected) {
+        return { ok: false, browser: false, page: false, omnivox: false, sleeping: false };
+    }
+
+    const pageAlive = !!page && !page.isClosed();
+    if (!pageAlive) {
+        return { ok: false, browser: true, page: false, omnivox: false, sleeping: false };
+    }
+
+    let omnivoxReady = false;
+    try {
+        omnivoxReady = await page.evaluate(() => typeof (window as any).Skytech !== 'undefined');
+    } catch {}
+
+    return { ok: omnivoxReady, browser: true, page: true, omnivox: omnivoxReady, sleeping: false };
+}
+
 export interface ProxyFetchResult {
     status: number;
     contentType: string;

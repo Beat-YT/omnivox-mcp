@@ -7,7 +7,7 @@ const accessKeyPath = path.join(dataDir, 'accessKey.txt');
 let currentAccessKey = null;
 
 export function ValidateAccessKey(req, res, next) {
-    if (req.path === '/download/document' || req.path === '/download/assignment-file' || req.path === '/openapi.json') {
+    if (req.path === '/download/document' || req.path === '/download/assignment-file' || req.path === '/openapi.json' || req.path === '/health') {
         return next()
     }
 
