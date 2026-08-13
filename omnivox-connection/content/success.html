@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Session Captured</title>
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body>
+    <div class="container">
+        <div class="login-card">
+            <h1 class="title">Session captured</h1>
+            <p class="subtitle" id="hint">Waiting for session data...</p>
+
+            <button class="btn-primary" id="dl-config" disabled>Download config.json</button>
+            <button class="btn-primary btn-outline" id="dl-cookies" disabled>Download cookies.json</button>
+        </div>
+    </div>
+
+    <script>
+        AuthData.onReady((data) => {
+            const configBtn = document.getElementById('dl-config');
+            const cookiesBtn = document.getElementById('dl-cookies');
+            const hint = document.getElementById('hint');
+
+            configBtn.disabled = false;
+            cookiesBtn.disabled = false;
+            hint.textContent = 'Download both files and place them in ~/.omnivox/';
+
+            configBtn.addEventListener('click', async () => {
+                if (await AuthData.saveFile('config.json', data.config)) {
+                    configBtn.textContent = 'config.json — saved';
+                    configBtn.disabled = true;
+                }
+            });
+
+            cookiesBtn.addEventListener('click', async () => {
+                if (await AuthData.saveFile('cookies.json', data.cookies)) {
+                    cookiesBtn.textContent = 'cookies.json — saved';
+                    cookiesBtn.disabled = true;
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

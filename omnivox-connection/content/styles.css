@@ -108,6 +108,23 @@ input:focus {
   }
 }
 
+.btn-outline {
+  margin-top: 12px;
+  background: transparent;
+  border: 2px solid #38bdf8;
+  color: #38bdf8;
+}
+
+.btn-outline:hover {
+  background: rgba(56, 189, 248, 0.1);
+  filter: none;
+}
+
+.btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .date-input {
   appearance: none;
   background: #020617;

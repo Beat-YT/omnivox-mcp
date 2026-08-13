@@ -2,15 +2,11 @@ const { app, BrowserWindow, session, ipcMain, dialog } = require("electron");
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
-const os = require("os");
 
 const { omnivoxVer, deviceInfo } = require("../shared/constants.cjs");
 const { staticResponses, nullCallbackCommands, silentCommands } = require("../shared/nativeCommands.cjs");
 
 app.commandLine.appendSwitch("disable-features", "OutOfBlinkCors");
-
-const homeDir = path.join(os.homedir(), ".omnivox");
-const browserDir = path.join(homeDir, "browser");
 
 let idAppareil = crypto.randomBytes(20).toString("hex");
 let codeUserAgent = "";
@@ -49,23 +45,6 @@ async function createWindow() {
             sandbox: false,
         }
     });
-
-    function writeFile(filename, content) {
-        fs.mkdirSync(homeDir, { recursive: true });
-        fs.writeFileSync(path.join(homeDir, filename), content, "utf8");
-    }
-
-    async function dumpCookies() {
-        if (fs.existsSync(browserDir)) {
-            fs.rmSync(browserDir, { recursive: true, force: true });
-            console.log(`Deleted browser profile at ${browserDir}`);
-        }
-
-        const cookies = await ses.cookies.get({});
-        const content = JSON.stringify(cookies, null, 2);
-        writeFile("cookies.json", content);
-        console.log(`Cookies saved to ${path.join(homeDir, "cookies.json")}`);
-    }
 
     /**
      * Fires a native callback on the page via IPC → preload → Ovx.ExecuteCallback
@@ -143,21 +122,18 @@ async function createWindow() {
                     IdAppareil: idAppareil
                 };
 
-                writeFile("config.json", JSON.stringify(config, null, 2));
-                console.log(`Config saved to ${path.join(homeDir, "config.json")}`);
-
                 fireCallback(command, null);
 
-                dumpCookies().then(() => {
-                    dialog.showMessageBox(win, {
-                        type: "info",
-                        title: "Authentification complétée",
-                        message: "Session Omnivox capturée avec succès.",
-                        detail: `cookies.json et config.json sauvegardés dans :\n  ${homeDir}`,
-                        buttons: ["Fermer"],
-                    }).then(() => app.quit());
+                ses.cookies.get({}).then(cookies => {
+                    win.loadFile("content/success.html");
+                    win.webContents.once('did-finish-load', () => {
+                        win.webContents.send("auth-data", {
+                            cookies: JSON.stringify(cookies, null, 2),
+                            config: JSON.stringify(config, null, 2)
+                        });
+                    });
                 }).catch(err => {
-                    console.error("Error dumping cookies:", err);
+                    console.error("Error getting cookies:", err);
                 });
                 break;
             }
@@ -175,25 +151,22 @@ async function createWindow() {
         handleOvxCommand(command, args);
     });
 
-    ipcMain.on('DumpCookies', () => {
-        dumpCookies().catch(err => {
-            console.error("Error dumping cookies:", err);
+    ipcMain.handle('save-file', async (evt, filename, content) => {
+        const { canceled, filePath } = await dialog.showSaveDialog(win, {
+            defaultPath: filename,
+            filters: [{ name: 'JSON', extensions: ['json'] }],
         });
+        if (!canceled && filePath) {
+            fs.writeFileSync(filePath, content, 'utf8');
+            return true;
+        }
+        return false;
     });
 
     win.webContents.setUserAgent(getUserAgent());
     ses.setUserAgent(getUserAgent());
 
-    const configPath = path.join(homeDir, "config.json");
-    if (fs.existsSync(configPath)) {
-        const configData = fs.readFileSync(configPath, "utf8");
-        const config = JSON.parse(configData);
-        codeUserAgent = config.Code || "";
-        idAppareil = config.IdAppareil || idAppareil;
-        win.loadURL(config.DefaultPage);
-    } else {
-        win.loadFile("content/index.html");
-    }
+    win.loadFile("content/index.html");
 }
 
 app.whenReady().then(createWindow);

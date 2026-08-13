@@ -11,11 +11,12 @@ OvxNatif.ExecuteCommand = function (command, args) {
     return 'none';
 };
 
-OvxNatif.DumpCookies = function () {
-    return ipcRenderer.send("DumpCookies");
-};
-
 contextBridge.exposeInMainWorld("OvxNatif", OvxNatif);
+
+contextBridge.exposeInMainWorld("AuthData", {
+    onReady: (callback) => ipcRenderer.on("auth-data", (_event, data) => callback(data)),
+    saveFile: (filename, content) => ipcRenderer.invoke("save-file", filename, content),
+});
 
 // Generic callback forwarding: main → preload → page
 ipcRenderer.on("Ovx-Callback", (_event, callbackName, data) => {
