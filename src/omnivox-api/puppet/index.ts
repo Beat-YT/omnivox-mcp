@@ -72,7 +72,7 @@ export async function InitializePuppet() {
                 '--no-default-browser-check',
                 '--mute-audio',
                 // Memory limits
-                '--js-flags=--max-old-space-size=256,--max-semi-space-size=2,--optimize-for-size',
+                '--js-flags=--max-old-space-size=512',
                 '--renderer-process-limit=1',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--disable-backgrounding-occluded-windows',
