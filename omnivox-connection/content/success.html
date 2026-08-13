@@ -32,14 +32,12 @@
             configBtn.addEventListener('click', async () => {
                 if (await AuthData.saveFile('config.json', data.config)) {
                     configBtn.textContent = 'config.json — saved';
-                    configBtn.disabled = true;
                 }
             });
 
             cookiesBtn.addEventListener('click', async () => {
                 if (await AuthData.saveFile('cookies.json', data.cookies)) {
                     cookiesBtn.textContent = 'cookies.json — saved';
-                    cookiesBtn.disabled = true;
                 }
             });
         });
