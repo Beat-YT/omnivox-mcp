@@ -24,7 +24,7 @@ npm install
 # 2. Authenticate (first time only)
 cd omnivox-connection
 npm install && npm start
-# Log in through the Electron window, then close it
+# Log in through the Electron window, save the data files
 
 # 3. Start the server
 cd ..

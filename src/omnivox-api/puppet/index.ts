@@ -218,6 +218,49 @@ export async function getPage(): Promise<Page> {
     return page;
 }
 
+export interface ProxyFetchResult {
+    status: number;
+    contentType: string;
+    body: string; // base64
+}
+
+export async function makeProxyFetch(
+    url: string,
+    method: string,
+    body?: string,
+    contentType?: string,
+): Promise<ProxyFetchResult> {
+    await waitForReady();
+    if (!page) throw new Error('Puppeteer page not initialized');
+
+    const fetchEval = () =>
+        page!.evaluate(
+            async (url: string, method: string, body: string | undefined, contentType: string | undefined) => {
+                const init: RequestInit = { method, credentials: 'include' };
+                if (body) {
+                    init.body = body;
+                    if (contentType) init.headers = { 'Content-Type': contentType };
+                }
+                const res = await fetch(url, init);
+                const ct = res.headers.get('content-type') || 'application/octet-stream';
+                const buf = await res.arrayBuffer();
+                const bytes = new Uint8Array(buf);
+                let binary = '';
+                for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+                return { status: res.status, contentType: ct, body: btoa(binary) };
+            },
+            url, method, body, contentType,
+        );
+
+    try {
+        return await fetchEval();
+    } catch (err) {
+        if (!isDetachedFrameError(err)) throw err;
+        await recoverPage();
+        return await fetchEval();
+    }
+}
+
 export async function makePuppeteerDownload(url: string): Promise<DownloadResult> {
     await waitForReady();
     if (!page) throw new Error('Puppeteer page not initialized');

@@ -7,11 +7,13 @@ const accessKeyPath = path.join(dataDir, 'accessKey.txt');
 let currentAccessKey = null;
 
 export function ValidateAccessKey(req, res, next) {
-    if (req.path === '/download/document' || req.path === '/download/assignment-file') {
+    if (req.path === '/download/document' || req.path === '/download/assignment-file' || req.path === '/openapi.json') {
         return next()
     }
 
+    const authHeader = req.headers['authorization'];
     const provided = req.headers['x-mcp-auth']
+        || (typeof authHeader === 'string' && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null);
 
     if (typeof provided !== 'string') {
         return res.status(401).json({ error: 'Missing access key' })
