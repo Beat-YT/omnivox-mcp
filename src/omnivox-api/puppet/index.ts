@@ -140,6 +140,8 @@ function isDetachedFrameError(err: unknown): boolean {
 }
 
 function makeProxyRequest(url: string, data: any) {
+    if (!page) throw new Error('Puppeteer page not initialized');
+
     return page.evaluate((url: string, data: any) => {
         return new Promise<any>((resolve, reject) => {
             (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
@@ -152,7 +154,6 @@ function makeProxyRequest(url: string, data: any) {
 
 export async function makeSkytechRequest<T = any>(url: string, data: any = {}): Promise<T> {
     await waitForReady();
-
     if (!page) throw new Error('Puppeteer page not initialized');
 
     try {
