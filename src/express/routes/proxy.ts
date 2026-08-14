@@ -4,7 +4,7 @@ import { makeProxyFetch } from 'src/omnivox-api/puppet';
 
 const router = express.Router();
 
-router.all('/Mobl/*', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
+router.all('/Mobl/{*path}', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
     const baseUrl = new URL(getConfig().DefaultPage).origin;
     const target = `${baseUrl}${req.originalUrl}`;
 

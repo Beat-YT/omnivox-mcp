@@ -78,6 +78,7 @@ export async function InitializePuppet() {
                 '--renderer-process-limit=1',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--disable-backgrounding-occluded-windows',
+                '--no-sandbox',
             ],
         });
 
