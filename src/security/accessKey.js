@@ -6,14 +6,20 @@ import { dataDir } from '@common/dataDir.js';
 const accessKeyPath = path.join(dataDir, 'accessKey.txt');
 let currentAccessKey = null;
 
+export function extractProvidedKey(req) {
+    const authHeader = req.headers['authorization'];
+    return req.headers['x-mcp-auth']
+        || (typeof authHeader === 'string' && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null)
+        || req.query.key
+        || null;
+}
+
 export function ValidateAccessKey(req, res, next) {
     if (req.path === '/download/document' || req.path === '/download/assignment-file' || req.path === '/openapi.json' || req.path === '/health') {
         return next()
     }
 
-    const authHeader = req.headers['authorization'];
-    const provided = req.headers['x-mcp-auth']
-        || (typeof authHeader === 'string' && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null);
+    const provided = extractProvidedKey(req);
 
     if (typeof provided !== 'string') {
         return res.status(401).json({ error: 'Missing access key' })
@@ -24,7 +30,6 @@ export function ValidateAccessKey(req, res, next) {
     const providedBuf = Buffer.from(provided)
     const expectedBuf = Buffer.from(expected)
 
-    // Constant-time comparison to prevent timing attacks
     const match =
         providedBuf.length === expectedBuf.length &&
         crypto.timingSafeEqual(providedBuf, expectedBuf)
