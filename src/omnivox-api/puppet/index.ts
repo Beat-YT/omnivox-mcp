@@ -77,6 +77,9 @@ export async function InitializePuppet() {
             fs.unlinkSync(pidFile);
         }
 
+        const singletonLock = path.join(browserDataDir, 'SingletonLock');
+        if (fs.existsSync(singletonLock)) fs.unlinkSync(singletonLock);
+
         browser = await puppeteer.launch({
             headless: true,
             userDataDir: browserDataDir,

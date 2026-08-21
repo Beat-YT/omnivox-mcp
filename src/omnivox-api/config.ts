@@ -75,6 +75,8 @@ export function getConfig(): OmnivoxConfig {
     const configFile = fs.readFileSync(configPath, 'utf-8');
     config = JSON.parse(configFile);
 
+    config.DefaultPage = decodeURIComponent(config.DefaultPage);
+
     if (!config.DefaultPage) {
         console.error('Configuration file is missing required fields. Please check omnivox-config.json.');
         console.error('Required fields: omnivoxBaseUrl');
