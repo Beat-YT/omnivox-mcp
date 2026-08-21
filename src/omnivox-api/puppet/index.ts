@@ -19,14 +19,35 @@ const sleepEnabled = process.env.BROWSER_SLEEP === 'true';
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
+const REFRESH_INTERVAL_MS = process.env.BROWSER_REFRESH_INTERVAL
+    ? parseInt(process.env.BROWSER_REFRESH_INTERVAL, 10) * 60 * 1000
+    : 0;
+let refreshTimer: ReturnType<typeof setInterval> | null = null;
+
 function resetIdleTimer() {
     if (!sleepEnabled) return;
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(sleep, IDLE_TIMEOUT_MS);
 }
 
+function startRefreshTimer() {
+    if (sleepEnabled || !REFRESH_INTERVAL_MS || refreshTimer) return;
+    refreshTimer = setInterval(async () => {
+        if (!page) return;
+        try {
+            const config = getConfig();
+            await page.goto(config.DefaultPage);
+            await page.waitForFunction(() => (window as any).Skytech !== undefined, { timeout: 60000 });
+            console.warn('[Puppet] Session refreshed');
+        } catch (err: any) {
+            console.warn('[Puppet] Session refresh failed:', err.message);
+        }
+    }, REFRESH_INTERVAL_MS);
+}
+
 async function sleep() {
     idleTimer = null;
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
     if (browser) {
         console.warn('[Puppet] Sleeping after idle timeout');
         try { await browser.close(); } catch { }
@@ -116,6 +137,7 @@ export async function InitializePuppet() {
         await page.goto(config.DefaultPage);
         await page.waitForFunction(() => (window as any).Skytech !== undefined, { timeout: 60000 });
 
+        startRefreshTimer();
         resetIdleTimer();
     })();
 
