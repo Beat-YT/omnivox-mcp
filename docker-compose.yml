@@ -16,4 +16,5 @@ services:
       - TZ=America/New_York
       - OMNIVOX_DATA_DIR=/data/omnivox
       - BROWSER_SLEEP=false
+      - BROWSER_REFRESH_INTERVAL=10 # recommended for session persistence
       # - MCP_SERVER_URL=https://your-public-domain.com  # Optional: enables download link generation
