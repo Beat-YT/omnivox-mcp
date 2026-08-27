@@ -61,6 +61,7 @@ Set these as environment variables or in a `.env` file at the project root:
 | `OMNIVOX_DATA_DIR` | `~/.omnivox` | Data directory for config, cookies, browser profile, and access key |
 | `MCP_SERVER_URL` | *(none)* | Optional. Public base URL that enables download link generation (`get-document-link` / `get-assignment-file-link`). Set to your public domain (e.g. `https://omnivox.example.com`). |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. |
+| `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended when running long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `true`. |
 
 ## Usage
 
