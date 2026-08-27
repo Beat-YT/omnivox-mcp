@@ -13,6 +13,7 @@ services:
       start_period: 30s
     environment:
       - PORT=3000
+      - TZ=America/New_York
       - OMNIVOX_DATA_DIR=/data/omnivox
       - BROWSER_SLEEP=false
       # - MCP_SERVER_URL=https://your-public-domain.com  # Optional: enables download link generation
