@@ -278,6 +278,13 @@ export interface ProxyFetchResult {
     body: string; // base64
 }
 
+function fixCharset(ct?: string): string | undefined {
+    if (!ct) return ct;
+    if (ct.startsWith('application/json')) return 'application/json; charset=iso-8859-1';
+    if (ct.startsWith('application/x-www-form-urlencoded')) return 'application/x-www-form-urlencoded; charset=iso-8859-1';
+    return ct;
+}
+
 export async function makeProxyFetch(
     url: string,
     method: string,
@@ -287,23 +294,30 @@ export async function makeProxyFetch(
     await waitForReady();
     if (!page) throw new Error('Puppeteer page not initialized');
 
+    const ct = fixCharset(contentType);
+
     const fetchEval = () =>
         page!.evaluate(
-            async (url: string, method: string, body: string | undefined, contentType: string | undefined) => {
-                const init: RequestInit = { method, credentials: 'include' };
-                if (body) {
-                    init.body = body;
-                    if (contentType) init.headers = { 'Content-Type': contentType };
-                }
-                const res = await fetch(url, init);
-                const ct = res.headers.get('content-type') || 'application/octet-stream';
-                const buf = await res.arrayBuffer();
-                const bytes = new Uint8Array(buf);
-                let binary = '';
-                for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-                return { status: res.status, contentType: ct, body: btoa(binary) };
+            (url: string, method: string, body: string | undefined, contentType: string | undefined) => {
+                return new Promise<any>((resolve, reject) => {
+                    const header = contentType ? { 'Content-Type': contentType } : {};
+                    (window as any).Skytech.Commun.Utils.HttpRequestWorker.DoXHRSetup(
+                        method, url, true, body || null, header,
+                        (requete: any) => {
+                            if (requete.readyState === 4) {
+                                resolve({
+                                    status: requete.status,
+                                    contentType: requete.getResponseHeader('content-type') || 'application/octet-stream',
+                                    body: btoa(unescape(encodeURIComponent(requete.responseText || ''))),
+                                });
+                            }
+                        },
+                        (err: any) => reject(err),
+                        false,
+                    );
+                });
             },
-            url, method, body, contentType,
+            url, method, body, ct,
         );
 
     try {
