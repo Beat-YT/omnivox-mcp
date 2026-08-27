@@ -60,7 +60,7 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode o
 - **MCP Server** (`src/mcp/server.ts`): Creates and exports the `mcpServer` instance.
 - **MCP Tools** (`src/mcp/tools/`): Register tools on the `mcpServer` instance (imported from `src/mcp/server.ts`). Auto-discovered at startup by scanning the directory.
 - **Express Server** (`src/express/server.ts`): Creates the Express app, MCP-over-HTTP transport, access key middleware, and route auto-discovery. Exports `StartExpressServer()`. Only used in HTTP mode.
-- **Routes** (`src/express/routes/`): Express routers auto-discovered at startup. Only used in HTTP mode. Includes the REST tool gateway (`tools.ts`) and resource-specific routes.
+- **Routes** (`src/express/routes/`): Express routers auto-discovered at startup. Only used in HTTP mode.
 
 ### Omnivox Proxy (HTTP mode only)
 
@@ -135,6 +135,6 @@ Tools with delta tracking:
 - **Mixed JS/TS**: Entry point (`index.js`) and security files are JavaScript; MCP layer (tools, schemas, transformers), Express layer (server, routes), and API requests are TypeScript.
 - **All requests via Puppeteer**: POST/JSON uses `makeSkytechRequest()`, downloads use `makePuppeteerDownload()`, page rendering uses `loadPageInFrame()`. No axios or separate HTTP client.
 - **Plugin Discovery**: Both MCP tools and routes are auto-loaded by scanning their directories - no manual registration needed.
-- **Term ID Caching**: `src/common/omnivoxHelper.ts` caches the current term ID for 5 days to avoid redundant API calls. Most tools/routes accept an optional `term_id` parameter, falling back to cached current term.
+- **Term ID Caching**: `src/common/omnivoxHelper.ts` caches the current term ID for 5 days to avoid redundant API calls. Most tools accept an optional `term_id` parameter, falling back to cached current term.
 - **No named functions in `page.evaluate()`**: tsx/esbuild injects `__name()` wrappers on `function` declarations. Always use arrow functions inside `evaluate()`.
 - **Logs on stderr**: All Node.js `console.log` calls have been replaced with `console.warn` so stdout is reserved for MCP protocol messages.
