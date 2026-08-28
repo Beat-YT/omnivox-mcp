@@ -53,7 +53,7 @@ All `term_id` parameters are optional and default to the current academic term.
 | `get-courses-summary` | — | All courses with counts and totals. Returns `course_id` values. Delta tracked. |
 | `get-course-info` | `course_id` | One course — teacher names, course code, group. No grades (use `get-course-evals`). |
 | `get-grades-summary` | — | Marks, class averages, remaining weight across all courses. Delta tracked. |
-| `get-course-evals` | `course_id` | Full eval breakdown — marks, weights, class stats, grade evolution. **Incomplete**: unposted exams won't appear here; reconcile with the syllabus. |
+| `get-course-evals` | `course_id` | Full eval breakdown — marks, weights, class stats, bonus/penalty adjustments, teacher comments. Ungraded evals appear as "not graded yet". **Incomplete**: evals the teacher hasn't entered in Léa won't appear; reconcile with the syllabus. |
 | `get-course-announcements` | `course_id` | Teacher announcements for a course. |
 | `get-absences` | — | Absence records for all courses. Delta tracked. |
 | `get-teachers` | — | All teachers with contact info. Prefer `get-course-people` for per-course. |
@@ -181,7 +181,7 @@ When asked about upcoming exams:
 ### Understanding Grades
 
 `get-grades-summary` gives the big picture — current earned marks, class stats, remaining weight. But to understand what's going on:
-- `get-course-evals` has the full breakdown with individual eval marks, class averages, and grade evolution over time.
+- `get-course-evals` has the full breakdown with individual eval marks, class averages, and teacher comments.
 - An eval with `-` for the mark hasn't been graded yet (or hasn't happened). Cross-reference with the syllabus to know which.
 - "earned/weight" format (e.g. "33.2/50") means 33.2 points earned out of 50% of the final grade evaluated so far. The percentage is `earned / weight * 100`.
 - `status: no_data` means no grades exist for the course yet (e.g. "Encadrement" courses with no evaluations).
