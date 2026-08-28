@@ -25,8 +25,16 @@ export function StartExpressServer() {
     InitializeAccessKey();
 
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
         console.log(`Data directory: ${dataDir}`);
+    });
+    server.on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+            console.error(`\nError: Port ${PORT} is already in use (EADDRINUSE). Is another instance running?\n`);
+        } else {
+            console.error(`Failed to start server: ${err.message}`);
+        }
+        process.exit(1);
     });
 }
