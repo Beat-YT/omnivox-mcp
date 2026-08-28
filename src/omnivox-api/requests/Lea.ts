@@ -7,6 +7,7 @@ import { TravauxListeModel } from "@typings/Lea/TravauxListeModel";
 import { TravauxDetailModel } from "@typings/Lea/TravauxDetailModel";
 import { NotesSommaireModel } from "@typings/Lea/NotesSommaireModel";
 import { NotesDetailWebModel } from "@typings/Lea/NotesDetailWebModel";
+import { NotesDetailModel } from "@typings/Lea/NotesDetailModel";
 import { AbsencesSommaireModel } from "@typings/Lea/AbsencesSommaireModel";
 import { EnseignantsDetailModel } from "@typings/Lea/EnseignantsDetail";
 import { EnseignantsSommaireModel } from "@typings/Lea/EnseignantsSommaire";
@@ -66,6 +67,13 @@ export function GetCommuniquesListeModel(courseId: string, term: string) {
     return makeSkytechRequest<CommuniquesListeModel.ResponseModel>(
         '/Mobl/LeaEtudiant/GetCommuniquesListeModel',
         { AnSession: term, noCours, noGroupe }
+    );
+}
+
+export function GetNotesDetailModel(courseCode: string, groupCode: string, term: string) {
+    return makeSkytechRequest<NotesDetailModel.ResponseModel>(
+        '/Mobl/LeaEtudiant/GetNotesDetailModel',
+        { AnSession: term, noCours: courseCode, noGroupe: groupCode }
     );
 }
 
