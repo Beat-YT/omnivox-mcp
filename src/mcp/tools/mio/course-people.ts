@@ -1,11 +1,12 @@
 import { GetCoursePeople } from "@api/MioWeb";
 import { PeopleSearchResponseSchema } from "@schemas/mio/people.schema";
 import { transformPeopleSearch } from "@transformers/mio/people";
+import { courseIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    course_id: z.string().describe('Course ID (e.g. 2434K5EM.01011) — from get-courses-summary or other tools'),
+    course_id: courseIdSchema,
 });
 
 mcpServer.registerTool('get-course-people',

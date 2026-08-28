@@ -2,11 +2,12 @@ import { GetTravauxDetailModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { assignmentDetailSchema } from "@schemas/courses/assignment-detail";
 import { transformAssignmentDetail } from "@transformers/courses/assignment-detail";
+import { courseIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    course_id: z.string(),
+    course_id: courseIdSchema,
     assignment_id: z.string(),
     term_id: z.string().optional(),
 });

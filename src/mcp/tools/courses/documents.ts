@@ -2,12 +2,13 @@ import { GetDocumentsListeModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { CourseDocument } from "@schemas/courses";
 import { transformDocuments } from "@transformers/courses/document";
+import { courseIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
     term_id: z.string().optional(),
-    course_id: z.string(),
+    course_id: courseIdSchema,
 });
 
 mcpServer.registerTool('get-course-documents',
