@@ -140,7 +140,7 @@ Only after reading the syllabus can you confidently tell the user what's coming 
 - **MIO message IDs are UUIDs**, not numbers.
 - **MIO folder IDs** are string constants like `SEARCH_FOLDER_MioRecu`. Use `get-mio-folders` to discover them.
 - **`course_id` is always required** on document/assignment downloads, even though the document ID seems sufficient.
-- **`~/.omnivox/` is private.** Never expose access keys, cookies, config, or browser profiles.
+- **The data folder is private.** Never expose access keys, cookies, config, or browser profiles.
 
 ---
 

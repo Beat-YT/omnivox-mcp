@@ -4,7 +4,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ${OMNIVOX_DATA_DIR:-~/.omnivox}:/data/omnivox
+      - ${OMNIVOX_DATA_DIR:-./data}:/data/omnivox
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
       interval: 30s

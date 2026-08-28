@@ -24,14 +24,15 @@ npm install
 # 2. Authenticate (first time only)
 cd omnivox-connection
 npm install && npm start
-# Log in through the Electron window, save the data files
+# Log in through the Electron window, save cookies.json + config.json,
+# then place them in the data/ folder at the project root (or your OMNIVOX_DATA_DIR)
 
 # 3. Start the server
 cd ..
 npm start              # Express server on port 3000
 ```
 
-The server starts with MCP-over-HTTP at `/mcp?key=...`, the REST tool gateway, and the proxy. An access key is auto-generated at `~/.omnivox/accessKey.txt` — that's your password to the whole thing, treat it accordingly.
+The server starts with MCP-over-HTTP at `/mcp?key=...`, the REST tool gateway, and the proxy. An access key is auto-generated at `data/accessKey.txt` — that's your password to the whole thing, treat it accordingly.
 
 *(There's also a stdio mode, `npm run start:stdio`, where an MCP client launches the server as a subprocess — deprecated and not recommended.)*
 
@@ -43,7 +44,7 @@ Prefer containers? Authenticate once with the Electron app, then:
 docker compose up -d
 ```
 
-The included [`docker-compose.yml`](docker-compose.yml) mounts `~/.omnivox` into the container, exposes port 3000, sets a session-keeping refresh interval, and wires up a healthcheck. Adjust and go.
+The included [`docker-compose.yml`](docker-compose.yml) mounts your data folder (`OMNIVOX_DATA_DIR`, default `./data`) into the container at `/data/omnivox`, exposes port 3000, sets a session-keeping refresh interval, and wires up a healthcheck. Adjust and go.
 
 ### Re-authentication
 
@@ -52,11 +53,11 @@ If your session expires or you want a different account, reset and log in again:
 ```bash
 npm run reset
 cd omnivox-connection && npm start
-# Log in, wait for the success dialog, then close the window
+# Log in, save the two files, place them back in your data folder
 cd .. && npm start
 ```
 
-`npm run reset` deletes `~/.omnivox/browser/`, `cookies.json`, and `config.json` so the server starts fresh.
+`npm run reset` clears `browser/`, `cookies.json`, `config.json`, and `accessKey.txt` from the data folder so the server starts fresh.
 
 ### Configuration
 
@@ -65,7 +66,7 @@ Set these as environment variables or in a `.env` file at the project root:
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `3000` | Server port |
-| `OMNIVOX_DATA_DIR` | `~/.omnivox` | Data directory for config, cookies, browser profile, and access key |
+| `OMNIVOX_DATA_DIR` | `data/` at the project root | Data directory for config, cookies, browser profile, and access key |
 | `MCP_SERVER_URL` | *(none)* | Optional. Public base URL that enables download link generation (`get-document-link` / `get-assignment-file-link`). Set to your public domain (e.g. `https://omnivox.example.com`). |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. |
 | `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `true`. |
@@ -156,8 +157,8 @@ The short version: this behaves like a browser you left logged in on your own co
 
 ### What's stored, and where
 
-- **Session cookies and browser profile** — `~/.omnivox/` on your disk, same as a logged-in browser. Nothing is sent anywhere else.
-- **Access key** — `~/.omnivox/accessKey.txt`, auto-generated, protects every endpoint the server exposes.
+- **Session cookies and browser profile** — the data folder on your disk (`data/` in the project, gitignored), same as a logged-in browser. Nothing is sent anywhere else.
+- **Access key** — `data/accessKey.txt`, auto-generated, protects every endpoint the server exposes.
 - **No external servers, no telemetry.** Everything runs on your machine or your server; all traffic goes directly between you and Omnivox. The codebase is open — audit it.
 
 ### What the access key can do
@@ -169,9 +170,9 @@ Treat `accessKey.txt` like your Omnivox password. Anyone holding it gets your fu
 
 ### Hardening checklist
 
-- **Don't expose the server to the internet unless you actually need to.** Localhost or LAN is the happy default. If you must go public: TLS via a reverse proxy (e.g. Nginx — [sample config](https://github.com/Beat-YT/omnivox-mcp/wiki/Setup#4-reverse-proxy-with-nginx-recommended)), and consider IP allowlisting.
+- **Don't expose the server to the internet unless you actually need to.** Localhost or LAN is the happy default. If you must go public: TLS via a reverse proxy (e.g. Nginx — [sample config](https://github.com/Beat-YT/omnivox-mcp/wiki/Setup#reverse-proxy-with-nginx-recommended)), and consider IP allowlisting.
 - **In Docker, bind to loopback** unless you're fronting it with a proxy: `"127.0.0.1:3000:3000"` instead of `"3000:3000"`.
-- **Keep `~/.omnivox/` private** — file permissions, disk encryption if it's a laptop.
+- **Keep the data folder private** — it's gitignored already; add file permissions, and disk encryption if it's a laptop.
 - One instance, one account, by design — there is nothing multi-tenant to leak across.
 - More in [Security Precautions](https://github.com/Beat-YT/omnivox-mcp/wiki/Setup#security-precautions).
 

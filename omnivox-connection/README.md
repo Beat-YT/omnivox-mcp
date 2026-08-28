@@ -24,7 +24,7 @@ npm install
 npm start
 ```
 
-A login form is displayed where you enter your Omnivox identifier and date of birth. After authentication, a success page appears with two download buttons. Save both files to `~/.omnivox/` (or your `OMNIVOX_DATA_DIR`) so the MCP server can pick them up.
+A login form is displayed where you enter your Omnivox identifier and date of birth. After authentication, a success page appears with two download buttons. Save both files into the server's data folder — the `data/` folder at the project root, or your `OMNIVOX_DATA_DIR` — so the MCP server can pick them up.
 
 ## Output files
 

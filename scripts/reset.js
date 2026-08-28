@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import { fileURLToPath } from 'url';
 
-const dataDir = process.env.OMNIVOX_DATA_DIR || path.join(os.homedir(), '.omnivox');
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const dataDir = process.env.OMNIVOX_DATA_DIR || path.join(projectRoot, 'data');
 const electronDataDir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'omnivox-connection');
 
 const targets = ['browser', 'cookies.json', 'config.json', 'accessKey.txt'];

@@ -17,7 +17,8 @@
 # Responses include tool names, descriptions, and input schemas.
 
 SERVER="http://127.0.0.1:3000"
-AUTH_HEADER="x-mcp-auth: $(cat ~/.omnivox/accessKey.txt 2>/dev/null)"
+DATA_DIR="${OMNIVOX_DATA_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/data}"
+AUTH_HEADER="x-mcp-auth: $(cat "$DATA_DIR/accessKey.txt" 2>/dev/null)"
 
 if [ -z "$1" ]; then
     echo "Usage: omnivox <tool-name> [json-params]"

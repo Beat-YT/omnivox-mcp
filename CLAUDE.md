@@ -85,10 +85,10 @@ All endpoints require the `x-mcp-auth` header. This is implemented in `src/expre
 
 ### Authentication
 
-- **Access Key** (HTTP mode only): All REST routes (except token-validated download routes) require `x-mcp-auth` header. MCP endpoint requires `key` query parameter. Auto-generated 32-byte hex key stored in `~/.omnivox/accessKey.txt`. Not used in stdio mode — the MCP client manages access.
+- **Access Key** (HTTP mode only): All REST routes (except token-validated download routes) require `x-mcp-auth` header. MCP endpoint requires `key` query parameter. Auto-generated 32-byte hex key stored in `<data dir>/accessKey.txt`. Not used in stdio mode — the MCP client manages access.
 - **Challenge-Response**: Handled automatically by Puppeteer — Omnivox's own JS (`Skytech.Commun.Utils.HttpRequestWorker.PostJSON`) manages the `x-ke` challenge internally.
 - **Web Tokens** (HTTP mode only): Time-limited tokens (15 min) for document/assignment file downloads without requiring the access key. Used by `get-document-link` and `get-assignment-file-link` tools.
-- **Persistent Browser Profile**: Chrome profile at `~/.omnivox/browser/` persists across restarts. Cookies are imported from the Electron auth app on first launch.
+- **Persistent Browser Profile**: Chrome profile at `<data dir>/browser/` persists across restarts. Cookies are imported from the Electron auth app's exported files on first launch.
 
 ### Puppeteer Module (`src/omnivox-api/puppet/`)
 
@@ -101,9 +101,9 @@ Runs a Puppeteer browser logged into Omnivox. All requests go through this brows
 
 ### Electron Auth App (`omnivox-connection/`)
 
-Separate Electron app that authenticates with Omnivox, captures session cookies, and exports them for the MCP server to use. Writes to both `~/.omnivox/` (same-machine) and cwd (cross-machine transfer). Also deletes `~/.omnivox/browser/` on launch to force fresh cookie import. Not part of the main server runtime.
+Separate Electron app that authenticates with Omnivox, captures session cookies, and offers `cookies.json` + `config.json` for download via save dialogs — nothing is written to the data folder automatically; the user places the files there. Not part of the main server runtime.
 
-### Runtime Data (`~/.omnivox/` — override with `OMNIVOX_DATA_DIR` env var)
+### Runtime Data (`data/` at the project root — override with `OMNIVOX_DATA_DIR` env var)
 
 - `browser/` - Persistent Chrome profile (session cookies live here after first import)
 - `cookies.json` - Session cookies exported by the Electron auth app
