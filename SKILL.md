@@ -11,8 +11,7 @@ Access Quebec college student portals (Omnivox/Lea) — courses, grades, schedul
 One instance = one student account. All data stays local.
 
 **Repository:** https://github.com/Beat-YT/omnivox-mcp
-**Setup guide:** See `AGENT_SETUP.md` in the repository root.
-**Heartbeat guide:** See `HEARTBEAT.md` for periodic check behavior.
+**Setup guide:** See `README.md` in the repository root and the github wiki for installation and configuration instructions.
 
 ---
 
