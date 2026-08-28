@@ -24,7 +24,7 @@ async function createWindow() {
 
     ses.webRequest.onBeforeRequest((details, callback) => {
         const lowerUrl = details.url.toLowerCase();
-        if (lowerUrl.includes("savelogjs") || lowerUrl.includes("omnigarder")) {
+        if (lowerUrl.includes("savelogjs") || lowerUrl.includes("omnigarder") || lowerUrl.includes("analytics")) {
             callback({ cancel: true });
             return;
         }

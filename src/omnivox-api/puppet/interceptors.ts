@@ -7,7 +7,7 @@ export async function setupPageInterceptors(page: Page) {
     page.on("request", req => {
         const requestUrl = req.url();
         const lowerUrl = requestUrl.toLowerCase();
-        if (lowerUrl.includes("savelogjs") || lowerUrl.includes("omnigarder")) {
+        if (lowerUrl.includes("savelogjs") || lowerUrl.includes("omnigarder") || lowerUrl.includes("analytics")) {
             req.respond({
                 status: 200,
                 contentType: "application/json; charset=utf-8",
