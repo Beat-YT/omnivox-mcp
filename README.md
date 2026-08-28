@@ -38,13 +38,15 @@ The server starts with MCP-over-HTTP at `/mcp?key=...`, the REST tool gateway, a
 
 ### Docker
 
-Prefer containers? Authenticate once with the Electron app, then:
+Prefer containers? Authenticate once with the Electron app, then copy the example compose file and set your data folder path:
 
 ```bash
+cp docker-compose.example.yml docker-compose.yml
+# Edit docker-compose.yml — replace /path/to/config/folder with your data folder
 docker compose up -d
 ```
 
-The included [`docker-compose.yml`](docker-compose.yml) mounts your data folder (`OMNIVOX_DATA_DIR`, default `./data`) into the container at `/data/omnivox`, exposes port 3000, sets a session-keeping refresh interval, and wires up a healthcheck. Adjust and go.
+The included [`docker-compose.example.yml`](docker-compose.example.yml) mounts your data folder into the container at `/data/omnivox`, exposes port 3000, sets a session-keeping refresh interval, and wires up a healthcheck. Your customized `docker-compose.yml` is gitignored.
 
 ### Re-authentication
 

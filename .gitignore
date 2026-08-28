@@ -135,6 +135,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 /data
+docker-compose.yml
 /.claude
 omnivox-connection/cookies.json
 omnivox-connection/config.json
