@@ -1,6 +1,7 @@
 import { GetMioAttachment } from "@api/Mio";
 import { mcpServer } from "src/mcp/server";
 import { isHttpMode } from "@common/transportMode";
+import { messageIdSchema } from "@common/validation";
 import { createWebToken } from "src/security/omniWebToken";
 import { dataDir } from "@common/dataDir";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 const input = z.object({
-    message_id: z.string().describe('The MIO message ID'),
+    message_id: messageIdSchema.describe('The MIO message ID'),
     attachment_id: z.string().describe('The attachment ID (IDFichierAttachement from read-mio-message)'),
 });
 

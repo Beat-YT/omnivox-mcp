@@ -1,9 +1,10 @@
 import { CategoriseMessage } from "@api/Mio";
+import { messageIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    message_id: z.string().describe('The MIO message ID'),
+    message_id: messageIdSchema.describe('The MIO message ID'),
     folder_id: z.string().describe('Target folder ID to move the message into'),
 });
 

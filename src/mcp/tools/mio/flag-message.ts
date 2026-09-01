@@ -1,9 +1,10 @@
 import { SetIndicateursMessage } from "@api/Mio";
+import { messageIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    message_id: z.string().describe('The MIO message ID'),
+    message_id: messageIdSchema.describe('The MIO message ID'),
     important: z.boolean().describe('Whether to flag the message as important'),
     mark_unread: z.boolean().describe('Whether to mark the message as unread (à relire)'),
 });

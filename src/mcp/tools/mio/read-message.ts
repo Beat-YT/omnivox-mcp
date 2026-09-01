@@ -1,13 +1,14 @@
 import { GetLatestMessages, GetMessages, SetMessageLu } from "@api/Mio";
+import { messageIdSchema } from "@common/validation";
 import { messageDetailToText } from "@transformers/mio/messages";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    message_id: z.string().describe('The MIO message ID to read'),
+    message_id: messageIdSchema.describe('The MIO message ID to read'),
     folder_id: z.string().optional().describe('Folder ID to search in (defaults to inbox: SEARCH_FOLDER_MioRecu)'),
     mark_read: z.boolean().optional().describe('Mark the message as read (sends a read receipt to the sender). Defaults to false.'),
-    last_id: z.string().optional().describe('(optional) The ID of the current pagination cursor, if applicable.'),
+    last_id: messageIdSchema.optional().describe('(optional) The ID of the current pagination cursor, if applicable.'),
 });
 
 mcpServer.registerTool('read-mio-message',

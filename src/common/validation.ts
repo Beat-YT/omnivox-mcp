@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+export const messageIdSchema = z.string().uuid({
+    message: "message_id must be a valid UUID v4 (e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'). Use get-mio-messages to find message IDs.",
+});
+
 export const recipientIdSchema = z.string().uuid({
     message: "recipient_id must be a valid UUID v4 (e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'). Use search-people or get-course-people to find recipient IDs.",
 });
