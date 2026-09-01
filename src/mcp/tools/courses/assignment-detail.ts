@@ -17,7 +17,6 @@ mcpServer.registerTool('get-assignment-detail',
         title: 'Get Assignment Detail',
         description: 'Retrieve detailed information about a specific assignment, including instructions, submissions, and corrections.',
         inputSchema: input,
-        outputSchema: assignmentDetailSchema.nullable(),
         annotations: {
             readOnlyHint: true,
             destructiveHint: false,
