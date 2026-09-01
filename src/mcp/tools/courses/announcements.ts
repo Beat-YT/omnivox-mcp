@@ -2,13 +2,13 @@ import { GetCommuniquesListeModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { AnnouncementItem } from "@schemas/courses/announcements";
 import { transformAnnouncements } from "@transformers/courses/announcements";
-import { courseIdSchema } from "@common/validation";
+import { courseIdSchema, termIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
     course_id: courseIdSchema,
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-course-announcements',

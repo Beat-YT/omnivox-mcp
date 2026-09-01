@@ -4,7 +4,7 @@ import { mcpServer } from "src/mcp/server";
 import { isHttpMode } from "@common/transportMode";
 import { createWebToken } from "src/security/omniWebToken";
 import { dataDir } from "@common/dataDir";
-import { courseIdSchema } from "@common/validation";
+import { courseIdSchema, termIdSchema } from "@common/validation";
 import { z } from "zod";
 import * as fs from "fs";
 import * as path from "path";
@@ -12,7 +12,7 @@ import * as path from "path";
 const input = z.object({
     course_id: courseIdSchema,
     document_id: z.string(),
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-document-link',

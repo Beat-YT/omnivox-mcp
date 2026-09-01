@@ -3,11 +3,12 @@ import { computeDelta, flattenSnapshot, itemDeltaText } from "@common/deltaTrack
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { AssignmentCourseSummaryItem } from "@schemas/courses/assignments-summary";
 import { transformAssignmentsSummary } from "@transformers/courses/assignments-summary";
+import { termIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-assignments-summary',

@@ -2,11 +2,12 @@ import { GetHoraireModel } from "@api/Horaire";
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { ScheduleItem } from "@schemas/schedule.schema";
 import { transformHoraireToSchedule } from "@transformers/schedule";
+import { termIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-schedule',

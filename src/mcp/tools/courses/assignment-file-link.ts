@@ -4,7 +4,7 @@ import { mcpServer } from "src/mcp/server";
 import { isHttpMode } from "@common/transportMode";
 import { createWebToken } from "src/security/omniWebToken";
 import { dataDir } from "@common/dataDir";
-import { courseIdSchema } from "@common/validation";
+import { courseIdSchema, termIdSchema } from "@common/validation";
 import { z } from "zod";
 import * as fs from "fs";
 import * as path from "path";
@@ -14,7 +14,7 @@ const input = z.object({
     assignment_id: z.string(),
     file_id: z.string(),
     role: z.enum(['teacher_document', 'submission', 'correction']),
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-assignment-file-link',

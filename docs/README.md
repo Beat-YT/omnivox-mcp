@@ -6,7 +6,7 @@ All endpoints are POST with JSON body unless noted. A `?nocache=<timestamp>` que
 
 ## AnSession
 
-`AnSession` (or `anSession`) is the academic term identifier. Format: `YYYYT` where T is 1 (winter), 2 (summer), 3 (fall). Example: `"20263"` = Fall 2026.
+`AnSession` (or `anSession`) is the academic term identifier. Format: `YYYYN` — 4-digit year + single-digit cycle number. The cycle numbers are institution-specific (some colleges use 1-2-3, others have more cycles). Example: `"20263"`. Use `AnSessionDisponible` from API responses to discover valid values.
 
 Most endpoints accept it as a body parameter. Some endpoints (like `LeaCommun/GetDefaultModel`) will default to the current term when given an empty string, but many endpoints require it explicitly — passing null or omitting it will fail or return empty data. Available terms are returned in `AnSessionDisponible` on most responses.
 

@@ -2,11 +2,12 @@ import { GetEnseignantsSommaireModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { teachersSummarySchema } from "@schemas/courses/teachers";
 import { transformTeachers } from "@transformers/courses/teachers";
+import { termIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-teachers',

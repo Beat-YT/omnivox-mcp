@@ -3,11 +3,12 @@ import { computeDelta, flattenSnapshot, itemDeltaText } from "@common/deltaTrack
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { CourseAbsence } from "@schemas/courses/absences";
 import { transformLeaAbsences } from "@transformers/courses/absences";
+import { termIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-absences',

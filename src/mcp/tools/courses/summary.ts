@@ -2,11 +2,12 @@ import { GetDefaultModel } from "@api/Lea";
 import { computeDelta, flattenSnapshot, itemDeltaText } from "@common/deltaTracker";
 import { CourseItem } from "@schemas/courses";
 import { transformCoursesSummary } from "@transformers/courses/summary";
+import { termIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-courses-summary',

@@ -18,11 +18,12 @@ import {
     CourseNewCounts,
     transformNotifications,
 } from "@transformers/overview";
+import { termIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    term_id: z.string().optional(),
+    term_id: termIdSchema.optional(),
 });
 
 mcpServer.registerTool('get-overview',
