@@ -1,9 +1,10 @@
 import { SendMessage } from "@api/Mio";
+import { recipientIdSchema } from "@common/validation";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
-    recipient_id: z.union([z.string(), z.array(z.string())]).describe('Recipient ID(s) — use search-people to find them. Pass a single ID or an array of IDs to send to multiple people.'),
+    recipient_id: z.union([recipientIdSchema, z.array(recipientIdSchema)]).describe('Recipient ID(s) — use search-people to find them. Pass a single ID or an array of IDs to send to multiple people.'),
     subject: z.string().describe('Message subject line'),
     message: z.string().describe('Message body (plain text)'),
     hide_recipients: z.boolean().optional().default(false).describe('Hide recipients from each other (like BCC)'),
