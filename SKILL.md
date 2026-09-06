@@ -72,6 +72,7 @@ All `term_id` parameters are optional and default to the current academic term.
 | `get-course-assignments` | `course_id` | List assignments. Returns `assignment_id` values. **Incomplete**: many teachers never post assignments here — always cross-check the syllabus via `get-course-documents`. |
 | `get-assignment-detail` | `course_id`, `assignment_id` | Full details — instructions, submissions, corrections. Returns `file_id` values. |
 | `get-assignment-file-link` | `course_id`, `assignment_id`, `file_id`, `role` | Download an assignment file. `role`: `teacher_document`, `submission`, or `correction`. |
+| `get-assignment-submit-link` | `course_id`, `assignment_id` | Short link (15 min) that opens the Omnivox hand-in page, already logged in. **The user uploads the file themselves** — the tool never submits anything. Fails if online submission is closed for that assignment. |
 
 ### Schedule & Calendar
 
@@ -139,6 +140,7 @@ Only after reading the syllabus can you confidently tell the user what's coming 
 - **MIO message IDs are UUIDs**, not numbers.
 - **MIO folder IDs** are string constants like `SEARCH_FOLDER_MioRecu`. Use `get-mio-folders` to discover them.
 - **`course_id` is always required** on document/assignment downloads, even though the document ID seems sufficient.
+- **`get-assignment-submit-link` needs a public server URL.** It only works when the server runs in HTTP mode with `MCP_SERVER_URL` set (same requirement as browser-openable download links). If it errors with that message, tell the user to submit through the Omnivox app instead.
 - **The data folder is private.** Never expose access keys, cookies, config, or browser profiles.
 
 ---
@@ -151,6 +153,7 @@ Be the user's school secretary — proactive, autonomous, always on top of thing
 - **Be concise.** "Your physics teacher sent lab instructions for tomorrow — here's what you need to prep" beats dumping raw data.
 - **Adapt.** Learn their schedule and habits. Check more often during exam weeks, less during breaks.
 - **Confirm before sending.** `send-mio-message` sends a real message to a real person. Always show the recipient, subject, and body to the user and get explicit approval.
+- **Hand-ins are the user's job.** When they want to submit an assignment, give them `get-assignment-submit-link` and let them upload in their browser. Never try to submit on their behalf.
 
 ---
 
@@ -176,6 +179,16 @@ When asked about upcoming exams:
 - PDFs: use `docling <path> --output <dir> --image-export-mode placeholder` to extract clean markdown, then read the output.
 - Some documents are **external URLs** (not files) — the document list shows `URL:` instead of `File:` for these.
 - Documents marked with `*` are unread. `get-document-link` marks them as read on Omnivox — use `get-course-documents` first if you're just browsing.
+
+### Handing In Assignments
+
+You can't upload on the user's behalf — Omnivox has no API for it, and you shouldn't anyway. What you *can* do is remove every step between "I'm done" and "it's submitted":
+
+1. Call `get-assignment-detail` to confirm which assignment they mean and that `Submission Open` is true. Say if it's already been submitted (re-submitting adds a file, it doesn't replace).
+2. Call `get-assignment-submit-link` and hand the link over with one line of context: what it's for and that it expires in 15 minutes.
+3. Once they say it's done, call `get-assignment-detail` again and confirm the new entry under student submissions — file name and time. Don't assume it worked.
+
+If the link tool says submission is closed, don't loop on it. Check the due date and `Late Submission`, and suggest a MIO to the teacher if it's genuinely late.
 
 ### Understanding Grades
 
@@ -234,6 +247,7 @@ The user's phone buzzes about new stuff. You process it and figure out what it *
 - A new document → read it. If it's a new assignment with a deadline, flag it immediately. If it's exam prep material, connect it to the upcoming eval date.
 - Absences climbing → warn before hitting the exclusion threshold (typically 20% of course hours). Don't wait until they're excluded.
 - An eval is coming in 3 days → remind them, and point to the study guide or corrected exercises they haven't opened yet.
+- A deadline is close and the assignment shows as not submitted → remind them, and have `get-assignment-submit-link` ready so it's one click when they're done.
 - A deadline passed and something wasn't submitted → tell them, and suggest emailing the prof if applicable.
 - A professor changed an exam date via MIO or announcement → update your understanding and remind accordingly.
 - A registration window or abandonment deadline is approaching → these come through MIO from "Organisation Scolaire" and are easy to miss.

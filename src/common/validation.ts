@@ -14,6 +14,14 @@ export const recipientIdSchema = z.uuid({
     message: "recipient_id must be a valid UUID v4 (e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'). Use search-people or get-course-people to find recipient IDs.",
 });
 
+export const assignmentIdSchema = z.uuid({
+    message: "assignment_id must be a valid UUID (e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'). Use get-course-assignments to find assignment IDs.",
+}).describe("Assignment ID (UUID) from get-course-assignments.");
+
+export const assignmentFileIdSchema = z.uuid({
+    message: "file_id must be a valid UUID (e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'). Use get-assignment-detail to find file IDs.",
+}).describe("Assignment file ID (UUID) from get-assignment-detail — a teacher document, student submission, or corrected copy.");
+
 export const courseIdSchema = z.string().refine(
     (val) => val.includes("."),
     {

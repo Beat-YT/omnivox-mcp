@@ -15,7 +15,7 @@ export function extractProvidedKey(req) {
 }
 
 export function ValidateAccessKey(req, res, next) {
-    if (req.path === '/download/document' || req.path === '/download/assignment-file' || req.path === '/openapi.json' || req.path === '/health') {
+    if (req.path === '/download/document' || req.path === '/download/assignment-file' || req.path === '/link/assignment-submit' || req.path === '/openapi.json' || req.path === '/health') {
         return next()
     }
 

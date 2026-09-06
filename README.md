@@ -6,7 +6,7 @@ This started life as an [MCP](https://modelcontextprotocol.io/) server and grew 
 
 Under the hood it runs a persistent Puppeteer browser logged into your Omnivox session, executing requests through the site's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively by Omnivox's own code. On top of that browser it offers four things:
 
-- **An MCP server** — 33 tools covering courses, grades (down to individual evaluations), schedule, calendar, MIO messaging, documents, assignments, and college news.
+- **An MCP server** — 34 tools covering courses, grades (down to individual evaluations), schedule, calendar, MIO messaging, documents, assignments, and college news.
 - **A REST tool gateway** — every MCP tool doubled as a plain HTTP endpoint, with a live catalog at `GET /tools` and a full OpenAPI 3.1 spec at `GET /openapi.json`. Virtually any assistant or agent framework that supports JSON-described tools can use it, MCP support or not. It's also just a nice API for your own projects.
 - **A raw Omnivox proxy** — `/Mobl/*` passes any request straight through the authenticated session, for endpoints no tool wraps yet.
 - **A research effort** — the mobile API this all sits on is undocumented, so we document it ourselves as we reverse-engineer it. The growing field notes live in [`docs/`](docs/README.md).
@@ -77,7 +77,7 @@ Set these as environment variables or in a `.env` file at the project root:
 
 ### With an MCP assistant
 
-Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport. That's it — the assistant gets all 33 tools and you can ask about grades, schedules, assignments, or messages in natural language. See `AGENT_SETUP.md` for client configs.
+Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport. That's it — the assistant gets all 34 tools and you can ask about grades, schedules, assignments, or messages in natural language. See `AGENT_SETUP.md` for client configs.
 
 ### With any other assistant (REST tool gateway)
 

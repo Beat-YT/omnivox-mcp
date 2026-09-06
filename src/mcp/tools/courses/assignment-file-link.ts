@@ -4,15 +4,15 @@ import { mcpServer } from "src/mcp/server";
 import { isHttpMode } from "@common/transportMode";
 import { createWebToken } from "src/security/omniWebToken";
 import { dataDir } from "@common/dataDir";
-import { courseIdSchema, termIdSchema } from "@common/validation";
+import { assignmentFileIdSchema, assignmentIdSchema, courseIdSchema, termIdSchema } from "@common/validation";
 import { z } from "zod";
 import * as fs from "fs";
 import * as path from "path";
 
 const input = z.object({
     course_id: courseIdSchema,
-    assignment_id: z.string(),
-    file_id: z.string(),
+    assignment_id: assignmentIdSchema,
+    file_id: assignmentFileIdSchema,
     role: z.enum(['teacher_document', 'submission', 'correction']),
     term_id: termIdSchema.optional(),
 });
