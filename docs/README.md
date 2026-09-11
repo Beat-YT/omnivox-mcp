@@ -8,7 +8,7 @@ All endpoints are POST with JSON body unless noted. A `?nocache=<timestamp>` que
 
 `AnSession` (or `anSession`) is the academic term identifier. Format: `YYYYN` — 4-digit year + single-digit cycle number. The cycle numbers are institution-specific (some colleges use 1-2-3, others have more cycles). Example: `"20263"`. Use `AnSessionDisponible` from API responses to discover valid values.
 
-Most endpoints accept it as a body parameter. Some endpoints (like `LeaCommun/GetDefaultModel`) will default to the current term when given an empty string, but many endpoints require it explicitly — passing null or omitting it will fail or return empty data. Available terms are returned in `AnSessionDisponible` on most responses.
+Most endpoints accept it as a body parameter. Some endpoints (like `LeaCommun/GetDefaultModel`) defaults to the current term when passed an empty string, but many endpoints require it explicitly (passing null or omitting returns empty data). Available terms are returned in `AnSessionDisponible` on most Lea responses.
 
 ## Common response envelope
 
@@ -24,8 +24,6 @@ IsAvailable           boolean
 ```
 
 ## Modules
-
-One file per `/Mobl/{Module}/` controller. LÉA (`LeaCommun` + `LeaEtudiant`) is kept in one file — both are the CVIE service.
 
 - [App](mobl/App.md) - initialization, notifications, service manifest, interceptions
 - [Lea](mobl/Lea.md) - LÉA course management (`LeaCommun` + `LeaEtudiant`): documents, assignments, grades, absences, teachers, announcements
