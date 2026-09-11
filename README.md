@@ -4,7 +4,7 @@ Your own personal bridge to Omnivox — the Quebec college student portal — fo
 
 This started life as an [MCP](https://modelcontextprotocol.io/) server and grew into something broader: a self-hosted toolbox that logs into Omnivox once and then lets *anything* talk to it — Claude over MCP, any assistant that can call plain HTTP tools, your own scripts, or you with `curl` at 2am wondering if a grade got posted.
 
-Under the hood it runs a persistent Puppeteer browser logged into your Omnivox session, executing requests through the site's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively by Omnivox's own code. On top of that browser it offers four things:
+Under the hood it runs a persistent Puppeteer browser logged into your Omnivox session (for JS challenges and cookies handling), executing requests through the site's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively by Omnivox's own code. On top of that browser it offers four things:
 
 - **An MCP server** — 34 tools covering courses, grades (down to individual evaluations), schedule, calendar, MIO messaging, documents, assignments, and college news.
 - **A REST tool gateway** — every MCP tool doubled as a plain HTTP endpoint, with a live catalog at `GET /tools` and a full OpenAPI 3.1 spec at `GET /openapi.json`. Virtually any assistant or agent framework that supports JSON-described tools can use it, MCP support or not. It's also just a nice API for your own projects.
@@ -12,6 +12,7 @@ Under the hood it runs a persistent Puppeteer browser logged into your Omnivox s
 - **A research effort** — the mobile API this all sits on is undocumented, so we document it ourselves as we reverse-engineer it. The growing field notes live in [`docs/`](docs/README.md).
 
 Everything runs on your machine (or your server, or a container). One instance = one Omnivox account.
+
 
 ## Quick start
 
@@ -21,11 +22,11 @@ git clone https://github.com/Beat-YT/omnivox-mcp.git
 cd omnivox-mcp
 npm install
 
-# 2. Authenticate (first time only)
+# 2. Authenticate on a desktop with UI (first time only)
 cd omnivox-connection
 npm install && npm start
 # Log in through the Electron window, save cookies.json + config.json,
-# then place them in the data/ folder at the project root (or your OMNIVOX_DATA_DIR)
+# then place them in a folder named data/ at the project root (or your OMNIVOX_DATA_DIR)
 
 # 3. Start the server
 cd ..
@@ -71,13 +72,13 @@ Set these as environment variables or in a `.env` file at the project root:
 | `OMNIVOX_DATA_DIR` | `data/` at the project root | Data directory for config, cookies, browser profile, and access key |
 | `MCP_SERVER_URL` | *(none)* | Optional. Public base URL that enables download link generation (`get-document-link` / `get-assignment-file-link`). Set to your public domain (e.g. `https://omnivox.example.com`). |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. |
-| `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `true`. |
+| `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `truea`. |
 
 ## Using it
 
 ### With an MCP assistant
 
-Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport. That's it — the assistant gets all 34 tools and you can ask about grades, schedules, assignments, or messages in natural language. See `AGENT_SETUP.md` for client configs.
+Connect your MCP client to `http://localhost:3000/mcp?key=YOUR_KEY` via Streamable HTTP transport. That's it — the assistant gets all 34 tools and you can ask about grades, schedules, assignments, or messages in natural language.
 
 ### With any other assistant (REST tool gateway)
 
@@ -125,7 +126,7 @@ The gateway isn't just for AI — it's a full Omnivox API for anything that spea
 - **Mobile app** — a custom Omnivox client with just the features you care about
 - **Data export** — archive your grades, documents, and messages
 
-Python, JavaScript, Swift, Kotlin, Go — whatever you like. Start from `GET /tools`.
+Python, JavaScript, Swift, Kotlin, Go — whatever you like. Start from our [`docs`](docs/).
 
 ## The research corner
 
