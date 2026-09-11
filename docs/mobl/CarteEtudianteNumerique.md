@@ -1,17 +1,5 @@
 # CarteEtudianteNumerique (Digital Student Card)
 
-## POST /Mobl/CarteEtudianteNumerique/EnvoiStatistique
-
-Logs a digital student card view event.
-
-**Body:**
-```
-typeAffichage    string     "autre" (before load), "valide" (after validation)
-```
-
-**Response:** `true`
-
----
 
 ## POST /Mobl/CarteEtudianteNumerique/GetDefaultModel
 
@@ -47,3 +35,16 @@ dateHeureExpiration     number
 ```
 
 **Response:** `image/jpeg`
+
+---
+
+## POST /Mobl/CarteEtudianteNumerique/EnvoiStatistique
+
+Logs a digital student card view event.
+
+**Body:**
+```
+typeAffichage    string     "autre" (before load), "valide" (after validation)
+```
+
+**Response:** `true`
