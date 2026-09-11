@@ -2,17 +2,18 @@
 
 # Omnivox MCP
 
-This started life as an [MCP](https://modelcontextprotocol.io/) server and grew into something broader: a self-hosted toolbox that logs into Omnivox once and then lets *anything* talk to it — Claude over MCP, any assistant that can call plain HTTP tools, your own scripts, or you with `curl` at 2am wondering if a grade got posted.
+A self-hosted toolbox that logs into Omnivox once and lets anything talk to it — Claude over MCP, any assistant that can call plain HTTP tools, or your own scripts.
 
-Under the hood it runs a persistent Puppeteer browser logged into your Omnivox session (for JS challenges and cookies handling), executing requests through the site's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively by Omnivox's own code. On top of that browser it offers four things:
+Under the hood it runs a persistent Puppeteer browser logged into your Omnivox session, executing requests through the site's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively.
 
-- **An MCP server** — 34 tools covering courses, grades (down to individual evaluations), schedule, calendar, MIO messaging, documents, assignments, and college news.
-- **A REST tool gateway** — every MCP tool doubled as a plain HTTP endpoint, with a live catalog at `GET /tools` and a full OpenAPI 3.1 spec at `GET /openapi.json`. Virtually any assistant or agent framework that supports JSON-described tools can use it, MCP support or not. It's also just a nice API for your own projects.
-- **A raw Omnivox proxy** — `/Mobl/*` passes any request straight through the authenticated session, for endpoints no tool wraps yet.
-- **A research effort** — the mobile API this all sits on is undocumented, so we document it ourselves as we reverse-engineer it. The growing field notes live in [`docs/`](docs/README.md).
+### Core Features
+
+- **An MCP server**: 34 tools covering all of LEA, MIO messaging, schedule, calendar, documents, assignments, and college news.
+- **An OpenAPI tools gateway**: every MCP tool doubled as a plain HTTP endpoint, with a live catalog and a full OpenAPI 3.1 spec at `GET /openapi.json`. Virtually any assistant or agent framework that supports JSON-described tools can use it.
+- **A raw Omnivox proxy**: `/Mobl/*` passes any request straight through the authenticated session, for direct access to JSON Data from omnivox directly.
+- **A research effort**: the mobile API this all sits on is undocumented, so we document it ourselves as we reverse-engineer it. The growing field notes live in [`docs/`](docs/README.md).
 
 Everything runs on your machine (or your server, or a container). One instance = one Omnivox account.
-
 
 ## Quick start
 
