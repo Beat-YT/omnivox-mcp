@@ -96,7 +96,7 @@ Runs a Puppeteer browser logged into Omnivox. All requests go through this brows
 
 - **`index.ts`**: Exports `InitializePuppet()`, `waitForReady()`, `makeSkytechRequest<T>(url, data)`, `makePuppeteerDownload(url)`, and `loadPageInFrame(url)`. The browser instance is stored at module scope.
 - **`interceptors.ts`**: Blocks noisy requests (SaveLogJS, Omnigarder) and handles download request header overrides (strips `X-Ovx-Download`, injects navigation headers).
-- **`ovxInjection.js`**: Injects `OvxNatif` bridge so Omnivox's JS thinks it's running inside the native iOS app.
+- **`ovxInjection.js`**: Injects `OvxNatif` bridge so Omnivox's JS thinks it's running inside the native app.
 - **`userAgent.js`**: Builds the OVX user-agent string with device ID and auth code.
 
 ### Electron Auth App (`omnivox-connection/`)

@@ -135,6 +135,7 @@ Omnivox's mobile API has no public documentation, so this repo doubles as a fiel
 
 - **Per-module endpoint docs** — request bodies and response shapes for every `/Mobl/` controller we've charted, from LÉA grades to MIO messaging.
 - **[The service manifest](docs/services.md)** — how `GetOffreService` describes the modules the app is assembled from, what the flags actually mean, and how its change-detection hash is built.
+- **[The native bridge](docs/native-bridge.md)** — how the mobile pages talk to the host app through `ComNatifOvx.js`: per-platform transports, the command/callback convention, and why it stays backward compatible with old app versions.
 - **Conventions** — the ×100 fixed-point grade encoding, int-sentinel "no value" markers, term ID format, the common response envelope.
 
 Some of it was found by reading the app's bundle, some by probing live endpoints — including a few natively-served endpoints the official app doesn't even use anymore (that's how per-evaluation grades work here without HTML scraping). If you chart new territory, contributions are warmly welcome.
