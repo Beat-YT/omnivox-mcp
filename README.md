@@ -1,6 +1,6 @@
-# Omnivox MCP
+<img width="1800" height="600" alt="omnivox-mcp-banner" src="https://github.com/user-attachments/assets/60e7b206-6b04-4e0b-98f8-251153b3f545" />
 
-Your own personal bridge to Omnivox — the Quebec college student portal — for AI assistants, side projects, and curious tinkerers.
+# Omnivox MCP
 
 This started life as an [MCP](https://modelcontextprotocol.io/) server and grew into something broader: a self-hosted toolbox that logs into Omnivox once and then lets *anything* talk to it — Claude over MCP, any assistant that can call plain HTTP tools, your own scripts, or you with `curl` at 2am wondering if a grade got posted.
 
