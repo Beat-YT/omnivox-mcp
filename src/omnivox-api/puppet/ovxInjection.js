@@ -6,41 +6,46 @@ import { isLogMode } from "../../common/transportMode";
 import { device } from "@common/constants";
 import { staticResponses, nullCallbackCommands, silentCommands } from "@common/nativeCommands";
 
+/*
+ * Fakes the Android side of the Omnivox WebView <-> native bridge (ComNatifOvx.js)
+ * so the mobile pages boot inside headless Puppeteer. Bare minimum only: nothing
+ * interacts with the fake app, we just need Skytech.Commun.Utils.HttpRequestWorker.PostJSON
+ * to become usable. See docs/native-bridge.md.
+ */
+
 /**
  *
  * @param {Page} page
  */
 export async function setupPageInjection(page) {
-    const token = crypto.randomBytes(32).toString('base64');
+    const token = crypto.randomBytes(16).toString('hex');
 
     // In-memory stores for native command emulation
     const kvStore = new Map();
     let themeStore = null;
 
-    page.on('console', (msg) => {
-        if (msg.type() !== 'debug') return;
-        const text = msg.text();
-        if (!text.startsWith(token)) return;
-
-        const { command, args } = JSON.parse(text.slice(token.length));
+    await page.exposeFunction(token, (command, args) => {
         if (isLogMode()) console.warn("[OVX COMMAND]", `${command} called with:`, args);
 
         const callbackName = `${command}CallBack`;
-        const callback = (data) => {
-            if (isLogMode()) console.warn("[OVX COMMAND]", `Executing callback ${callbackName} with data:`, data);
-            page.evaluate((_command, _data) => {
-                Ovx.ExecuteCallback(_command, _data);
-            }, callbackName, data);
+        const callback = (cb_data) => {
+            if (isLogMode()) console.warn("[OVX COMMAND]", `Executing callback ${callbackName} with data:`, cb_data);
+
+            page.evaluate((_cbName, _cb_data) => {
+                Ovx.ExecuteCallback(_cbName, _cb_data);
+            }, callbackName, cb_data);
         };
 
         handleCommand(command, args, callback);
     });
 
     await page.evaluateOnNewDocument((t, platform) => {
+        const bridge = window[t];
+
         Object.defineProperty(navigator, 'webdriver', { get: () => false });
         Object.defineProperty(navigator, 'platform', { get: () => platform });
-
-        const _debug = console.debug.bind(console);
+        Object.defineProperty(window, t, { value: bridge, enumerable: false, writable: false, configurable: false });
+        Object.defineProperty(window, `puppeteer_${t}`, { value: window[`puppeteer_${t}`], enumerable: false, writable: false, configurable: false });
 
         // Sync commands return a JSON string directly (like real addJavascriptInterface)
         const syncHandlers = {
@@ -50,24 +55,28 @@ export async function setupPageInjection(page) {
         };
 
         // Signature matches real Android: ExecuteCommand(commandName: string, jsonParams: string) => string
-        const execCmd = (strNomCommande, jsonString) => {
+        const ExecuteCommand = (strNomCommande, jsonString) => {
             if (syncHandlers[strNomCommande]) return syncHandlers[strNomCommande]();
 
-            // Async commands — send to Node.js via console bridge, return "none" like real app
-            const args = jsonString ? JSON.parse(jsonString) : {};
-            _debug(t + JSON.stringify({ command: strNomCommande, args }));
+            bridge(strNomCommande, JSON.parse(jsonString || '{}'));
             return 'none';
         };
 
+        // Set ExecuteCommand function signature
         const _nativeStr = 'function ExecuteCommand() { [native code] }';
+        const _toStringStr = 'function toString() { [native code] }';
         const _origToString = Function.prototype.toString;
-        const _nativeFns = new Set([execCmd]);
+        const _nativeFns = new Set([ExecuteCommand]);
+        let _toStringPtr = null;
         Function.prototype.toString = function () {
-            return _nativeFns.has(this) ? _nativeStr : _origToString.call(this);
+            if (this === ExecuteCommand) return _nativeStr;
+            if (this === _toStringPtr) return _toStringStr;
+            return _origToString.call(this);
         };
-        _nativeFns.add(Function.prototype.toString);
+        _toStringPtr = Function.prototype.toString;
 
-        window.OvxNatif = { ExecuteCommand: execCmd };
+        // define the bridge
+        window.OvxNatif = { ExecuteCommand: ExecuteCommand };
     }, token, device.platform);
 
     /**
