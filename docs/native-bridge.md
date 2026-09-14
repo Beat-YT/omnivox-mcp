@@ -65,11 +65,34 @@ The rest of the bridge is UI. These are the calls that affect how requests are b
 
 ## Backward compatibility
 
-A new command only becomes usable once both the iOS and Android apps ship an update, and users update at their own pace. The web side is therefore written to tolerate any app version:
+The two halves of the bridge ship on different schedules. The page is served fresh from Omnivox on every load; the native half only changes when the user installs an app-store update, which many never do. Every mobile page therefore has to run against every app build still installed somewhere, and the JS is written on that assumption: no command is required to exist and no callback is required to fire.
 
-- Errors thrown by `OvxNatif.ExecuteCommand` are caught and logged (`MOBILE_NATIF_0001`), never re-thrown when the log worker is available. The comments list the app versions those errors came from (`3.0.1: Can't find variable: OvxNatif`, `1.0.4: Error calling method on NPObject`).
-- `createCommand` accepts a `ShouldExecute` gate, typically `Skytech.Commun.Utils.Support.IsMinimumVersion(android, ios)`, to skip commands old apps do not know.
-- `Ovx.ActiveSupportVieuxNamespaceAndroid()` aliases `Ovx.Device` to `Ovx.Android.Device` for Android ≤ 1.0.3, which used a flat namespace.
-- With `debug` in the user agent on `Win32` (or `window.unitTest`), no native call is made and callbacks fire immediately. This is how Omnivox developers run the mobile site in desktop Chrome.
+The mechanisms, all in `ComNatifOvx.js` and `Skytech.Commun.Utils.Support`:
 
-The practical consequence: an unknown or unanswered command degrades the page, it does not break it.
+- **Errors are swallowed.** Exceptions thrown by `OvxNatif.ExecuteCommand` are caught and logged as `MOBILE_NATIF_0001`, never re-thrown when the log worker is available. The comments list the app versions those errors came from (`3.0.1: Can't find variable: OvxNatif`, `1.0.4: Error calling method on NPObject`).
+- **Missing callbacks are tolerated.** A pending callback that never fires leaves its caller waiting; nothing times out into an error state. `Storage.SetCodeUserAgent` is the one command whose result the boot sequence depends on, and the page fires that callback itself after 8 s.
+- **New commands are version-gated.** `createCommand` accepts a `ShouldExecute` gate, typically `Skytech.Commun.Utils.Support.IsMinimumVersion(ios, android)`, so a command is never sent to an app that predates it. Named capability flags follow the same pattern: `SupporteCommandeOpenAppLink` is `IsMinimumVersion("3.11.1", "3.8.6")`, `IsRedesignV400` is `IsMinimumVersion("4.0.0", "4.0.0")`.
+- **Old namespaces are kept.** `Ovx.ActiveSupportVieuxNamespaceAndroid()` aliases `Ovx.Device` to `Ovx.Android.Device` for Android ≤ 1.0.3, which used a flat namespace.
+- **No app at all is a supported mode.** With `debug` in the user agent on `Win32` (or `window.unitTest`), no native call is made and callbacks fire immediately. This is how Omnivox developers run the mobile site in desktop Chrome.
+
+The contract only grows, and only behind gates. An unknown or unanswered command degrades the page, it does not break it, and a bridge that satisfies a given app version keeps satisfying it: the page can never assume more than that version provides, because real users are still on it.
+
+### Version pinning
+
+`IsMinimumVersion` compares against `Skytech.Commun.Utils.Support.AppVersion`, which is parsed once, in `Support.Initialize()`, from the `AppVer=` field of `window.userAgentRequete` (the OVX user agent, see `Storage.SetCodeUserAgent`). The app version the page believes it is running in is whatever the user agent says.
+
+```
+IsMinimumVersion(versionIOS, versionAndroid)
+  not the native app             → false
+  no minimum for this platform   → true   (null / undefined)
+  otherwise                      → AppVer >= minimum
+```
+
+Declaring a version pins the set of commands the page will ever emit: anything gated above it is skipped before it reaches `ExecuteCommand`, so an emulated bridge only has to cover what that version's app understood. Features gated above the pinned version stay off without error (the 4.0 layout behind `IsRedesignV400`, for example). Bumping the version opts into them, and into whatever new commands they call.
+
+Two other checks read the same version:
+
+- `Skytech.Commun.Application.IsModuleActif` also requires `IsMinimumVersion(VersionMinimum, VersionMinimum)` from the service manifest (`App/GetOffreService`), so a service can hide itself below a minimum app version.
+- `IsLatestAppVersion` compares against `ServerConfig.AppVersionStore`. When behind, the page shows an update prompt as an interception, subject to the cadence rules in `doitAfficherPopupUpdateAppNative`. It does not block.
+
+This project declares `AppVer=3.8.9` (`omnivoxVer` in `shared/constants.cjs`) and emulates the Android side in `src/omnivox-api/puppet/ovxInjection.js`.

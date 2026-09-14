@@ -11,6 +11,15 @@ import { staticResponses, nullCallbackCommands, silentCommands } from "@common/n
  * so the mobile pages boot inside headless Puppeteer. Bare minimum only: nothing
  * interacts with the fake app, we just need Skytech.Commun.Utils.HttpRequestWorker.PostJSON
  * to become usable. See docs/native-bridge.md.
+ *
+ * This is not fragile. The real native app ships through app stores and users update
+ * whenever, so Omnivox's JS must run against every app build still installed anywhere:
+ * errors from OvxNatif.ExecuteCommand are caught and logged, commands whose callback
+ * never fires are tolerated, and new commands sit behind IsMinimumVersion gates. That
+ * gate reads AppVer= from the user agent we build (omnivoxVer in shared/constants.cjs),
+ * so the page never emits a command newer than the version we declare. An unhandled
+ * command below degrades a page feature we do not use; it cannot break the bridge.
+ * See "Backward compatibility" and "Version pinning" in docs/native-bridge.md.
  */
 
 /**

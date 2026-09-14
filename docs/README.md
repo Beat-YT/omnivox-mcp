@@ -47,4 +47,4 @@ IsAvailable           boolean
 ## Reference
 
 - [Services](services.md) - the module manifest (`App/GetOffreService`): how services map to modules and `/Mobl/` routes, flags, change-detection hash, notification codes
-- [Native bridge](native-bridge.md) - the WebView ↔ native app bridge (`ComNatifOvx.js`): transports, command/callback convention, command namespaces, backward compatibility
+- [Native bridge](native-bridge.md) - the WebView ↔ native app bridge (`ComNatifOvx.js`): transports, command/callback convention, command namespaces, backward compatibility and version pinning

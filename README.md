@@ -140,6 +140,12 @@ Omnivox's mobile API has no public documentation, so this repo doubles as a fiel
 
 Some of it was found by reading the app's bundle, some by probing live endpoints — including a few natively-served endpoints the official app doesn't even use anymore (that's how per-evaluation grades work here without HTML scraping). If you chart new territory, contributions are warmly welcome.
 
+## Will this break?
+
+The usual worry, on reading that this fakes the native app's JavaScript bridge: *surely the next Omnivox update kills it.* It doesn't, and not by luck. The mobile pages are served fresh from Omnivox on every load, but the native app only changes when a user installs a store update, so Skytech's own JS has to keep working against every app build still installed anywhere. It is written to assume nothing about the bridge: unknown commands are swallowed, unanswered callbacks are tolerated, and anything new is gated behind the app version the user agent declares. We pin that version, so the page never asks for something the emulated bridge doesn't know.
+
+What can drift is the ordinary stuff: a `/Mobl/` response shape (fixed in a transformer, like any API client) and a session that eventually expires (log in again). The bridge is the *least* likely thing here to need attention. The mechanics, with the exact gates, are in [the native bridge notes](docs/native-bridge.md#backward-compatibility).
+
 ## Documentation
 
 The [Wiki](https://github.com/Beat-YT/omnivox-mcp/wiki) is the operator's manual:
