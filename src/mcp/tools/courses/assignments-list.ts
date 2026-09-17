@@ -14,7 +14,7 @@ const input = z.object({
 mcpServer.registerTool('get-course-assignments',
     {
         title: 'Get Course Assignments',
-        description: 'Retrieve the list of assignments for a specific course.',
+        description: 'Retrieve the list of assignments for a specific course. Incomplete by nature: many teachers never post assignments here, so an empty list does not mean there is no homework. Cross-check the course syllabus from get-course-documents.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,

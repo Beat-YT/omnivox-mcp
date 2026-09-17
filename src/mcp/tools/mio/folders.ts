@@ -10,7 +10,7 @@ const input = z.object({});
 mcpServer.registerTool('get-mio-folders',
     {
         title: 'Get MIO Folders',
-        description: 'Retrieve the list of MIO (internal messaging) folders and their unread counts.',
+        description: 'Retrieve the list of MIO (internal messaging) folders and their unread counts. Folder IDs are string constants like SEARCH_FOLDER_MioRecu; pass them as folder_id to the other MIO tools.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,

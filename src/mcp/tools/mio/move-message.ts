@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const input = z.object({
     message_id: messageIdSchema.describe('The MIO message ID'),
-    folder_id: z.string().describe('Target folder ID to move the message into'),
+    folder_id: z.string().describe('Target folder to move the message into. Folder ID string constant such as SEARCH_FOLDER_MioRecu (inbox) or SEARCH_FOLDER_MioEnvoye (sent). Use get-mio-folders to discover them.'),
 });
 
 mcpServer.registerTool('move-mio-message',

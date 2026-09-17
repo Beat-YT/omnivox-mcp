@@ -20,7 +20,7 @@ const input = z.object({
 mcpServer.registerTool('get-assignment-file-link',
     {
         title: 'Get Assignment File',
-        description: 'Generate a temporary download link for an assignment file (teacher document, student submission, or corrected copy). The link expires after 15 minutes. Give this link to the user so they can open the file in their browser.',
+        description: 'Fetch an assignment file (teacher document, student submission, or corrected copy). In HTTP mode with MCP_SERVER_URL set, returns a browser link that expires after 15 minutes; otherwise saves the file locally and returns its path. Get file IDs and roles from get-assignment-detail.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,

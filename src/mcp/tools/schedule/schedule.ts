@@ -13,7 +13,7 @@ const input = z.object({
 mcpServer.registerTool('get-schedule',
     {
         title: 'Get Schedule',
-        description: 'Retrieve the weekly class schedule (timetable) for a given term or the current term.',
+        description: 'Retrieve the static weekly class schedule (timetable) for a given term or the current term. Same every week: it does not reflect holidays, day swaps or cancelled classes. Use get-calendar for those.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,

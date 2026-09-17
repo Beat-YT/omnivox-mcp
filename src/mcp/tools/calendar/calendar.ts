@@ -12,7 +12,7 @@ const input = z.object({
 mcpServer.registerTool('get-calendar',
     {
         title: 'Get Calendar',
-        description: 'Retrieve upcoming calendar events (classes, exams, assignments, etc.).',
+        description: 'Retrieve the real day-by-day calendar: classes, holidays, day swaps, cancelled classes, exams and deadlines. Prefer this over get-schedule for what happens on a given day. Exam and assignment dates only appear if the teacher entered them on Lea, so read the course syllabus for the full picture.',
         inputSchema: input,
         // outputSchema: CalendarPageSchema,
         annotations: {

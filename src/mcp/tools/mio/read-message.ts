@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const input = z.object({
     message_id: messageIdSchema.describe('The MIO message ID to read'),
-    folder_id: z.string().optional().describe('Folder ID to search in (defaults to inbox: SEARCH_FOLDER_MioRecu)'),
+    folder_id: z.string().optional().describe('Folder ID string constant such as SEARCH_FOLDER_MioRecu (inbox) or SEARCH_FOLDER_MioEnvoye (sent). Use get-mio-folders to discover them. Defaults to inbox.'),
     mark_read: z.boolean().optional().describe('Mark the message as read (sends a read receipt to the sender). Defaults to false.'),
     last_id: messageIdSchema.optional().describe('(optional) The ID of the current pagination cursor, if applicable.'),
 });

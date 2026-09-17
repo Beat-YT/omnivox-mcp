@@ -14,7 +14,7 @@ const input = z.object({
 mcpServer.registerTool('get-assignments-summary',
     {
         title: 'Get Assignments Summary',
-        description: 'Retrieve a per-course summary of assignments for a given term or the current term.',
+        description: 'Retrieve a per-course summary of assignments for a given term or the current term. Only counts assignments teachers posted on Lea; an empty summary does not mean the student is caught up.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,

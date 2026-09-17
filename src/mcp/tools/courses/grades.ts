@@ -40,7 +40,7 @@ function day(ts: number | null | undefined): string | null {
 mcpServer.registerTool('get-course-evals',
     {
         title: 'Get Course Grades',
-        description: 'Retrieve evaluations, grades and course summary for a specific course.',
+        description: 'Retrieve evaluations, grades and course summary for a specific course. Ungraded evaluations show no mark. Evaluations the teacher has not entered in Lea will not appear at all, so reconcile the list against the course syllabus.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,

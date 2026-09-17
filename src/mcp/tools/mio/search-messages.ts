@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const input = z.object({
     query: z.string().describe('Search query text'),
-    folder_id: z.string().optional().describe('Optional Folder ID to search in (if applicable, defaults search all folders)'),
+    folder_id: z.string().optional().describe('Optional folder to restrict the search to. Folder ID string constant such as SEARCH_FOLDER_MioRecu (inbox) or SEARCH_FOLDER_MioEnvoye (sent). Use get-mio-folders to discover them. Defaults to all folders.'),
 });
 
 mcpServer.registerTool('search-mio-messages',

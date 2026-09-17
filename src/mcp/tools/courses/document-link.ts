@@ -18,7 +18,7 @@ const input = z.object({
 mcpServer.registerTool('get-document-link',
     {
         title: 'Get Lea Document',
-        description: 'Generate a temporary download link for a Lea document. The link expires after 15 minutes. Give this link to the user so they can open the file in their browser.',
+        description: 'Fetch a Lea document. In HTTP mode with MCP_SERVER_URL set, returns a browser link that expires after 15 minutes; otherwise saves the file locally and returns its path. Marks the document as read on Omnivox, so use get-course-documents first if you are only browsing.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,

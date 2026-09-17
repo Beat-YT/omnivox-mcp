@@ -29,83 +29,25 @@ Omnivox is the web portal used by virtually all CEGEPs (Quebec's public colleges
 
 ---
 
+## Prerequisites
+
+Micro-managing a student autonomously means seeing everything they see. Verify each item before promising anything. Missing any one of them leaves a blind spot.
+
+- [ ] **1. Access to Omnivox.** This server must be running and logged in. Confirm with `get-overview`. If it errors, the session cookies have probably expired and the user must re-authenticate with the Electron auth app.
+- [ ] **2. Access to a document parser** such as [docling](https://github.com/docling-project/docling) that converts PDF, DOCX, PPTX and similar files into markdown. Nearly everything that matters (syllabi, lab instructions, assignment sheets, study guides) is a file. Without a parser you cannot read them, and most of the guidance in this document becomes impossible to follow.
+- [ ] **3. Access to the school calendar.** You need the academic calendar (semester start, reading week, holidays, exam period) to map "Semaine 11" in a syllabus to a real date. `get-calendar` covers part of this, but some colleges only publish the academic calendar as a PDF on their website. Those PDFs are dense grids of tiny numbers that even the best vision models misread. Parse it as text with your document parser, or transcribe the key dates once and keep them, before relying on it.
+- [ ] **4. Access to the plans de cours and document downloading.** Use `get-course-documents` and `get-document-link` to fetch each course's plan de cours (syllabus) at the start of term and read it. It is the source of truth for evaluations, weights and deadlines. If a course has no syllabus on Lea, check MIO attachments and tell the user it is missing.
+- [ ] **5. A persistent cron/reminder store** (agentic setups only). To run autonomously you need a way to wake yourself up on a schedule and to store reminders that survive restarts and new conversations. Without it you can only react when the user talks to you, and every eval date or deadline you noted is lost at the end of the session. Use it for periodic check-ins, exam reminders, and deadlines that never appear in Omnivox. **Non-persistent schedulers are not an option.** A scheduler or reminder tool that only lives as long as the current session dies with the conversation, so a reminder set on Monday for an exam on Friday simply never fires. If your only scheduler is session-bound, treat this prerequisite as unmet and tell the user.
+
+---
+
 ## Tools
 
+The full tool catalog, with parameters and behavior notes, lives in the wiki: https://github.com/Beat-YT/omnivox-mcp/wiki/Tools
+
+On a running server, the `tools` tool (or `GET /tools`) returns the live catalog with each tool's description and input schema. Use it to discover exact parameter names before calling anything.
+
 All `term_id` parameters are optional and default to the current academic term.
-
-### Tool Discovery (for the cli)
-| Tool | Params | What it does |
-|---|---|---|
-| `tools` | `names` (optional, comma-separated) | Discover available tools. Without `names`, returns all tools. With `names`, returns only matching tools by name. Includes each tool's description and input schema. |
-
-### Dashboard
-
-| Tool | Params | What it does |
-|---|---|---|
-| `get-overview` | — | **Start here.** Dashboard of what's actionable right now: today's schedule, per-course new items (docs, announcements, assignments, grades) with delta tracking, new MIO messages, upcoming evals, notifications, and featured college news. |
-| `get-terms` | — | List available terms with the current default. |
-
-### Courses & Grades
-
-| Tool | Params | What it does |
-|---|---|---|
-| `get-courses-summary` | — | All courses with counts and totals. Returns `course_id` values. Delta tracked. |
-| `get-course-info` | `course_id` | One course — teacher names, course code, group. No grades (use `get-course-evals`). |
-| `get-grades-summary` | — | Marks, class averages, remaining weight across all courses. Delta tracked. |
-| `get-course-evals` | `course_id` | Full eval breakdown — marks, weights, class stats, bonus/penalty adjustments, teacher comments. Ungraded evals appear as "not graded yet". **Incomplete**: evals the teacher hasn't entered in Léa won't appear; reconcile with the syllabus. |
-| `get-course-announcements` | `course_id` | Teacher announcements for a course. |
-| `get-absences` | — | Absence records for all courses. Delta tracked. |
-| `get-teachers` | — | All teachers with contact info. Prefer `get-course-people` for per-course. |
-
-### Documents
-
-| Tool | Params | What it does |
-|---|---|---|
-| `get-course-documents` | `course_id` | List documents. Returns `document_id` values. |
-| `get-document-link` | `course_id`, `document_id` | Downloads a document locally and returns the file path. **Marks it as read on Omnivox.** |
-
-### Assignments
-
-| Tool | Params | What it does |
-|---|---|---|
-| `get-assignments-summary` | — | Per-course assignment overview. Delta tracked. |
-| `get-course-assignments` | `course_id` | List assignments. Returns `assignment_id` values. **Incomplete**: many teachers never post assignments here — always cross-check the syllabus via `get-course-documents`. |
-| `get-assignment-detail` | `course_id`, `assignment_id` | Full details — instructions, submissions, corrections. Returns `file_id` values. |
-| `get-assignment-file-link` | `course_id`, `assignment_id`, `file_id`, `role` | Download an assignment file. `role`: `teacher_document`, `submission`, or `correction`. |
-| `get-assignment-submit-link` | `course_id`, `assignment_id` | Short link (15 min) that opens the Omnivox hand-in page, already logged in. **The user uploads the file themselves** — the tool never submits anything. Fails if online submission is closed for that assignment. |
-
-### Schedule & Calendar
-
-| Tool | Params | What it does |
-|---|---|---|
-| `get-calendar` | `page`, `range` | Real day-by-day schedule with holidays, day swaps, cancelled classes, and deadlines. `range`: `today`, `week`, `month`, or `all` (default). Paginated via `page` (0-indexed). **Incomplete for deadlines**: exam and assignment dates only show up if the teacher entered them — read the syllabus for the full picture. |
-| `get-schedule` | — | Static weekly timetable. Does **not** reflect holidays or day swaps. |
-| `get-cancelled-classes` | — | Upcoming cancelled class sessions with teacher notes. |
-
-### Messaging (MIO)
-
-| Tool | Params | What it does |
-|---|---|---|
-| `get-mio-folders` | — | Folders with unread counts. Delta tracked. |
-| `get-mio-messages` | `folder_id`, `last_id`, `count` | Messages from a folder (defaults to inbox). Returns 21 at a time (max 100 via `count`). Paginate with `last_id`. |
-| `read-mio-message` | `message_id`, `folder_id`, `mark_read` | Full message content. `mark_read` sends a read receipt (default false). `folder_id` defaults to inbox. |
-| `search-mio-messages` | `query`, `folder_id` | Full-text search. Searches all folders by default, or a specific one via `folder_id`. |
-| `get-mio-attachment-link` | `message_id`, `attachment_id` | Download a MIO attachment. |
-| `get-course-people` | `course_id` | Students and teachers in a course. Returns recipient IDs. |
-| `search-people` | `query` | Search anyone by name. Returns recipient IDs. |
-| `send-mio-message` | `recipient_id`, `subject`, `message`, `hide_recipients` | **Sends a real message.** Confirm with user first. `recipient_id` supports arrays. `hide_recipients` (default false) hides recipients from each other (BCC). |
-| `flag-mio-message` | `message_id`, `important`, `mark_unread` | Flag or mark as unread. |
-| `move-mio-message` | `message_id`, `folder_id` | Move to another folder. |
-| `delete-mio-message` | `message_id` | Move to trash (not permanent). Supports arrays. |
-| `restore-mio-message` | `message_id` | Restore from trash. Supports arrays. |
-| `create-mio-folder` | `name` | Create a new folder. |
-
-### College
-
-| Tool | Params | What it does |
-|---|---|---|
-| `get-college-news` | — | College news and announcements. |
-| `get-college-list` | — | Get the user's college name. |
 
 ---
 
@@ -135,12 +77,8 @@ Only after reading the syllabus can you confidently tell the user what's coming 
 ## Gotchas
 
 - **Lea data is incomplete.** See "Syllabi Are the Source of Truth" above — always reconcile assignments, evals, and deadlines against the course syllabus from `get-course-documents`.
-- **`get-document-link` marks documents as read** on Omnivox. Use `get-course-documents` first if you're just browsing.
 - **Not all professors upload syllabi to Lea.** Some distribute them in class or via MIO. If a syllabus isn't on Lea, check MIO attachments and tell the user it's missing from the portal.
-- **MIO message IDs are UUIDs**, not numbers.
-- **MIO folder IDs** are string constants like `SEARCH_FOLDER_MioRecu`. Use `get-mio-folders` to discover them.
-- **`course_id` is always required** on document/assignment downloads, even though the document ID seems sufficient.
-- **`get-assignment-submit-link` needs a public server URL.** It only works when the server runs in HTTP mode with `MCP_SERVER_URL` set (same requirement as browser-openable download links). If it errors with that message, tell the user to submit through the Omnivox app instead.
+- **Read the tool descriptions.** Tool-specific caveats (what marks a document as read, ID formats, what needs a public server URL) are in each tool's description and parameter docs. Discover them with the `tools` tool.
 - **The data folder is private.** Never expose access keys, cookies, config, or browser profiles.
 
 ---
