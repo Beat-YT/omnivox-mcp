@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { dataDir } from '@common/dataDir';
 import { device } from '@common/constants';
+import { DownloadResult, FrameHandle, ProxyFetchResult } from './types';
 
 const browserDataDir = path.join(dataDir, 'browser');
 const pidFile = path.join(dataDir, 'chrome.pid');
@@ -58,10 +59,28 @@ async function sleep() {
     }
 }
 
-export interface DownloadResult {
-    data: Buffer;
-    contentType: string;
-    contentDisposition: string;
+async function recoverPage(): Promise<void> {
+    page = null;
+    readyPromise = null;
+
+    return InitializePuppet();
+}
+
+function isDetachedFrameError(err: unknown): boolean {
+    return err instanceof Error && err.message.includes('detached Frame');
+}
+
+function makeProxyRequest(url: string, data: any) {
+    if (!page) throw new Error('Puppeteer page not initialized');
+
+    return page.evaluate((url: string, data: any) => {
+        return new Promise<any>((resolve, reject) => {
+            (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
+                (result: any) => resolve(result),
+                (error: any) => reject(error)
+            );
+        });
+    }, url, data);
 }
 
 export async function InitializePuppet() {
@@ -156,30 +175,6 @@ export async function waitForReady(): Promise<void> {
     resetIdleTimer();
 }
 
-async function recoverPage(): Promise<void> {
-    page = null;
-    readyPromise = null;
-
-    return InitializePuppet();
-}
-
-function isDetachedFrameError(err: unknown): boolean {
-    return err instanceof Error && err.message.includes('detached Frame');
-}
-
-function makeProxyRequest(url: string, data: any) {
-    if (!page) throw new Error('Puppeteer page not initialized');
-
-    return page.evaluate((url: string, data: any) => {
-        return new Promise<any>((resolve, reject) => {
-            (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, data,
-                (result: any) => resolve(result),
-                (error: any) => reject(error)
-            );
-        });
-    }, url, data);
-}
-
 export async function makeSkytechRequest<T = any>(url: string, data: any = {}): Promise<T> {
     await waitForReady();
     if (!page) throw new Error('Puppeteer page not initialized');
@@ -193,11 +188,6 @@ export async function makeSkytechRequest<T = any>(url: string, data: any = {}): 
         
         return await makeProxyRequest(url, data);
     }
-}
-
-export interface FrameHandle {
-    frame: Frame;
-    dispose: () => Promise<void>;
 }
 
 export async function loadPageInFrame(url: string): Promise<FrameHandle> {
@@ -272,11 +262,7 @@ export async function getHealthStatus(): Promise<{ ok: boolean; browser: boolean
     return { ok: omnivoxReady, browser: true, page: true, omnivox: omnivoxReady, sleeping: false };
 }
 
-export interface ProxyFetchResult {
-    status: number;
-    contentType: string;
-    body: string; // base64
-}
+
 
 function fixCharset(ct?: string): string | undefined {
     if (!ct) return ct;
