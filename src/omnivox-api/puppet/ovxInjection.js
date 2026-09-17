@@ -139,7 +139,7 @@ export async function setupPageInjection(page) {
             }
 
             case 'WebUI.SetDefaultPage': {
-                updateConfig({ DefaultPage: args.Url || "" });
+                updateConfig({ DefaultPage: args.Url ? decodeURIComponent(args.Url) : "" });
                 callback(null);
                 break;
             }
