@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { extractProvidedKey, getAccessKey } from "../security/accessKey.js";
 import * as crypto from 'crypto';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { mcpServer } from '../mcp/server.js';
 
 const mcpRouter = Router();
