@@ -6,14 +6,14 @@ import { requestLogger } from './logger.js';
 import { dataDir } from '../common/dataDir.js';
 
 const app = express();
+
 app.set('etag', false);
-
 app.use(requestLogger);
-
-// important: call mcpRouter before ValidateAccessKey,
 app.use(mcpRouter);
 
-app.use(ValidateAccessKey);
+app.get('/', (req, res) => {
+    res.send('Welcome to the Omnivox MCP Server! Server is up.');
+});
 
 // Auto-discover route files
 fs.readdirSync('./src/express/routes').forEach(async (file) => {
@@ -29,6 +29,7 @@ export function StartExpressServer() {
         console.log(`Server is running on port ${PORT}`);
         console.log(`Data directory: ${dataDir}`);
     });
+    
     server.on('error', (err: NodeJS.ErrnoException) => {
         if (err.code === 'EADDRINUSE') {
             console.error(`\nError: Port ${PORT} is already in use (EADDRINUSE). Is another instance running?\n`);

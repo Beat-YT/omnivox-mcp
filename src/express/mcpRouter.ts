@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { extractProvidedKey, getAccessKey } from "../security/accessKey.js";
+import { extractProvidedKey, getAccessKey, ValidateAccessKey } from "../security/accessKey.js";
 import * as crypto from 'crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { mcpServer } from '../mcp/server.js';
@@ -7,7 +7,8 @@ import { mcpServer } from '../mcp/server.js';
 const mcpRouter = Router();
 let statelessTransport: StreamableHTTPServerTransport;
 
-mcpRouter.all('/mcp', async (req, res) => {
+
+mcpRouter.all('/mcp', ValidateAccessKey, async (req, res) => {
     const provided = extractProvidedKey(req);
     if (typeof provided !== 'string') {
         return res.status(401).json({ error: 'Missing access key' });

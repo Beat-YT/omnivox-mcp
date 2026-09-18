@@ -1,10 +1,11 @@
 import * as express from 'express';
 import { getConfig } from 'src/omnivox-api/config';
 import { makeProxyFetch } from 'src/omnivox-api/puppet';
+import { ValidateAccessKey } from 'src/security/accessKey';
 
 const router = express.Router();
 
-router.all('/Mobl/{*path}', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
+router.all('/Mobl/{*path}', ValidateAccessKey, express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
     const target = `${req.originalUrl}`;
 
     try {

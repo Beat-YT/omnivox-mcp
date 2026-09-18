@@ -6,19 +6,33 @@ import { dataDir } from '@common/dataDir.js';
 const accessKeyPath = path.join(dataDir, 'accessKey.txt');
 let currentAccessKey = null;
 
+/**
+ * Extracts the access key from the request.
+ * @param {import('express').Request} req 
+ * @returns {string|null}
+ */
 export function extractProvidedKey(req) {
     const authHeader = req.headers['authorization'];
-    return req.headers['x-mcp-auth']
-        || (typeof authHeader === 'string' && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null)
-        || req.query.key
-        || null;
+
+    if (req.headers['x-mcp-auth']) {
+        return req.headers['x-mcp-auth'];
+    }
+
+    if (typeof authHeader === 'string') {
+        const prefix = authHeader.substring(0, 6).toLocaleLowerCase();
+        if (prefix === 'bearer' && authHeader.length > 7) {
+            return authHeader.slice(7);
+        }
+    }
+
+    if (typeof req.query.key === 'string') {
+        return req.query.key;
+    }
+
+    return null;
 }
 
 export function ValidateAccessKey(req, res, next) {
-    if (req.path === '/download/document' || req.path === '/download/assignment-file' || req.path === '/link/assignment-submit' || req.path === '/openapi.json' || req.path === '/health') {
-        return next()
-    }
-
     const provided = extractProvidedKey(req);
 
     if (typeof provided !== 'string') {
@@ -60,6 +74,8 @@ export function getAccessKey() {
     currentAccessKey = crypto.randomBytes(32).toString('hex');
     fs.mkdirSync(path.dirname(accessKeyPath), { recursive: true });
     fs.writeFileSync(accessKeyPath, currentAccessKey);
+
+    console.log(`Generated new access key and saved to ${accessKeyPath}. Please keep it safe!`);
 
     return currentAccessKey;
 }

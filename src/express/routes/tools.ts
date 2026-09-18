@@ -2,14 +2,14 @@ import * as express from 'express';
 import { mcpServer } from 'src/mcp/server';
 import { normalizeObjectSchema, safeParseAsync } from '@modelcontextprotocol/sdk/server/zod-compat.js';
 import { toJsonSchemaCompat } from '@modelcontextprotocol/sdk/server/zod-json-schema-compat.js';
+import { ValidateAccessKey } from 'src/security/accessKey';
 
 const router = express.Router();
 
 const EMPTY_OBJECT_JSON_SCHEMA = { type: 'object' as const, properties: {} };
-
 const getTools = () => (mcpServer as any)._registeredTools as Record<string, any>;
 
-router.get('/tools', (req, res) => {
+router.get('/tools', ValidateAccessKey, (req, res) => {
     const toolNames = req.query.names ? String(req.query.names).split(',') : null;
     console.log('Fetching tools with filter:', toolNames);
 
@@ -32,7 +32,7 @@ router.get('/tools', (req, res) => {
     res.json({ tools: list });
 });
 
-router.post('/tools/:toolName', express.json({ type: '*/*' }), async (req, res) => {
+router.post('/tools/:toolName', ValidateAccessKey, express.json({ type: '*/*' }), async (req, res) => {
     const tools = getTools();
     const tool = tools[req.params.toolName];
 
@@ -65,7 +65,7 @@ router.post('/tools/:toolName', express.json({ type: '*/*' }), async (req, res) 
             return res.json(result.structuredContent);
         }
 
-        // No structured content — return plain text
+        // No structured content, we return plain text
         const text = (result.content || [])
             .filter((c: any) => c.type === 'text')
             .map((c: any) => c.text)
