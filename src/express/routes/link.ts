@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { consumeWebToken } from 'src/security/omniWebToken';
-import { BuildAssignmentSubmitUrl } from '@api/Login';
+import { BuildAssignmentSubmitUrl } from '@api/AutoLoginWeb';
 
 const router = express.Router();
 

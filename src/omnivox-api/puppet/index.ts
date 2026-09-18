@@ -9,6 +9,8 @@ import { dataDir } from '@common/dataDir';
 import { device } from '@common/constants';
 import { DownloadResult, FrameHandle, ProxyFetchResult } from './types';
 
+export type { DownloadResult, ProxyFetchResult } from './types';
+
 const browserDataDir = path.join(dataDir, 'browser');
 const pidFile = path.join(dataDir, 'chrome.pid');
 
@@ -121,7 +123,6 @@ export async function InitializePuppet() {
                 '--renderer-process-limit=1',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--disable-backgrounding-occluded-windows',
-                '--no-sandbox',
             ],
         });
 

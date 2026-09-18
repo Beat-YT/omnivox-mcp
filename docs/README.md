@@ -48,3 +48,4 @@ IsAvailable           boolean
 
 - [Services](services.md) - the module manifest (`App/GetOffreService`): how services map to modules and `/Mobl/` routes, flags, change-detection hash, notification codes
 - [Native bridge](native-bridge.md) - the WebView ↔ native app bridge (`ComNatifOvx.js`): transports, command/callback convention, command namespaces, backward compatibility and version pinning
+- [Web handoff](web-handoff.md) - how a portal-only manifest entry becomes a `WebUI.OpenNewWindow` call: fields read from `MenuItems`, the `AutoLogin` / `AutoLoginIntraflex` wrapping, the `TokenRedirection` step and the window arguments

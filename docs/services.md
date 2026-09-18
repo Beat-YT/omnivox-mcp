@@ -21,7 +21,7 @@ OffreService
 
 1. **Native module** — client module with its own UI, backed by `/Mobl/{Id}/` JSON controllers. `EstModuleResponsive: false`. `UrlService`, when present, is the web-portal equivalent.
 2. **Webview host** — client module hosts a responsive web page (`EstModuleResponsive: true`). `UrlService` is the hosted page: `/apps/*`, `/ui/*`, or a `.ovx` page behind the Skytech redirect.
-3. **Web redirect** — `Module: null`. Opens `UrlService`, typically `/intr/Module/ServicesExterne/Skytech.aspx?...&lk={portal path}&IdService={CodeModule}` (SSO handoff). MIO's portal counterpart uses `RedirigeMio.ashx`.
+3. **Web redirect** — `Module: null`. Opens `UrlService`, typically `/intr/Module/ServicesExterne/Skytech.aspx?...&lk={portal path}&IdService={CodeModule}` (SSO handoff). MIO's portal counterpart uses `RedirigeMio.ashx`. The wrapping and native call are described in [web-handoff.md](web-handoff.md).
 
 ## Flags
 

@@ -45,6 +45,21 @@ nocache            number
 
 Responds `301` to `//<college>-lea.omnivox.ca<UrlRetour>` and sets `SidLea` + `SessionSky_CheckUserAgent…` cookies on `omnivox.ca`.
 
+---
+
+## GET /Mobl/Login/AutoLoginIntraflex
+
+Bridges the mobile session to the classic intranet pages on the same host (`/intr/*`, "Intraflex"), including the `ServicesExterne/Skytech.aspx` SSO redirect that most portal-only modules sit behind. Used as the `UrlRetour` of `AutoLogin`. See [web-handoff.md](../web-handoff.md) for the full chain from a manifest entry to the native window.
+
+**Query params:**
+```
+UrlIntraflex         string     intranet path to land on (URL-encoded)
+IndicateurAppNative  bool       "true" inside the native app, "false" from the browser web app
+nocache              number
+```
+
+Expected to redirect to `UrlIntraflex` once the intranet session is set; the response itself has not been captured yet.
+
 ### Example: assignment hand-in page
 
 The mobile app has no native upload for Léa assignments. "Remettre" opens:
