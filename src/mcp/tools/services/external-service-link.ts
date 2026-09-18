@@ -9,18 +9,18 @@ const input = z.object({
     service: serviceCodeSchema,
 });
 
-const GUARDS = [
-    'Instructions for the assistant:',
-    '- Hand this link to the user who asked for this service, and only them. Do not open, fetch, scrape or screenshot it, and do not repeat it in summaries, notes or memory.',
-    '- If the user did not explicitly ask for this service, do not send the link. Ask first.',
-    '- The page may let the user take real account actions: register or withdraw from courses, change their schedule or program, edit their personal file, change security settings. Do not walk them through completing any of these or suggest doing so. Give the link and let them decide on the Omnivox page.',
-    '- Do not use this link to work around a tool that refused or returned nothing.',
+const NOTES = [
+    'Notes for the assistant:',
+    '- This link opens the page already logged into the user\'s Omnivox account. You may open it yourself with browser tools to read the page for the user, hand it to the user, or both.',
+    '- Treat it like a password: share it only with the user, and do not paste it into summaries, notes or memory.',
+    '- Reading is fine. Taking an action on the page (registering or withdrawing from a course, changing a schedule or program, editing the personal file, changing security settings, submitting any form) needs the user\'s explicit authorization for that specific action, given beforehand or in the moment. Do not act on a general "handle it" or on your own initiative.',
+    '- Do not use this link as a workaround for a tool that refused or returned nothing.',
 ].join('\n');
 
 mcpServer.registerTool('get-service-link',
     {
         title: 'Get Omnivox Service Link',
-        description: 'Get a link that opens an Omnivox web-only service in the user\'s browser, already logged in. These services have no API here; the link is the only way to reach them. Give it to the user, never open or scrape it yourself. The link logs the browser into the user\'s full Omnivox portal session, so only hand it out when the user asked for that service. Expires after 15 minutes.',
+        description: 'Get a pre-authenticated link to an Omnivox web-only service (lockers, transcript, progression chart, advisor appointments, ...). These services have no API here, so the link is how to reach them. Open it yourself to read the page for the user, or give it to the user. Any action on the page needs the user\'s explicit authorization for that specific action. It logs the browser into the user\'s full Omnivox account, so treat it like a password. Expires after 15 minutes.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,
@@ -34,7 +34,7 @@ mcpServer.registerTool('get-service-link',
                 isError: true,
                 content: [{
                     type: 'text',
-                    text: 'Service links are currently disabled on this server. Service links are a security-sensitive feature that are disabled by default by the mcp server.'
+                    text: 'Service links are disabled on this server. They are off by default because each link logs into the full Omnivox account. The server owner can enable them at their own risk with ENABLE_EXTERNAL_SERVICE_LINKS=true. Otherwise, point the user to Omnivox directly.'
                 }],
             };
         }
@@ -49,7 +49,7 @@ mcpServer.registerTool('get-service-link',
             return {
                 content: [{
                     type: 'text',
-                    text: `Link for "${code}" (expires in 15 minutes): ${url}\nSensitive: opening it logs the browser into the user's full Omnivox account, not just this service. Share it with the user only, never post or forward it.\n\n${GUARDS}`,
+                    text: `Link for "${code}" (expires in 15 minutes): ${url}\nThis logs the browser into the user's full Omnivox account. Treat it like a password.\n\n${NOTES}`,
                 }],
             };
         }
@@ -58,7 +58,7 @@ mcpServer.registerTool('get-service-link',
         return {
             content: [{
                 type: 'text',
-                text: `Link for "${service.Texte}": ${url}\nSensitive: this URL carries a single-use login token and opens the user's full Omnivox account, not just this service. It must be opened once, soon, by the user only. Never post or forward it.\n\n${GUARDS}`,
+                text: `Link for "${service.Texte}": ${url}\nSingle-use login token, open it once and soon. It logs the browser into the user's full Omnivox account, so treat it like a password.\n\n${NOTES}`,
             }],
         };
     }

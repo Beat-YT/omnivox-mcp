@@ -74,7 +74,7 @@ Set these as environment variables or in a `.env` file at the project root:
 | `MCP_SERVER_URL` | *(none)* | Optional. Public base URL that enables download link generation (`get-document-link` / `get-assignment-file-link`). Set to your public domain (e.g. `https://omnivox.example.com`). |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. |
 | `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `truea`. |
-| `ENABLE_EXTERNAL_SERVICE_LINKS` | `false` | When `true` or `1`, enables `get-service-link`, which hands out pre-authenticated links to web-only Omnivox services (lockers, advisor appointments, progression chart, ...). Any such link logs the browser into the full portal session, which is why it is off by default. With `MCP_SERVER_URL` set the tool returns a short `/link/service` URL that mints the Omnivox token on click; otherwise it returns the raw single-use URL. |
+| `ENABLE_EXTERNAL_SERVICE_LINKS` | `false` | When `true` or `1`, enables `get-service-link`, which hands out pre-authenticated links to web-only Omnivox services (lockers, advisor appointments, progression chart, ...). Any such link logs the browser into the full portal session, which is why it is off by default. Enable at your own risk. With `MCP_SERVER_URL` set the tool returns a short `/link/service` URL that mints the Omnivox token on click; otherwise it returns the raw single-use URL. |
 
 ## Using it
 
