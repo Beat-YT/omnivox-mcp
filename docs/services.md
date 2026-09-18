@@ -83,31 +83,33 @@ Client modules probed with guessed action names, no endpoints found (a wrong act
 |---|---|---|---|---|
 | MFAE_validation_methods | MFAE | 2-Step Verification | MFA.Default | /apps/mfa/validation-methods |
 | MFAE_devices | MFAE | Trusted devices | MFA.Default | /apps/mfa/devices |
-| Cnfq | CNFQ | Attendance Validation | Cnfq.Default | Skytech redirect (.ovx) |
-| Insc | INSC | Course Registration | Insc.Default | Skytech redirect (.ovx) |
-| Mdhr | MDHR | Course Schedule Modification | Mdhr.Default | Skytech redirect (.ovx) |
-| Adr | ADR | Personal File | Adr.Default | Skytech redirect (.ovx) |
-| GrilleCheminement | GRCH | Progression Chart | GrilleCheminement.Default | Skytech redirect (.ovx) |
-| Notb | NOTB | Grades Transcript | Notb.Default | Skytech redirect |
-| ConsultationHoraireLocaux | LODE | Rooms - Availability | ConsultationHoraireLocaux.Default | Skytech redirect |
-| SondagesVotes | SVET | Surveys and Votes | SondagesVotes.Default | Skytech redirect (.ovx) |
+| Cnfq | CNFQ | Attendance Validation | Cnfq.Default | Skytech redirect, `lk=/estd/cnfq/Recensement.ovx` |
+| Insc | INSC | Course Registration | Insc.Default | Skytech redirect (.ovx), not captured |
+| Mdhr | MDHR | Course Schedule Modification | Mdhr.Default | Skytech redirect (.ovx), not captured |
+| Adr | ADR | Personal File | Adr.Default | Skytech redirect, `lk=/estd/ress/Dossier.ovx` |
+| GrilleCheminement | GRCH | Progression Chart | GrilleCheminement.Default | Skytech redirect, `lk=/estd/grch/Main.ovx` |
+| Notb | NOTB | Grades Transcript | Notb.Default | Skytech redirect, `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=NOTB` |
+| ConsultationHoraireLocaux | LODE | Rooms - Availability | ConsultationHoraireLocaux.Default | Skytech redirect, not captured |
+| SondagesVotes | SVET | Surveys and Votes | SondagesVotes.Default | Skytech redirect, `lk=/estd/svet/AccesSV.ovx` |
 | DesinscriptionsAbandons | DIAB | Withdrawals and drops | DesinscriptionsAbandons.Default | /ui/etudiants/omnivox/desinscriptions-abandons |
+
+"Skytech redirect" means `/intr/Module/ServicesExterne/Skytech.aspx?IdServiceSkytech=Skytech_Omnivox&lk={path}&IdService={CodeModule}&C={college}&E=P&L={lang}&Ref={stamp}`. The app opens every responsive module with `UseWebKit: true`; see [web-handoff.md](web-handoff.md#captured-handoffs).
 
 ## Web redirects (`Module: null`)
 
-| Id | CodeModule | Service |
-|---|---|---|
-| API | API | Academic Advisor Appointment |
-| COVE | COVE | Carpooling |
-| TSCL_EXECUTION | TSCL_EXECUTION | Classification test |
-| ACAE | ACAE | Lockers |
-| IMPR | IMPR | Printing Credits |
-| CGPE | CGPE | Program Change |
-| REPR | REPR | Repères - Mon Webfolio |
-| SRAE | SRAE | Student Access Centre |
-| AENS | AENS | Teachers Directory |
+| Id | CodeModule | Service | `lk` inside the Skytech redirect |
+|---|---|---|---|
+| API | API | Academic Advisor Appointment | /estd/prvs/Api.ovx |
+| COVE | COVE | Carpooling | /estd/RedirigeModuleDotNet.ovx?CodeModule=COVE |
+| TSCL_EXECUTION | TSCL_EXECUTION | Classification test | /estd/tscl/TestClas.ovx |
+| ACAE | ACAE | Lockers | /estd/RedirigeModuleDotNet.ovx?CodeModule=ACAE |
+| IMPR | IMPR | Printing Credits | /estd/impr/Redirige.ovx |
+| CGPE | CGPE | Program Change | not captured |
+| REPR | REPR | Repères - Mon Webfolio | /estd/repr/Reperes.ovx |
+| SRAE | SRAE | Student Access Centre | /estd/RedirigeModuleDotNet.ovx?CodeModule=SRAE |
+| AENS | AENS | Teachers Directory | /estd/aens/AnnuaireEnseignant.ovx |
 
-Non-responsive wrapper modules with a `Module` value but a portal `UrlService`, probed with guessed action names and no endpoints found (not conclusive): `ChoixCours` (CHOIX), `DemandeCarteTarifReduit` (OPUE), `ReleveImpot` (RMPT).
+Non-responsive wrapper modules with a `Module` value but a portal `UrlService`, probed with guessed action names and no endpoints found (not conclusive): `ChoixCours` (CHOIX, not captured), `DemandeCarteTarifReduit` (OPUE, `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=OPUE`), `ReleveImpot` (RMPT, `lk=/estd/rmpt/ReleveImpots.ovx`). The Services page forces these onto the web path at render time, so they open like a web redirect.
 
 ## App navigation modules
 

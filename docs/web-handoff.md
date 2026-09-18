@@ -11,7 +11,7 @@ WebUI.OpenNewWindow {
              ?UrlIntraflex=/intr/Module/ServicesExterne/Skytech.aspx
                  ?IdServiceSkytech=Skytech_Omnivox
                  &lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=SRAE
-                 &IdService=SRAE&C=EDM&E=P&L=FRA&Ref=20260918113923
+                 &IdService=SRAE&C=<college>&E=P&L=<lang>&Ref=<yyyyMMddHHmmss>
              &IndicateurAppNative=true&nocache=<ms>
          &ForceSession=true&nocache=<ms>&AppVersion=3.8.9&TokenRedirection=<token>
   DisplayNavigationBar: "True"
@@ -70,6 +70,16 @@ The inner `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=…` and the trailing `C
 
 Both handlers end in `Skytech.Commun.Application.ManageLien(url, "url", { Titre: <.ModuleTitre text>, ... })`.
 
+### "Omnivox version web" button
+
+The `Intraflex` entry (`MOBI_Intraflex`, `EstModuleMobile: false`, `UrlService: null`) is a regular web-list item, so it takes the same path as any other web module with no special casing in the link builder. Because `UrlService` is `null`, `encodeURIComponent(null)` yields the literal string `null` and the app opens:
+
+```
+/Mobl/Login/AutoLogin?UrlRetour=/Mobl/Login/AutoLoginIntraflex?UrlIntraflex=null&IndicateurAppNative=true&nocache=…&ForceSession=true&…&TokenRedirection=…
+```
+
+`AutoLoginIntraflex` treats `UrlIntraflex=null` as "no target" and lands on the portal home. The only extra behaviour is a second touch handler on `#srvIntraflex` that sets a `ForceWeb=true` cookie (path `/`) before the window opens, so the portal does not bounce a mobile user agent back to the mobile site. A desktop browser opening the same link does not need the cookie.
+
 ## Wrapping the path
 
 `Skytech.Commun.Module.LoginWorker` provides the wrappers:
@@ -117,6 +127,44 @@ Argument mapping for `OpenNewWindow` (the bridge stringifies booleans, see [nati
 | `TextBtnBack` | `params.Titre`, else `Dictio.COMMUN.MSG_0001`; iOS below 3.10.1 truncates at 30 chars |
 | `TextBackAltNavbar` | `encodeURIComponent(Dictio.COMMUN.ALT_NAV_BAR_BACK_LABEL)` |
 | callback | `params.OnCloseCallback` (Services page uses it to refresh notifications) |
+
+## Captured handoffs
+
+Every Services-page item tapped in one session (student account, French UI, app 3.8.9), reduced to the decoded `UrlService`. WebKit is the `UseWebKit` argument of the resulting `OpenNewWindow`.
+
+| Label | Code | WebKit | `UrlService` |
+|---|---|---|---|
+| Omnivox version web | MOBI_Intraflex | false | `null` |
+| Léa version web | CVIE | false | Skytech redirect, `lk=/estd/cvie` |
+| Annuaire des enseignants | AENS | false | Skytech redirect, `lk=/estd/aens/AnnuaireEnseignant.ovx` |
+| Prise de Rendez-vous avec API | API | false | Skytech redirect, `lk=/estd/prvs/Api.ovx` |
+| Casiers | ACAE | false | Skytech redirect, `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=ACAE` |
+| Covoiturage | COVE | false | Skytech redirect, `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=COVE` |
+| Services adaptés | SRAE | false | Skytech redirect, `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=SRAE` |
+| Carte OPUS à tarif réduit | OPUE | false | Skytech redirect, `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=OPUE` |
+| Crédits d'impression | IMPR | false | Skytech redirect, `lk=/estd/impr/Redirige.ovx` |
+| Classement en langue | TSCL_EXECUTION | false | Skytech redirect, `lk=/estd/tscl/TestClas.ovx` |
+| Relevés d'impôt | RMPT | false | Skytech redirect, `lk=/estd/rmpt/ReleveImpots.ovx` |
+| Repères - Mon Webfolio | REPR | false | Skytech redirect, `lk=/estd/repr/Reperes.ovx` |
+| Dossier personnel | ADR | true | Skytech redirect, `lk=/estd/ress/Dossier.ovx` |
+| Fréquentation scolaire | CNFQ | true | Skytech redirect, `lk=/estd/cnfq/Recensement.ovx` |
+| Grille de cheminement | GRCH | true | Skytech redirect, `lk=/estd/grch/Main.ovx` |
+| Résultats - Bulletin | NOTB | true | Skytech redirect, `lk=/estd/RedirigeModuleDotNet.ovx?CodeModule=NOTB` |
+| Sondages et votes | SVET | true | Skytech redirect, `lk=/estd/svet/AccesSV.ovx` |
+| Validation en 2 étapes | MFAE | true | `/apps/mfa/validation-methods` |
+| Appareils de confiance | MFAE | true | `/apps/mfa/devices` |
+| Désinscriptions et abandons | DIAB | true | `/ui/etudiants/omnivox/desinscriptions-abandons` |
+| Notes finales et Cote R | NOTE | false | cvir, see below |
+
+"Skytech redirect" is `/intr/Module/ServicesExterne/Skytech.aspx?IdServiceSkytech=Skytech_Omnivox&lk={path}&IdService={CodeModule}&C={college}&E=P&L={lang}&Ref={stamp}`.
+
+What the capture shows:
+
+- `Ref` was the same `yyyyMMddHHmmss` value on every entry, so it is stamped once when the manifest is generated, not per link. `C` is the college code (`ClientConfig.CodeClient`), `L` the UI language. `E=P` is constant and its meaning is not known.
+- `WebKit: true` lines up exactly with `EstModuleResponsive: true` in [services.md](services.md#webview-host-modules-estmoduleresponsive-true).
+- Modules with `Module: null` and the forced-web wrappers (`OPUE`, `RMPT`) are indistinguishable at this level: both are a Skytech redirect through Intraflex.
+- `TSCL_EXECUTION` is hidden only from the non-mobile list in `displayView`; as an `EstModuleMobile` entry it is still tappable.
+- Notes finales is the one cvir handoff. Its `UrlService` is `/cvir/Service.aspx?Module=note&Item=notefinale&L=[[Langue]]&ServEnsCVIR=&ServEns=` and it goes through `AutoLoginCvir`, not Intraflex. The `[[Langue]]` template token is sent unreplaced, so the server side must tolerate or substitute it. The native `NotesFinales` module has its own handoff through `GetNotesFinalesModel`, see [mobl/NotesFinales.md](mobl/NotesFinales.md).
 
 ## Reproducing it outside the app
 

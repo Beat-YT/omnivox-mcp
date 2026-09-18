@@ -24,10 +24,10 @@ async function FindService(idOrCode: string): Promise<ServiceMenuItem> {
     throw new Error(`Unknown service "${idOrCode}". Not present in this user's service manifest.`);
 }
 
-async function BuildIntraflexAutoLoginUrl(intranetPath: string, withToken = true): Promise<string> {
+async function BuildIntraflexAutoLoginUrl(intranetPath: string | null, withToken = true): Promise<string> {
     const page = await getPage();
     const relative = await page.evaluate(
-        (p: string) => (window as any).Skytech.Commun.Module.LoginWorker.CreerLienPreAuthentifierIntraflex(p),
+        (p: string | null) => (window as any).Skytech.Commun.Module.LoginWorker.CreerLienPreAuthentifierIntraflex(p),
         intranetPath,
     );
     return finalize(relative, withToken);
@@ -46,10 +46,10 @@ export async function BuildCvirAutoLoginUrl(cvirPath: string, anSession?: string
 export async function BuildServiceAutoLoginUrl(idOrCode: string, withToken = true) {
     const service = await FindService(idOrCode);
 
-    if (!service.UrlService) {
+    if (!service.UrlService && service.EstModuleMobile) {
         throw new Error(`Service "${service.Id}" (${service.Texte}) has no web page; it only exists as a native module.`);
     }
-    if (/^[a-zA-Z]+:\/\//.test(service.UrlService) && !/^https?:\/\//.test(service.UrlService)) {
+    if (service.UrlService && /^[a-zA-Z]+:\/\//.test(service.UrlService) && !/^https?:\/\//.test(service.UrlService)) {
         throw new Error(`Service "${service.Id}" opens an external app (${service.UrlService}), not a web page.`);
     }
     if (!service.EstActif) {
@@ -62,6 +62,7 @@ export async function BuildServiceAutoLoginUrl(idOrCode: string, withToken = tru
     const url = await BuildIntraflexAutoLoginUrl(service.UrlService, withToken);
     return { service, url };
 }
+
 export async function BuildAssignmentSubmitUrl(courseId: string, assignmentId: string, term: string): Promise<string> {
     const [noCours, noGroupe] = courseId.split('.');
     const depotQs = new URLSearchParams({

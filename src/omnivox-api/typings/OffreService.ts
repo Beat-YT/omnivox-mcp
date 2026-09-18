@@ -5,7 +5,7 @@ export interface ServiceMenuItem {
     Texte: string;
     Description: string;
     OrdreAffichage: number;
-    UrlService: string;
+    UrlService: string | null;
     EstDisponibleMenu: boolean;
     EstActif: boolean;
     EstBloque: boolean;

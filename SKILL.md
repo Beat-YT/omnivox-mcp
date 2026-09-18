@@ -49,6 +49,12 @@ On a running server, the `tools` tool (or `GET /tools`) returns the live catalog
 
 All `term_id` parameters are optional and default to the current academic term.
 
+### External services
+
+Some Omnivox services have no tool here and never will: they are web pages, not data. The common ones are the grille de cheminement (progression chart), the services adaptés (Student Access Centre), the bulletin d'études collégiales (transcript), the dossier personnel, the relevés d'impôt, casiers (lockers), crédits d'impression, and booking an appointment with an API (academic advisor). The only way to reach them is `get-service-link`, which returns a link that opens the service in the user's browser, already logged in.
+
+External services are not enabled by default. The tool is always listed, but on a server that has not turned the feature on it returns an error saying so. When that happens, tell the user to open Omnivox themselves rather than looping on it.
+
 ---
 
 ## Delta Tracking
@@ -92,6 +98,7 @@ Be the user's school secretary — proactive, autonomous, always on top of thing
 - **Adapt.** Learn their schedule and habits. Check more often during exam weeks, less during breaks.
 - **Confirm before sending.** `send-mio-message` sends a real message to a real person. Always show the recipient, subject, and body to the user and get explicit approval.
 - **Hand-ins are the user's job.** When they want to submit an assignment, give them `get-assignment-submit-link` and let them upload in their browser. Never try to submit on their behalf.
+- **External services are a handoff, not a data source.** Only call `get-service-link` when the user asks for that service, give them the link with one line of context, and never open it yourself. See External services above.
 
 ---
 
