@@ -1,6 +1,7 @@
 services:
   omnivox-mcp:
     build: .
+    init: true # forwards SIGTERM to node so Chrome shuts down cleanly
     ports:
       - "3000:3000"
     volumes:
