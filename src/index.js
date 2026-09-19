@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import InitializeMcpTools from './mcp/tools.js';
-import { InitializePuppet } from './omnivox-api/puppet/index.js';
+import { InitializePuppet, ShutdownPuppet } from './omnivox-api/puppet/index.js';
 import { dataDir } from './common/dataDir.js';
 
 const useHttp = process.argv.includes('--http');
@@ -12,6 +12,14 @@ setLogMode(useLog);
 
 InitializeMcpTools();
 InitializePuppet();
+
+const shutdown = async () => {
+    console.log('Shutting down...');
+    await ShutdownPuppet();
+    process.exit(0);
+};
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 if (useHttp) {
     const { StartExpressServer } = await import('./express/server.js');

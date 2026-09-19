@@ -3,6 +3,7 @@ import { getConfig, getElectronCookies } from '../config';
 import { setupPageInterceptors } from './interceptors';
 import { setupPageInjection } from './ovxInjection';
 import { buildUserAgent } from './userAgent';
+import { cleanupPreviousChrome } from './cleanup';
 import * as fs from 'fs';
 import * as path from 'path';
 import { dataDir } from '@common/dataDir';
@@ -92,22 +93,15 @@ export async function InitializePuppet() {
     readyPromise = (async () => {
         const isFirstRun = !fs.existsSync(browserDataDir);
 
-        // Kill orphaned Chrome process from a previous unclean shutdown
-        if (fs.existsSync(pidFile)) {
-            try {
-                const pid = Number(fs.readFileSync(pidFile, 'utf-8').trim());
-                process.kill(pid);
-            } catch { }
-            fs.unlinkSync(pidFile);
-        }
-
-        const singletonLock = path.join(browserDataDir, 'SingletonLock');
-        if (fs.existsSync(singletonLock)) fs.unlinkSync(singletonLock);
+        cleanupPreviousChrome(browserDataDir, pidFile);
 
         browser = await puppeteer.launch({
             headless: true,
             userDataDir: browserDataDir,
             defaultViewport: null,
+            handleSIGHUP: false,
+            handleSIGINT: false,
+            handleSIGTERM: false,
             args: [
                 '--disable-gpu',
                 '--disable-dev-shm-usage',
@@ -169,6 +163,13 @@ export async function InitializePuppet() {
     })();
 
     return readyPromise;
+}
+
+export async function ShutdownPuppet() {
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } 
+    await page?.close().catch(() => { });
+    await browser?.close().catch(() => { });
+    page = null; browser = null; readyPromise = null;
 }
 
 export async function waitForReady(): Promise<void> {
