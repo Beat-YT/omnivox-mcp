@@ -22,6 +22,10 @@ function formatLine(req: Request, res: Response, duration: number): string {
 }
 
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
+    if (process.env.DISABLE_LOGGER === 'true' || process.env.DISABLE_LOGGER === '1') {
+        return next();
+    }
+    
     const start = Date.now();
 
     res.on('finish', () => {
