@@ -71,9 +71,10 @@ Set these as environment variables or in a `.env` file at the project root:
 |---|---|---|
 | `PORT` | `3000` | Server port |
 | `OMNIVOX_DATA_DIR` | `data/` at the project root | Data directory for config, cookies, browser profile, and access key |
-| `MCP_SERVER_URL` | *(none)* | Optional. Public base URL that enables download link generation (`get-document-link` / `get-assignment-file-link`). Set to your public domain (e.g. `https://omnivox.example.com`). |
+| `BROWSER_LAUNCH_ARGS` | *(none)* | Extra Chrome flags appended to the default launch arguments, space-separated. Useful in Docker where Chrome runs as root and needs `--no-sandbox --disable-setuid-sandbox`. |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. |
-| `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `truea`. |
+| `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `true`. |
+| `MCP_SERVER_URL` | *(none)* | Optional. Public base URL that enables download link generation (`get-document-link` / `get-assignment-file-link`). Set to your public domain (e.g. `https://omnivox.example.com`). |
 | `ENABLE_EXTERNAL_SERVICE_LINKS` | `false` | When `true` or `1`, enables `get-service-link`, which hands out pre-authenticated links to web-only Omnivox services (lockers, advisor appointments, progression chart, ...). Any such link logs the browser into the full portal session, which is why it is off by default. Enable at your own risk. With `MCP_SERVER_URL` set the tool returns a short `/link/service` URL that mints the Omnivox token on click; otherwise it returns the raw single-use URL. |
 
 ## Using it

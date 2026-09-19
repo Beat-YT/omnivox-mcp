@@ -27,6 +27,9 @@ const REFRESH_INTERVAL_MS = process.env.BROWSER_REFRESH_INTERVAL
     : 0;
 let refreshTimer: ReturnType<typeof setInterval> | null = null;
 
+// Extra Chrome flags, space-separated (e.g. "--no-sandbox" when running as root in Docker)
+const extraLaunchArgs = (process.env.BROWSER_LAUNCH_ARGS ?? '').split(/\s+/).filter(Boolean);
+
 function resetIdleTimer() {
     if (!sleepEnabled) return;
     if (idleTimer) clearTimeout(idleTimer);
@@ -123,6 +126,7 @@ export async function InitializePuppet() {
                 '--renderer-process-limit=1',
                 '--disable-features=IsolateOrigins,site-per-process',
                 '--disable-backgrounding-occluded-windows',
+                ...extraLaunchArgs,
             ],
         });
 
