@@ -9,19 +9,33 @@ const input = z.object({
     service: serviceCodeSchema,
 });
 
+const output = z.object({
+    url: z.string(),
+    msg: z.string(),
+});
+
 const NOTES = [
     'Notes for the assistant:',
-    '- This link opens the page already logged into the user\'s Omnivox account. You may open it yourself with browser tools to read the page for the user, hand it to the user, or both.',
-    '- Treat it like a password: share it only with the user, and do not paste it into summaries, notes or memory.',
-    '- Reading is fine. Taking an action on the page (registering or withdrawing from a course, changing a schedule or program, editing the personal file, changing security settings, submitting any form) needs the user\'s explicit authorization for that specific action, given beforehand or in the moment. Do not act on a general "handle it" or on your own initiative.',
-    '- Do not use this link as a workaround for a tool that refused or returned nothing.',
-].join('\n');
+    'This link opens the page already logged into the user\'s Omnivox account. You may open it yourself with browser tools to read the page for the user, hand it to the user, or both.',
+    'Treat it like a password: share it only with the user, and do not paste it into summaries, notes or memory.',
+    'Reading is fine. Taking an action on the page (registering or withdrawing from a course, changing a schedule or program, editing the personal file, changing security settings, submitting any form) needs the user\'s explicit authorization for that specific action, given beforehand or in the moment. Do not act on a general "handle it" or on your own initiative.',
+    'Do not use this link as a workaround for a tool that refused or returned nothing.',
+].join(' ');
+
+function linkResult(url: string, msg: string) {
+    const result = { url, msg: `${msg} ${NOTES}` };
+    return {
+        content: [{ type: 'text' as const, text: JSON.stringify(result) }],
+        structuredContent: result,
+    };
+}
 
 mcpServer.registerTool('get-service-link',
     {
         title: 'Get Omnivox Service Link',
         description: 'Get a pre-authenticated link to an Omnivox web-only service (lockers, transcript, progression chart, advisor appointments, ...). These services have no API here, so the link is how to reach them. Open it yourself to read the page for the user, or give it to the user. Any action on the page needs the user\'s explicit authorization for that specific action. It logs the browser into the user\'s full Omnivox account, so treat it like a password. Expires after 15 minutes.',
         inputSchema: input,
+        outputSchema: output,
         annotations: {
             readOnlyHint: true,
             destructiveHint: false,
@@ -46,21 +60,11 @@ mcpServer.registerTool('get-service-link',
         if (isHttpMode() && serverBaseUrl) {
             const token = createWebToken({ type: 'external-service', code });
             const url = `${serverBaseUrl}/link/service?token=${token}`;
-            return {
-                content: [{
-                    type: 'text',
-                    text: `Link for "${code}" (expires in 15 minutes): ${url}\nThis logs the browser into the user's full Omnivox account. Treat it like a password.\n\n${NOTES}`,
-                }],
-            };
+            return linkResult(url, `Link for "${code}" (expires in 15 minutes). This logs the browser into the user's full Omnivox account. Treat it like a password.`);
         }
 
         const { service, url } = await BuildServiceAutoLoginUrl(code);
-        return {
-            content: [{
-                type: 'text',
-                text: `Link for "${service.Texte}": ${url}\nSingle-use login token, open it once and soon. It logs the browser into the user's full Omnivox account, so treat it like a password.\n\n${NOTES}`,
-            }],
-        };
+        return linkResult(url, `Link for "${service.Texte}". Single-use login token, open it once and soon. It logs the browser into the user's full Omnivox account, so treat it like a password.`);
     }
 );
 
