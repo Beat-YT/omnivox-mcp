@@ -26,21 +26,19 @@ mcpServer.registerTool('get-teachers',
         const model = await GetEnseignantsSommaireModel(term);
         const teachers = transformTeachers(model);
 
-        const texts = teachers.teachers.map(t => ({
-            type: 'text' as const,
-            text: [
-                t.name,
-                t.department ? `  Department: ${t.department}` : null,
-                t.office ? `  Office: ${t.office}` : null,
-                t.phone ? `  Phone: ${t.phone}` : null,
-            ].filter(Boolean).join('\n'),
-        }));
+        const lines = [
+            `# Teachers — term ${teachers.term_id} (${teachers.teachers.length})`,
+            '',
+            ...teachers.teachers.map(t => [
+                `## ${t.name}`,
+                t.department ? `- Department: ${t.department}` : null,
+                t.office ? `- Office: ${t.office}` : null,
+                t.phone ? `- Phone: ${t.phone}` : null,
+            ].filter(Boolean).join('\n') + '\n'),
+        ];
 
         return {
-            content: [
-                { type: 'text', text: `Teachers for term ${teachers.term_id}: ${teachers.teachers.length} teacher(s).` },
-                ...texts,
-            ],
+            content: [{ type: 'text', text: lines.join('\n') }],
             structuredContent: teachers,
         };
     }

@@ -23,11 +23,11 @@ mcpServer.registerTool('get-terms',
         const terms = await transformTerms(termIds);
 
         const defaultName = terms.find(t => t.id === defaultTerm)?.name || defaultTerm;
-        const lines = terms.map(t => `${t.id}: ${t.name}${t.id === defaultTerm ? ' (current)' : ''}`);
+        const lines = terms.map(t => `- ${t.id}: ${t.name}${t.id === defaultTerm ? ' (current)' : ''}`);
 
         return {
             content: [
-                { type: 'text', text: `Current term: ${defaultName} (${defaultTerm})\n\n${lines.join('\n')}` },
+                { type: 'text', text: `# Terms\nCurrent term: ${defaultName} (${defaultTerm})\n\n${lines.join('\n')}` },
             ],
             structuredContent: {
                 default_term: defaultTerm,

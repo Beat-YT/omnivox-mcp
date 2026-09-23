@@ -21,16 +21,13 @@ mcpServer.registerTool('get-college-list',
         const data = await UpdateListeCollegeUser();
         const result = transformCollegeList(data);
 
-        const texts = result.colleges.map(c => ({
-            type: 'text' as const,
-            text: `${c.name} (${c.code})`,
-        }));
+        const lines = [
+            `# Colleges (${result.count})`,
+            ...result.colleges.map(c => `- ${c.name} (${c.code})`),
+        ];
 
         return {
-            content: [
-                { type: 'text', text: `Found ${result.count} college(s).` },
-                ...texts,
-            ],
+            content: [{ type: 'text', text: lines.join('\n') }],
             structuredContent: result,
         };
     }

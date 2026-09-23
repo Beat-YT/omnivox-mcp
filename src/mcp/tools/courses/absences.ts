@@ -33,20 +33,20 @@ mcpServer.registerTool('get-absences',
         const dt = itemDeltaText(deltas, m => m.replace(/_/g, ' '));
 
         const totalHours = absences.courses.reduce((sum, c) => sum + c.total_hours_absent, 0);
-        const header = `Term: ${term} — ${absences.courses.length} course(s), ${totalHours}h total absent`;
+        const header = `# Absences — term ${term} (${totalHours}h total)`;
         const courses = absences.courses.map(c => formatAbsence(c, dt?.items[c.course_id]));
 
         return {
-            content: [{ type: 'text', text: [dt?.header, header, '', ...courses].filter(Boolean).join('\n') }],
+            content: [{ type: 'text', text: [header, dt?.header, '', ...courses].filter(l => l != null).join('\n') }],
         };
     }
 );
 
 function formatAbsence(c: CourseAbsence, delta?: string) {
     const lines = [
-        `- ${c.name || c.course_id} (${c.course_id}): ${c.total_hours_absent}h absent`,
-        ...c.absences.map(a => `  ${a.date}: ${a.hours}h`),
-        `  ${delta || '[no changes since last check]'}`,
+        `## ${c.name || c.course_id} (${c.course_id}): ${c.total_hours_absent}h`,
+        ...c.absences.map(a => `- ${a.date.slice(0, 10)}: ${a.hours}h`),
+        `- Changes: ${delta || '[no changes since last check]'}`,
         '',
     ];
     return lines.join('\n');

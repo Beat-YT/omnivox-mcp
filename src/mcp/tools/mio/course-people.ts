@@ -27,27 +27,18 @@ mcpServer.registerTool('get-course-people',
             const teachers = result.results.filter(p => p.type === 'teacher');
             const students = result.results.filter(p => p.type !== 'teacher');
 
-            const texts: { type: 'text'; text: string }[] = [];
+            const lines = [`# People in ${args.course_id} (${result.results.length})`];
 
             if (teachers.length) {
-                texts.push({ type: 'text', text: `Teachers (${teachers.length}):` });
-                texts.push(...teachers.map(p => ({
-                    type: 'text' as const,
-                    text: `  ${p.name} — ID: ${p.id}`,
-                })));
+                lines.push('', `## Teachers (${teachers.length})`);
+                lines.push(...teachers.map(p => `- ${p.name} (ID: ${p.id})`));
             }
 
-            texts.push({ type: 'text', text: `Students (${students.length}):` });
-            texts.push(...students.map(p => ({
-                type: 'text' as const,
-                text: `  ${p.name} — ID: ${p.id}`,
-            })));
+            lines.push('', `## Students (${students.length})`);
+            lines.push(...students.map(p => `- ${p.name} (ID: ${p.id})`));
 
             return {
-                content: [
-                    { type: 'text', text: `${result.results.length} people in course ${args.course_id}.` },
-                    ...texts,
-                ],
+                content: [{ type: 'text', text: lines.join('\n') }],
                 structuredContent: result,
             };
         } catch (e) {

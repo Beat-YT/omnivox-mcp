@@ -22,11 +22,11 @@ mcpServer.registerTool('get-cancelled-classes',
 
         if (data.cancelled_classes.length === 0) {
             return {
-                content: [{ type: 'text', text: 'No cancelled classes.' }],
+                content: [{ type: 'text', text: '# Cancelled classes\nNo cancelled classes.' }],
             };
         }
 
-        const header = `${data.cancelled_classes.length} cancelled class(es):`;
+        const header = `# Cancelled classes (${data.cancelled_classes.length})`;
         const lines = data.cancelled_classes.map(formatCancelled);
 
         return {
@@ -41,12 +41,13 @@ function formatCancelled(c: CancelledClass): string {
     const date = start.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
     const time = `${formatTime(start)}-${formatTime(end)}`;
     const parts = [
-        `- ${date} ${time}: ${c.course_name} (${c.course_id})`,
-        c.teacher && `  Teacher: ${c.teacher}`,
-        c.rooms.length && `  Room: ${c.rooms.join(', ')}`,
-        c.comment && `  Note: ${c.comment}`,
+        `## ${c.course_name} (${c.course_id})`,
+        `- When: ${date}, ${time}`,
+        c.teacher && `- Teacher: ${c.teacher}`,
+        c.rooms.length && `- Room: ${c.rooms.join(', ')}`,
+        c.comment && `- Note: ${c.comment}`,
     ];
-    return parts.filter(Boolean).join('\n');
+    return parts.filter(Boolean).join('\n') + '\n';
 }
 
 function formatTime(d: Date): string {

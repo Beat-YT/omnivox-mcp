@@ -34,20 +34,30 @@ mcpServer.registerTool('get-assignment-detail',
         }
 
         const lines = [
-            `Assignment: ${detail.title}`,
-            detail.category && `Category: ${detail.category}`,
-            detail.published_at && `Published: ${detail.published_at}`,
-            detail.due_at && `Due: ${detail.due_at}`,
-            `Submitted: ${detail.is_submitted}`,
-            `Submission Open: ${detail.is_submission_open}`,
-            `Late Submission: ${detail.allow_late_submission}`,
-            detail.student_submissions?.length && `Student Submissions: ${detail.student_submissions.length}`,
-            detail.teacher_documents?.length && `Teacher Documents: ${detail.teacher_documents.length}`,
-            detail.correction_files?.length && `Correction Files: ${detail.correction_files.length}`,
-        ].filter(Boolean).join('\n');
+            `# ${detail.title}`,
+            detail.category && `- Category: ${detail.category}`,
+            detail.published_at && `- Published: ${detail.published_at}`,
+            detail.due_at && `- Due: ${detail.due_at}`,
+            `- Submitted: ${detail.is_submitted ? 'yes' : 'no'}`,
+            `- Submission open: ${detail.is_submission_open ? 'yes' : 'no'}`,
+            `- Late submission allowed: ${detail.allow_late_submission ? 'yes' : 'no'}`,
+        ];
+
+        if (detail.student_submissions?.length) {
+            lines.push('', `## Your submissions (${detail.student_submissions.length})`);
+            lines.push(...detail.student_submissions.map(s => `- ${s.file_name} (${s.submitted_at}${s.is_late_submission ? ', late' : ''})`));
+        }
+        if (detail.teacher_documents?.length) {
+            lines.push('', `## Teacher documents (${detail.teacher_documents.length})`);
+            lines.push(...detail.teacher_documents.map(d => `- ${d.file_name}`));
+        }
+        if (detail.correction_files?.length) {
+            lines.push('', `## Correction files (${detail.correction_files.length})`);
+            lines.push(...detail.correction_files.map(d => `- ${d.file_name}`));
+        }
 
         return {
-            content: [{ type: 'text', text: lines }],
+            content: [{ type: 'text', text: lines.filter(Boolean).join('\n') }],
             structuredContent: detail,
         };
     }

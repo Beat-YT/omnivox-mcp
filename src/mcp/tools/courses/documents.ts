@@ -28,29 +28,31 @@ mcpServer.registerTool('get-course-documents',
         const documents = transformDocuments(model, term, course_id);
 
         const unviewed = documents.documents.filter(d => !d.is_viewed).length;
-        const header = `${documents.course_name || course_id} — ${documents.documents.length} document(s)${unviewed ? `, ${unviewed} unread` : ''}`;
-        const legend = unviewed ? '* = not viewed' : '';
+        const title = documents.course_name ? `${documents.course_name} (${course_id})` : course_id;
+        const header = `# Documents: ${title}`;
+        const meta = `${documents.documents.length} document(s)${unviewed ? `, ${unviewed} unread` : ''}`;
         const docs = documents.documents.map(formatDocument);
 
         return {
-            content: [{ type: 'text', text: [header, legend, '', ...docs].filter(Boolean).join('\n') }],
+            content: [{ type: 'text', text: [header, meta, '', ...docs].join('\n') }],
         };
     }
 )
 
 function formatDocument(doc: CourseDocument) {
-    const marker = doc.is_viewed ? '- ' : '* ';
-    const date = doc.published_at ? new Date(doc.published_at).toLocaleDateString() : '?';
+    const marker = doc.is_viewed ? '' : ' *new*';
+    const date = doc.published_at ? doc.published_at.slice(0, 10) : '?';
 
     const details: string[] = [];
-    if (doc.category) details.push(`  Category: ${doc.category}`);
-    if (doc.description) details.push(`  ${doc.description}`);
-    if (doc.filename) details.push(`  File: ${doc.filename}`);
-    if (doc.external_url) details.push(`  URL: ${doc.external_url}`);
-    details.push(`  ID: ${doc.id}`);
+    details.push(`- Published: ${date}`);
+    if (doc.category) details.push(`- Category: ${doc.category}`);
+    if (doc.description) details.push(`- Description: ${doc.description}`);
+    if (doc.filename) details.push(`- File: ${doc.filename}`);
+    if (doc.external_url) details.push(`- URL: ${doc.external_url}`);
+    details.push(`- ID: ${doc.id}`);
 
     return [
-        `${marker}[${date}] ${doc.title}`,
+        `## ${doc.title}${marker}`,
         ...details,
         '',
     ].join('\n');

@@ -53,15 +53,17 @@ mcpServer.registerTool('get-calendar',
             grouped.get(day)!.push(e);
         }
 
-        const lines: string[] = [];
+        const lines: string[] = ['# Calendar'];
 
         // @ts-ignore
         for (const [day, events] of grouped) {
-            lines.push(`\n--- ${day} ---`);
+            lines.push('', `## ${day}`);
             for (const e of events) {
                 lines.push(mapEventToText(e));
             }
         }
+
+        if (!page.events.length) lines.push('No events in this range.');
 
         return {
             content: [
@@ -95,20 +97,22 @@ function formatTime(iso: string): string {
 
 function mapEventToText(e: CalendarEvent): string {
     const parts: string[] = [];
+    const past = e.status === 'past' ? ' (past)' : '';
 
     if (e.allDay) {
-        parts.push(`[${e.category}] ${e.title}`);
+        parts.push(`### All day: ${e.title}${past}`);
+        parts.push(`- Category: ${e.category}`);
     } else {
         const time = `${formatTime(e.start)}–${e.end ? formatTime(e.end) : '?'}`;
-        parts.push(`${time} ${e.title}${e.location ? ` (${e.location})` : ''}`);
-        if (e.category == 'student_access_exam') parts.push(`  Exam with the Student Access Service`);
+        parts.push(`### ${time} ${e.title}${past}`);
+        if (e.location) parts.push(`- Location: ${e.location}`);
+        if (e.category == 'student_access_exam') parts.push(`- Exam with the Student Access Service`);
     }
 
-    if (e.classType) parts.push(`  type: ${e.classType}`);
-    if (e.course) parts.push(`  course: ${e.course.course_id}`);
-    if (e.weight) parts.push(`  weight: ${e.weight / 100}%`);
-    if (e.description) parts.push(`  ${e.description}`);
-    if (e.status === 'past') parts.push(`  (past)`);
+    if (e.classType) parts.push(`- Type: ${e.classType}`);
+    if (e.course) parts.push(`- Course: ${e.course.course_id}`);
+    if (e.weight) parts.push(`- Weight: ${e.weight / 100}%`);
+    if (e.description) parts.push(`- Description: ${e.description}`);
 
     return parts.join('\n');
 }

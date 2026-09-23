@@ -75,12 +75,12 @@ export function messageToText(m: MioModel.ListeMessage, opts?: { folder?: string
   const excerpt = extractHtmlPreview(m.Message)
   const attachments = m.Attachements ?? []
 
-  const header = `${m.Unread ? '* ' : '  '}[${date}] ${sender}: ${subject}`
-  const details: string[] = []
-  if (excerpt) details.push(`  ${excerpt}`)
-  if (attachments.length) details.push(`  Attachments: ${attachments.map(a => a.NomFichier).join(', ')}`)
-  details.push(`  ID: ${m.Id}`)
-  if (opts?.folder) details.push(`  Folder: ${opts.folder}`)
+  const header = `## ${subject}${m.Unread ? ' *new*' : ''}`
+  const details: string[] = [`- From: ${sender}`, `- Date: ${date}`]
+  if (excerpt) details.push(`- Preview: ${excerpt}`)
+  if (attachments.length) details.push(`- Attachments: ${attachments.map(a => a.NomFichier).join(', ')}`)
+  details.push(`- ID: ${m.Id}`)
+  if (opts?.folder) details.push(`- Folder: ${opts.folder}`)
   return [header, ...details].join('\n')
 }
 
@@ -88,7 +88,7 @@ export function messageToText(m: MioModel.ListeMessage, opts?: { folder?: string
 export function messagesMetaToText(raw: MioModel.ResponseModel) {
   const count = raw.ListeMessages?.length ?? 0
   const hasMore = count < (raw.NbMessagesTotal ?? 0)
-  return `${raw.NbMessagesNonLus ?? 0} unread / ${raw.NbMessagesTotal ?? 0} total — showing ${count} message(s).${hasMore ? ' Use last_id to load more.' : ''}\n* = unread`
+  return `# MIO messages\n${raw.NbMessagesNonLus ?? 0} unread / ${raw.NbMessagesTotal ?? 0} total, showing ${count}.${hasMore ? ' Use last_id to load more.' : ''}`
 }
 
 /** Format a single message for full reading */
@@ -102,12 +102,13 @@ export function messageDetailToText(m: MioModel.ListeMessage) {
   )
 
   return [
-    `Subject: ${subject}`,
-    `From: ${sender}`,
-    `Date: ${date}`,
-    m.IDMessageReply ? `Reply to: ${m.IDMessageReply}` : null,
-    attachments.length ? `Attachments:\n${attachments.join('\n')}` : null,
+    `# ${subject}`,
+    `- From: ${sender}`,
+    `- Date: ${date}`,
+    m.IDMessageReply ? `- Reply to: ${m.IDMessageReply}` : null,
+    attachments.length ? `\n## Attachments\n${attachments.join('\n')}` : null,
     '',
+    '## Message',
     body,
   ].filter(l => l !== null).join('\n')
 }

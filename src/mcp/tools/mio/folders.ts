@@ -29,22 +29,21 @@ mcpServer.registerTool('get-mio-folders',
         const dt = itemDeltaText(deltas, m => m.replace(/_/g, ' '));
 
         const totalUnread = result.folders.reduce((sum, f) => sum + f.unread_msg_count, 0);
-        const header = `${result.folders.length} MIO folder(s), ${totalUnread} unread total`;
+        const header = `# MIO folders (${totalUnread} unread)`;
         const folders = result.folders.map(f => formatFolder(f, dt?.items[f.id]));
 
         return {
-            content: [{ type: 'text', text: [dt?.header, header, '', ...folders].filter(Boolean).join('\n') }],
+            content: [{ type: 'text', text: [header, dt?.header, '', ...folders].filter(l => l != null).join('\n') }],
         };
     }
 );
 
 function formatFolder(f: Folder, delta?: string) {
-    const marker = f.unread_msg_count ? '* ' : '- ';
     return [
-        `${marker}${f.label} (${f.type})`,
-        `  ${f.unread_msg_count} unread / ${f.total_msg_count} total`,
-        `  ID: ${f.id}`,
-        `  ${delta || '[no changes since last check]'}`,
+        `## ${f.label} (${f.type})`,
+        `- Messages: ${f.unread_msg_count} unread / ${f.total_msg_count} total`,
+        `- ID: ${f.id}`,
+        `- Changes: ${delta || '[no changes since last check]'}`,
         '',
     ].join('\n');
 }

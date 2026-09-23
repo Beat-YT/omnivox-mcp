@@ -19,21 +19,18 @@ mcpServer.registerTool('get-college-news',
         const data = await GetListeActualite();
         const news = transformCollegeNews(data);
 
-        const texts = news.map(n => ({
-            type: 'text' as const,
-            text: [
-                `${n.title}${n.is_urgent ? ' [URGENT]' : ''}${n.is_featured ? ' [FEATURED]' : ''}`,
-                n.content_preview && `Preview: ${n.content_preview}`,
-                n.published_at && `Published: ${n.published_at}`,
-                '',
-            ].filter(Boolean).join('\n'),
-        }));
+        const lines = [
+            `# College news (${news.length})`,
+            '',
+            ...news.map(n => [
+                `## ${n.title}${n.is_urgent ? ' [URGENT]' : ''}${n.is_featured ? ' [FEATURED]' : ''}`,
+                n.published_at && `- Published: ${n.published_at}`,
+                n.content_preview && `- Preview: ${n.content_preview}`,
+            ].filter(Boolean).join('\n') + '\n'),
+        ];
 
         return {
-            content: [
-                { type: 'text', text: `${news.length} college news item(s).` },
-                ...texts,
-            ],
+            content: [{ type: 'text', text: lines.join('\n') }],
             structuredContent: { items: news },
         };
     }

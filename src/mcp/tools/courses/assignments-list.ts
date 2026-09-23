@@ -26,16 +26,15 @@ mcpServer.registerTool('get-course-assignments',
         const model = await GetTravauxListeModel(args.course_id, term);
         const result = transformAssignmentsList(model, term, args.course_id);
 
-        const texts = result.assignments.map(a => ({
-            type: 'text' as const,
-            text: mapAssignmentToText(a),
-        }));
+        const lines = [
+            `# Assignments: ${args.course_id}`,
+            `${result.assignments.length} assignment(s)`,
+            '',
+            ...result.assignments.map(mapAssignmentToText),
+        ];
 
         return {
-            content: [
-                { type: 'text', text: `${result.assignments.length} assignment(s) for course ${args.course_id}.` },
-                ...texts,
-            ],
+            content: [{ type: 'text', text: lines.join('\n') }],
             structuredContent: result,
         };
     }
@@ -43,10 +42,9 @@ mcpServer.registerTool('get-course-assignments',
 
 function mapAssignmentToText(a: AssignmentListItem) {
     return [
-        `${a.title}${a.is_submitted ? ' [SUBMITTED]' : ''}${a.has_correction ? ' [CORRECTED]' : ''}`,
-        a.due_at && `Due: ${a.due_at}`,
-        a.category && `Category: ${a.category}`,
-        a.content_preview && `Preview: ${a.content_preview}`,
-        '',
-    ].filter(Boolean).join('\n');
+        `## ${a.title}${a.is_submitted ? ' [SUBMITTED]' : ''}${a.has_correction ? ' [CORRECTED]' : ''}`,
+        a.due_at && `- Due: ${a.due_at}`,
+        a.category && `- Category: ${a.category}`,
+        a.content_preview && `- Preview: ${a.content_preview}`,
+    ].filter(Boolean).join('\n') + '\n';
 }

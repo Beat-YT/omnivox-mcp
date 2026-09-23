@@ -37,24 +37,16 @@ mcpServer.registerTool('get-courses-summary',
         const deltas = computeDelta(`get-courses-summary:${summary.term_id}`, snapshot);
         const dt = itemDeltaText(deltas, m => m.replace(/_/g, ' '));
 
-        const hasUnread = summary.courses.some(c =>
-            c.unread_documents || c.unread_announcements || c.unread_assignments || c.unread_grades
-        );
-
-        const header = `Term: ${summary.term_id} — ${summary.courses.length} courses`;
-        const legend = hasUnread ? '* = has unread items' : '';
+        const header = `# Courses — term ${summary.term_id} (${summary.courses.length})`;
         const courses = summary.courses.map(c => formatCourse(c, dt?.items[c.id]));
 
         return {
-            content: [{ type: 'text', text: [dt?.header, header, legend, '', ...courses].filter(Boolean).join('\n') }],
+            content: [{ type: 'text', text: [header, dt?.header, '', ...courses].filter(l => l != null).join('\n') }],
         };
     }
 )
 
 function formatCourse(c: CourseItem, delta?: string) {
-    const hasUnread = !!(c.unread_documents || c.unread_announcements || c.unread_assignments || c.unread_grades);
-    const marker = hasUnread ? '* ' : '- ';
-
     const unread: string[] = [];
     if (c.unread_documents)     unread.push(`${c.unread_documents} new docs`);
     if (c.unread_announcements) unread.push(`${c.unread_announcements} new announcements`);
@@ -69,15 +61,15 @@ function formatCourse(c: CourseItem, delta?: string) {
     ].join(', ');
 
     const lines = [
-        `${marker}${c.title} (${c.id})`,
-        `  ${totals}`,
+        `## ${c.title} (${c.id})`,
+        `- Totals: ${totals}`,
     ];
 
     if (unread.length) {
-        lines.push(`  Unread: ${unread.join(', ')}`);
+        lines.push(`- Unread: ${unread.join(', ')}`);
     }
 
-    lines.push(`  ${delta || '[no changes since last check]'}`);
+    lines.push(`- Changes: ${delta || '[no changes since last check]'}`);
     lines.push('');
     return lines.join('\n');
 }

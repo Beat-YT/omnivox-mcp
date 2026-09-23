@@ -28,7 +28,7 @@ mcpServer.registerTool('search-mio-messages',
 
         return {
             content: [
-                { type: 'text', text: `Search "${args.query}": ${data.ListeMessages?.length ?? 0} result(s).\n\n${lines.join('\n\n')}` },
+                { type: 'text', text: `# MIO search: "${args.query}"\n${data.ListeMessages?.length ?? 0} result(s)\n\n${lines.join('\n\n')}` },
             ],
         };
     }

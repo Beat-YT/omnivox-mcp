@@ -23,16 +23,13 @@ mcpServer.registerTool('search-people',
         const raw = await RechercheIndividu(args.query);
         const result = transformPeopleSearch(raw);
 
-        const texts = result.results.map(p => ({
-            type: 'text' as const,
-            text: `${p.name} (${p.type}) — ID: ${p.id}`,
-        }));
+        const lines = [
+            `# People search: "${args.query}" (${result.results.length})`,
+            ...result.results.map(p => `- ${p.name}, ${p.type} (ID: ${p.id})`),
+        ];
 
         return {
-            content: [
-                { type: 'text', text: `${result.results.length} result(s) for "${args.query}".` },
-                ...texts,
-            ],
+            content: [{ type: 'text', text: lines.join('\n') }],
             structuredContent: result,
         };
     }
