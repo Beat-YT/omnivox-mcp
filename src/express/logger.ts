@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { dataDir } from '../common/dataDir.js';
 import { isHttpMode } from '../common/transportMode.js';
+import { toLocalIso } from '../common/transformHelpers.js';
 
 const logFile = path.join(dataDir, 'server.log');
 
@@ -15,7 +16,7 @@ const statusText: Record<number, string> = {
 };
 
 function formatLine(req: Request, res: Response, duration: number): string {
-    const date = new Date().toISOString();
+    const date = toLocalIso();
     const status = res.statusCode;
     const reason = statusText[status] || '';
     return `[${date}] ${req.method} ${req.originalUrl} → ${status} ${reason} (${duration}ms)`;

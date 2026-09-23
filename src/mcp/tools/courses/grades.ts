@@ -2,6 +2,7 @@ import { GetNotesDetailModel, GetNotesDetailWebModel, GetNotesSommaireModel } fr
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { NotesDetailModel } from "@typings/Lea/NotesDetailModel";
 import { courseIdSchema, termIdSchema } from "@common/validation";
+import { toLocalIso } from "@common/transformHelpers";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
@@ -34,7 +35,7 @@ function signed(n: number): string {
 
 function day(ts: number | null | undefined): string | null {
     if (!ts || ts < 0) return null;
-    return new Date(ts).toISOString().slice(0, 10);
+    return toLocalIso(ts).slice(0, 10);
 }
 
 mcpServer.registerTool('get-course-evals',

@@ -1,6 +1,6 @@
 import { CommuniquesListeModel } from "@typings/Lea/CommuniquesListeModel"
 import { announcementItemSchema, AnnouncementItem, AnnouncementSummary } from "@schemas/courses/announcements"
-import { extractHtmlPreview } from "@common/transformHelpers"
+import { extractHtmlPreview, toLocalIso } from "@common/transformHelpers"
 
 
 export function transformAnnouncements(
@@ -19,8 +19,8 @@ export function transformAnnouncements(
             return announcementItemSchema.parse({
                 id: String(communique.IdCommunique),
                 title: communique.Titre,
-                published_at: new Date(communique.DateDebutDiffusion).toISOString(),
-                expires_at: new Date(communique.DateFinDiffusion).toISOString(),
+                published_at: toLocalIso(communique.DateDebutDiffusion),
+                expires_at: toLocalIso(communique.DateFinDiffusion),
                 is_read: communique.Visionne,
                 is_visible: communique.IsPermetVisionnement,
                 html_content: communique.Contenu,

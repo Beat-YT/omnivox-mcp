@@ -1,4 +1,4 @@
-import { toIso } from "@common/transformHelpers";
+import { toIso, toLocalIso } from "@common/transformHelpers";
 import { CancelledClass, CancelledClasses } from "@schemas/courses/cancelled";
 import { CoursAnnuleModel } from "@typings/CoursAnnuleModel";
 
@@ -11,8 +11,8 @@ export function transformCoursAnnule(raw: CoursAnnuleModel.ResponseModel): Cance
 
         return {
             id: a.IDAnnulation,
-            start: new Date(y, m, d, parseHour(a.HeureDebutAnnulation), parseMinute(a.HeureDebutAnnulation)).toISOString(),
-            end: new Date(y, m, d, parseHour(a.HeureFinAnnulation), parseMinute(a.HeureFinAnnulation)).toISOString(),
+            start: toLocalIso(new Date(y, m, d, parseHour(a.HeureDebutAnnulation), parseMinute(a.HeureDebutAnnulation))),
+            end: toLocalIso(new Date(y, m, d, parseHour(a.HeureFinAnnulation), parseMinute(a.HeureFinAnnulation))),
             course_id: `${a.NoCours}.${a.NoGroupe}`,
             course_name: a.NomCours,
             teacher: a.NomProf || undefined,
@@ -24,7 +24,7 @@ export function transformCoursAnnule(raw: CoursAnnuleModel.ResponseModel): Cance
     cancelled_classes.sort((a, b) => a.start.localeCompare(b.start));
 
     return {
-        fetched_at: toIso(raw.DateCoursAnnule) ?? new Date().toISOString(),
+        fetched_at: toIso(raw.DateCoursAnnule) ?? toLocalIso(),
         cancelled_classes,
     };
 }

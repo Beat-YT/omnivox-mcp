@@ -2,6 +2,7 @@ import { CalendarEvent } from "@schemas/calendar/calendar";
 import { CourseItem } from "@schemas/courses/summary";
 import { CollegeNewsItem } from "@schemas/college/college-news";
 import { NotificationItem } from "@schemas/overview/notifications";
+import { toLocalIso } from "@common/transformHelpers";
 
 type DeltaText = { header: string; items: Record<string, string> } | null;
 
@@ -71,7 +72,7 @@ export function formatMioInbox(dt: DeltaText): string | null {
 
 export function formatTodaySchedule(events: CalendarEvent[]): string | null {
     const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10); // YYYY-MM-DD
+    const todayStr = toLocalIso(now).slice(0, 10); // YYYY-MM-DD
 
     const today = events.filter(e => {
         if (e.allDay) return e.start.slice(0, 10) === todayStr;
