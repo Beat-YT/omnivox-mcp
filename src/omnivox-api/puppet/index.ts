@@ -166,10 +166,16 @@ export async function InitializePuppet() {
 }
 
 export async function ShutdownPuppet() {
-    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; } 
+    if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+    if (idleTimer) { clearTimeout(idleTimer); idleTimer = null; }
+    
     await page?.close().catch(() => { });
     await browser?.close().catch(() => { });
+
     page = null; browser = null; readyPromise = null;
+
+    // clear stale PID if exist.
+    if (fs.existsSync(pidFile)) fs.unlinkSync(pidFile);
 }
 
 export async function waitForReady(): Promise<void> {
@@ -191,7 +197,7 @@ export async function makeSkytechRequest<T = any>(url: string, data: any = {}): 
         if (!isDetachedFrameError(err)) throw err;
 
         await recoverPage();
-        
+
         return await makeProxyRequest(url, data);
     }
 }
@@ -263,7 +269,7 @@ export async function getHealthStatus(): Promise<{ ok: boolean; browser: boolean
     let omnivoxReady = false;
     try {
         omnivoxReady = await page!.evaluate(() => !!(window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON);
-    } catch {}
+    } catch { }
 
     return { ok: omnivoxReady, browser: true, page: true, omnivox: omnivoxReady, sleeping: false };
 }
