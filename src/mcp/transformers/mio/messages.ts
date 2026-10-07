@@ -1,4 +1,4 @@
-import { extractHtmlPreview, toIso } from "@common/transformHelpers"
+import { extractHtmlPreview, toDisplayDate, toIso } from "@common/transformHelpers"
 import { MessagesResponse } from "@schemas/mio/messages.schema"
 import { MioModel } from "@typings/Mio/Messages"
 
@@ -67,16 +67,31 @@ export function transformMioMessages(raw: MioModel.ResponseModel, currentFolder:
 
 // --- Text transformers (model → text, no intermediate schema) ---
 
+// NbLectures and ListeDestinataires only describe our own copy on sent messages (MioEnvoi).
+// Unread recipients carry .NET DateTime.MinValue as a negative timestamp, so read means > 0.
+function sentReadLine(m: MioModel.ListeMessage) {
+  return `- Read: ${m.NbLectures ?? 0}/${m.NbDestinataires ?? 0}`
+}
+
+function recipientsSummary(m: MioModel.ListeMessage, max = 5) {
+  const names = (m.ListeDestinataires ?? []).map(d => d.NomComplet)
+  if (!names.length) return '?'
+  const more = names.length - max
+  return names.slice(0, max).join(', ') + (more > 0 ? ` (+${more} more)` : '')
+}
+
 /** Format a single message as a list item line */
 export function messageToText(m: MioModel.ListeMessage, opts?: { folder?: string }) {
-  const date = toIso(m.TimestampDateEnvoi)?.slice(0, 10) ?? '?'
+  const date = toDisplayDate(m.TimestampDateEnvoi) ?? '?'
   const sender = m.NomCompletEnvoyeur || m.OIDEnvoyeur
   const subject = m.Sujet?.trim() || '(no subject)'
   const excerpt = extractHtmlPreview(m.Message)
   const attachments = m.Attachements ?? []
 
   const header = `## ${subject}${m.Unread ? ' *new*' : ''}`
-  const details: string[] = [`- From: ${sender}`, `- Date: ${date}`]
+  const details: string[] = m.MioEnvoi
+    ? [`- To: ${recipientsSummary(m)}`, `- Date: ${date}`, sentReadLine(m)]
+    : [`- From: ${sender}`, `- Date: ${date}`]
   if (excerpt) details.push(`- Preview: ${excerpt}`)
   if (attachments.length) details.push(`- Attachments: ${attachments.map(a => a.NomFichier).join(', ')}`)
   details.push(`- ID: ${m.Id.toUpperCase()}`)
@@ -95,17 +110,25 @@ export function messagesMetaToText(raw: MioModel.ResponseModel) {
 export function messageDetailToText(m: MioModel.ListeMessage) {
   const subject = m.Sujet?.trim() || '(no subject)'
   const sender = `${m.NomCompletEnvoyeur}${m.NumeroEnvoyeur ? ` (${m.NumeroEnvoyeur})` : ''}`
-  const date = toIso(m.TimestampDateEnvoi) ?? '?'
+  const date = toDisplayDate(m.TimestampDateEnvoi) ?? '?'
   const body = extractHtmlPreview(m.Message, 10000) || '(empty body)'
   const attachments = (m.Attachements ?? []).map(a =>
     `- ${a.NomFichier} (${a.ContentType}, ${Math.round(a.TailleOctet / 1024)}KB) [attachment_id: ${a.IDFichierAttachement}]`
   )
 
+  const recipients = (m.ListeDestinataires ?? []).map(d => {
+    const name = `${d.NomComplet}${d.Numero ? ` (${d.Numero})` : ''}`
+    const readAt = toDisplayDate(d.DateVisualisation)
+    return `- ${name}: ${readAt ? `read ${readAt}` : 'unread'}`
+  })
+
   return [
     `# ${subject}`,
-    `- From: ${sender}`,
+    m.MioEnvoi ? null : `- From: ${sender}`,
     `- Date: ${date}`,
+    m.MioEnvoi ? sentReadLine(m) : null,
     m.IDMessageReply ? `- Reply to: ${m.IDMessageReply}` : null,
+    m.MioEnvoi && recipients.length ? `\n## Recipients (${recipients.length})\n${recipients.join('\n')}` : null,
     attachments.length ? `\n## Attachments\n${attachments.join('\n')}` : null,
     '',
     '## Message',

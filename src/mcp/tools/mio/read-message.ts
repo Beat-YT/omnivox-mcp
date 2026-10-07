@@ -24,7 +24,7 @@ mcpServer.registerTool('read-mio-message',
     async (args) => {
         const folder = args.folder_id || 'SEARCH_FOLDER_MioRecu';
         const data = args.last_id ? await GetMessages(folder, args.last_id) : await GetLatestMessages(folder, 50);
-        const msg = data.ListeMessages?.find(m => m.Id.toUpperCase() === args.message_id);
+        const msg = data.ListeMessages?.find(m => m.Id.toUpperCase() === args.message_id.toUpperCase());
 
         if (!msg) {
             const scope = args.last_id ? `the page after ${args.last_id}` : 'the 50 most recent messages';

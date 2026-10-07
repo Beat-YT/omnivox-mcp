@@ -14,6 +14,18 @@ export function toIso(ms?: number) {
     return toLocalIso(ms)
 }
 
+/** Readable local date for text output, e.g. "Thu, Sep 24 11:43". Adds the year outside the current one. */
+export function toDisplayDate(ms?: number) {
+    if (!ms || ms < 0) return undefined
+    const d = new Date(ms)
+    const date = d.toLocaleDateString('en-CA', {
+        weekday: 'short', month: 'short', day: 'numeric',
+        year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
+    })
+    const time = d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false })
+    return `${date} ${time}`
+}
+
 export function extractHtmlPreview(html?: string, maxLength = 350) {
     if (!html) return undefined
 

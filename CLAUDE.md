@@ -133,6 +133,7 @@ Tool text output is markdown. The shape below is what most tools follow and is t
 - **Flags**: append status to the heading instead of using legends or marker characters: ` *new*` for unread, bracket tags like `[SUBMITTED]`, `[CORRECTED]`, `[EXPIRED]`, `[URGENT]`, or `(past)`.
 - **Nested details**: when a bullet needs its own sub-points, use a two-space indented sub-bullet.
 - **Body text**: long free-form content (a message body, an announcement text, a description) goes in a plain paragraph under its own heading, separate from the bullet list (`## Message` in `read-mio-message`). Bullets are for short fields, not prose.
+- **Dates**: print dates and times in the server's local time, in a readable form (`Mon, Oct 6 14:30`, as `get-calendar` does with `toLocaleDateString('en-CA', ...)`). Never ISO strings, never UTC, no `Z` or offset suffix. The server runs for a single account, so one timezone for everything is fine, and a local time is something the model can use directly instead of having to reason about timezones. The ISO values from `toIso()` are for schema fields, not for text output.
 - **Delta tracker**: the summary header goes right under the `# ` title, and each item gets a `- Changes: ...` bullet.
 - **Empty results**: keep the `# ` title and add one sentence (`No events in this range.`).
 - **Multi-block output**: `get-overview` returns one text block per section, each starting with `## `, plus a final block with `annotations.audience: ['assistant']` for guidance meant only for the model.
