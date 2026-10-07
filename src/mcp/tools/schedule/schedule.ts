@@ -33,7 +33,8 @@ mcpServer.registerTool('get-schedule',
 
         const schedule = transformHoraireToSchedule(model);
 
-        const lines = [`# Weekly schedule — term ${schedule.term_id} (${schedule.schedule.length} slots)`];
+        const lines = [`# Weekly schedule: term ${schedule.term_id} (${schedule.schedule.length} slots)`];
+        if (!schedule.schedule.length) lines.push('No classes in this schedule.');
         let currentDay = '';
         for (const s of schedule.schedule) {
             if (s.day_str !== currentDay) {
@@ -45,16 +46,17 @@ mcpServer.registerTool('get-schedule',
 
         return {
             content: [{ type: 'text', text: lines.join('\n') }],
-            structuredContent: schedule,
         };
     }
 );
 
 function mapScheduleItemToText(s: ScheduleItem) {
-    const details = [
-        s.course_code && `${s.course_code}.${s.group}`,
-        s.type,
-        s.rooms?.length && `room ${s.rooms.join(', ')}`,
-    ].filter(Boolean);
-    return `- ${s.time_str}: ${s.title}${details.length ? ` (${details.join(', ')})` : ''}`;
+    const parts = [`### ${s.time_str} ${s.title}`];
+    if (s.course_code) parts.push(`- Course: ${s.course_code}.${s.group}`);
+    if (s.type) parts.push(`- Type: ${s.type}`);
+    if (s.rooms?.length) parts.push(`- Room: ${s.rooms.join(', ')}`);
+    for (const n of s.notes ?? []) {
+        parts.push('', '#### Teacher note', '', ...[n.title, n.content].filter(Boolean));
+    }
+    return parts.join('\n');
 }

@@ -15,11 +15,14 @@ export const scheduleItemSchema = z.object({
     duration_min: z.number().int().optional(),
     rooms: z.array(z.string()).optional(),
     time_str: z.string(),
+    notes: z.array(z.object({
+        title: z.string().optional(),
+        content: z.string().optional(),
+    })).optional(),
 })
 
 export type ScheduleItem = z.infer<typeof scheduleItemSchema>
 export interface Schedule {
-    [key: string]: unknown
     term_id: string
     schedule: ScheduleItem[]
 }

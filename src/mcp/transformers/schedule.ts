@@ -26,6 +26,10 @@ export function transformHoraireToSchedule(response: HoraireModel.ResponseHorair
             time_str,
             rooms: plage.Locaux.map(loc => `${loc.Pavillon} ${loc.Numero}`.trim()),
             type: plage.TypePeriode,
+            notes: group?.Messages?.length ? group.Messages.map(m => ({
+                title: m.Titre || undefined,
+                content: m.Contenu || undefined,
+            })) : undefined,
         } as ScheduleItem)
     })
 

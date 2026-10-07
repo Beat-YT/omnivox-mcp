@@ -123,6 +123,23 @@ Tools with delta tracking:
 - `get-mio-folders` — `unread_msg_count`, `total_msg_count` per folder
 - `get-overview` — `count` per service
 
+### Tool Output Conventions (recommended)
+
+Tool text output is markdown. The shape below is what most tools follow and is the preferred starting point for new or reworked tools. Deviate when the data reads better another way; the goal is output that an LLM can scan, not strict uniformity.
+
+- **Title**: open with one `# ` heading naming the subject, usually with a count or term in it (`# Documents: <course> (<id>)`, `# Teachers (12)`). A short plain meta line can follow (`3 document(s), 1 unread`), then a blank line.
+- **Items**: each list item is a `## ` heading with its title, followed by `- Label: value` bullets for its fields. Prefer bullets over space-indented lines, and `yes`/`no` over `true`/`false`.
+- **Groups**: when items are grouped (calendar days, schedule days), the group is `## ` and the entries under it are `### ` or plain bullets. Sub-sections of a single item (submissions, attachments, message body) work well as `## ` with a count in parentheses.
+- **Flags**: append status to the heading instead of using legends or marker characters: ` *new*` for unread, bracket tags like `[SUBMITTED]`, `[CORRECTED]`, `[EXPIRED]`, `[URGENT]`, or `(past)`.
+- **Nested details**: when a bullet needs its own sub-points, use a two-space indented sub-bullet.
+- **Body text**: long free-form content (a message body, an announcement text, a description) goes in a plain paragraph under its own heading, separate from the bullet list (`## Message` in `read-mio-message`). Bullets are for short fields, not prose.
+- **Delta tracker**: the summary header goes right under the `# ` title, and each item gets a `- Changes: ...` bullet.
+- **Empty results**: keep the `# ` title and add one sentence (`No events in this range.`).
+- **Multi-block output**: `get-overview` returns one text block per section, each starting with `## `, plus a final block with `annotations.audience: ['assistant']` for guidance meant only for the model.
+- **Errors**: return `isError: true` with a plain text message.
+
+Avoid `structuredContent` and `outputSchema`. Tool output is written for an LLM to read, not for programs that need a structured shape. Clients that want raw structured data should go through the `/Mobl/*` proxy instead.
+
 ### Logging
 
 - **HTTP request logs**: Always on in HTTP mode (console + `server.log` file). Gated by `isHttpMode()`.
