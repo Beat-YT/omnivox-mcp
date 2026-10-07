@@ -24,10 +24,11 @@ mcpServer.registerTool('read-mio-message',
     async (args) => {
         const folder = args.folder_id || 'SEARCH_FOLDER_MioRecu';
         const data = args.last_id ? await GetMessages(folder, args.last_id) : await GetLatestMessages(folder, 50);
-        const msg = data.ListeMessages?.find(m => m.Id === args.message_id);
+        const msg = data.ListeMessages?.find(m => m.Id.toUpperCase() === args.message_id);
 
         if (!msg) {
-            return { content: [{ type: 'text', text: `Message not found: ${args.message_id}. If it exists, provide the last_id of a message above it in the same folder for pagination.` }] };
+            const scope = args.last_id ? `the page after ${args.last_id}` : 'the 50 most recent messages';
+            return { content: [{ type: 'text', text: `Message not found in ${scope} of folder ${folder}: ${args.message_id}. Make sure folder_id is the folder the message is in (search-mio-messages shows it).` }], isError: true };
         }
 
         if (args.mark_read) {

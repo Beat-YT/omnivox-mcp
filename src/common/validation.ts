@@ -8,7 +8,7 @@ export const termIdSchema = z.string()
 
 export const messageIdSchema = z.uuid({
     message: "message_id must be a valid UUID v4 (e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'). Use get-mio-messages to find message IDs.",
-}).describe("MIO message ID (UUID, not a number) from get-mio-messages.");
+}).toUpperCase().describe("MIO message ID (UUID, not a number) from get-mio-messages.");
 
 export const recipientIdSchema = z.uuid({
     message: "recipient_id must be a valid UUID v4 (e.g. 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'). Use search-people or get-course-people to find recipient IDs.",

@@ -79,7 +79,7 @@ export function messageToText(m: MioModel.ListeMessage, opts?: { folder?: string
   const details: string[] = [`- From: ${sender}`, `- Date: ${date}`]
   if (excerpt) details.push(`- Preview: ${excerpt}`)
   if (attachments.length) details.push(`- Attachments: ${attachments.map(a => a.NomFichier).join(', ')}`)
-  details.push(`- ID: ${m.Id}`)
+  details.push(`- ID: ${m.Id.toUpperCase()}`)
   if (opts?.folder) details.push(`- Folder: ${opts.folder}`)
   return [header, ...details].join('\n')
 }

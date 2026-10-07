@@ -1,11 +1,12 @@
 import { GetLatestMessages, GetMessages } from "@api/Mio";
+import { messageIdSchema } from "@common/validation";
 import { messageToText, messagesMetaToText } from "@transformers/mio/messages";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
 const input = z.object({
     folder_id: z.string().optional().describe('Folder ID string constant such as SEARCH_FOLDER_MioRecu (inbox) or SEARCH_FOLDER_MioEnvoye (sent). Use get-mio-folders to discover them. Defaults to inbox.'),
-    last_id: z.string().optional().describe('Last message ID for pagination — omit to get latest messages'),
+    last_id: messageIdSchema.optional().describe('Last message ID for pagination, omit to get latest messages'),
     count: z.number().optional().describe('Number of messages to fetch (default 21, max 100)'),
 });
 

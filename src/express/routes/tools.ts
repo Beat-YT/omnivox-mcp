@@ -43,9 +43,9 @@ router.post('/tools/:toolName', ValidateAccessKey, express.json({ type: '*/*' })
         return res.status(404).json({ error: `Tool "${req.params.toolName}" is disabled` });
     }
 
-    const args = req.body || {};
+    let args = req.body || {};
     if (tool.inputSchema) {
-        const parsed = await safeParseAsync(tool.inputSchema, args) as { success: boolean; error?: any };
+        const parsed = await safeParseAsync(tool.inputSchema, args) as { success: boolean; data?: any; error?: any };
         if (!parsed.success) {
             const issues = Array.isArray(parsed.error?.issues)
                 ? parsed.error.issues.map((i: any) => ({
@@ -56,6 +56,7 @@ router.post('/tools/:toolName', ValidateAccessKey, express.json({ type: '*/*' })
 
             return res.status(400).json({ error: 'Invalid input', issues });
         }
+        args = parsed.data;
     }
 
     try {
