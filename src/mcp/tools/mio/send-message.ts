@@ -22,7 +22,9 @@ mcpServer.registerTool('send-mio-message',
     },
     async (args) => {
         const to = Array.isArray(args.recipient_id) ? args.recipient_id.join(',') : args.recipient_id;
-        const success = await SendMessage(to, args.subject, args.message, args.hide_recipients);
+
+        const sanitizedBody = args.message.replace(/\r?\n/g, '<br>');
+        const success = await SendMessage(to, args.subject, sanitizedBody, args.hide_recipients);
 
         return {
             content: [
