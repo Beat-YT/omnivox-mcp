@@ -258,7 +258,7 @@ ListeTravaux[]
   RangTravail                          number
   IsRemisePermise                      boolean
   IsRemiseEnRetardPermise              boolean
-  EstRemis                             boolean
+  EstRemis                             boolean    true as soon as ListeDepotsTravail has any file; says nothing about completeness
   ListeDepotsTravail                   DepotsTravail[]
   ListeDocumentsTravail                DocumentFichier[]
   ListeCopieCorigee                    DocumentFichier[]

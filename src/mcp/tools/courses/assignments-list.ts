@@ -1,8 +1,17 @@
 import { GetTravauxListeModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
-import { AssignmentListItem } from "@schemas/courses/assignments-list";
-import { transformAssignmentsList } from "@transformers/courses/assignments-list";
+import { extractHtmlPreview, toDisplayDate } from "@common/transformHelpers";
 import { courseIdSchema, termIdSchema } from "@common/validation";
+import {
+    depositFileLines,
+    depositLine,
+    dueMs,
+    FINAL_VERSION_NOTE,
+    handInInstructionLines,
+    headingTags,
+    needsFinalVersionCheck,
+    Travail,
+} from "@common/assignmentHandIn";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
@@ -14,7 +23,7 @@ const input = z.object({
 mcpServer.registerTool('get-course-assignments',
     {
         title: 'Get Course Assignments',
-        description: 'Retrieve the list of assignments for a specific course. Incomplete by nature: many teachers never post assignments here, so an empty list does not mean there is no homework. Cross-check the course syllabus from get-course-documents.',
+        description: 'List the assignments of a course with their deadline and what is in the hand-in deposit. A file in the deposit means something was uploaded, not that the work is finished. Incomplete by nature: many teachers never post assignments here, so an empty list does not mean there is no homework. Cross-check the course syllabus from get-course-documents.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,
@@ -24,27 +33,40 @@ mcpServer.registerTool('get-course-assignments',
     async (args) => {
         const term = args.term_id || await getDefaultTermId();
         const model = await GetTravauxListeModel(args.course_id, term);
-        const result = transformAssignmentsList(model, term, args.course_id);
+        const travaux = (model.ListeTravaux ?? []).filter(t => t.IDTravail && t.Titre);
 
         const lines = [
             `# Assignments: ${args.course_id}`,
-            `${result.assignments.length} assignment(s)`,
+            `${travaux.length} assignment(s)`,
             '',
-            ...result.assignments.map(mapAssignmentToText),
         ];
+        if (travaux.length) lines.push(...travaux.map(t => formatAssignment(t)));
+        else lines.push('No assignments posted on Lea for this course.');
 
-        return {
-            content: [{ type: 'text', text: lines.join('\n') }],
-            structuredContent: result,
-        };
+        const content: { type: 'text'; text: string; annotations?: { audience: ('assistant' | 'user')[] } }[] = [
+            { type: 'text', text: lines.join('\n') },
+        ];
+        if (travaux.some(t => needsFinalVersionCheck(t))) {
+            content.push({ type: 'text', text: FINAL_VERSION_NOTE, annotations: { audience: ['assistant'] } });
+        }
+
+        return { content };
     }
 );
 
-function mapAssignmentToText(a: AssignmentListItem) {
+function formatAssignment(t: Travail) {
+    const due = dueMs(t);
+    const preview = extractHtmlPreview(t.Enonce, 240);
+
     return [
-        `## ${a.title}${a.is_submitted ? ' [SUBMITTED]' : ''}${a.has_correction ? ' [CORRECTED]' : ''}`,
-        a.due_at && `- Due: ${a.due_at}`,
-        a.category && `- Category: ${a.category}`,
-        a.content_preview && `- Preview: ${a.content_preview}`,
-    ].filter(Boolean).join('\n') + '\n';
+        `## ${t.Titre}${headingTags(t)}`,
+        due ? `- Due: ${toDisplayDate(due)}` : '- Due: no deadline set',
+        t.NomCategorie && `- Category: ${t.NomCategorie}`,
+        depositLine(t),
+        ...depositFileLines(t),
+        ...handInInstructionLines(t),
+        preview && `- Preview: ${preview}`,
+        `- ID: ${t.IDTravail}`,
+        '',
+    ].filter(Boolean).join('\n');
 }

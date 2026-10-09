@@ -1,9 +1,8 @@
 import { GetTravauxSommaireModel } from "@api/Lea";
 import { computeDelta, flattenSnapshot, itemDeltaText } from "@common/deltaTracker";
 import { getDefaultTermId } from "@common/omnivoxHelper";
-import { AssignmentCourseSummaryItem } from "@schemas/courses/assignments-summary";
-import { transformAssignmentsSummary } from "@transformers/courses/assignments-summary";
 import { termIdSchema } from "@common/validation";
+import { TravauxSommaireModel } from "@typings/Lea/TravauxSommaireModel";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
@@ -14,7 +13,7 @@ const input = z.object({
 mcpServer.registerTool('get-assignments-summary',
     {
         title: 'Get Assignments Summary',
-        description: 'Retrieve a per-course summary of assignments for a given term or the current term. Only counts assignments teachers posted on Lea; an empty summary does not mean the student is caught up.',
+        description: 'Per-course assignment counts for a term, with the titles Lea still lists as to hand in. Only counts assignments teachers posted on Lea; an empty summary does not mean the student is caught up. Use get-course-assignments for deadlines and deposit contents.',
         inputSchema: input,
         annotations: {
             readOnlyHint: true,
@@ -24,34 +23,44 @@ mcpServer.registerTool('get-assignments-summary',
     async (args) => {
         const term = args.term_id || await getDefaultTermId();
         const model = await GetTravauxSommaireModel(term);
-        const result = transformAssignmentsSummary(model);
+        const courses = (model.ListeSommaire ?? []).filter(c => c.NoCours && c.NoGroupe && c.NomCours);
 
-        const snapshot = flattenSnapshot(result.summary, s => s.course_id, {
-            total_assignments: s => s.total_assignments,
-            new_assignments_count: s => s.new_assignments_count,
-            new_correction_count: s => s.new_correction_count,
+        const snapshot = flattenSnapshot(courses, courseId, {
+            total_assignments: c => c.NbEnoncesTotal ?? 0,
+            new_assignments_count: c => c.NbNouveaute ?? 0,
+            new_correction_count: c => c.NouvellesCorrections ?? 0,
         });
         const deltas = computeDelta(`get-assignments-summary:${term}`, snapshot);
         const dt = itemDeltaText(deltas, m => m.replace(/_/g, ' '));
 
-        const header = `# Assignments — term ${term} (${result.summary.length} courses)`;
-        const courses = result.summary.map(s => formatAssignment(s, dt?.items[s.course_id]));
+        const header = `# Assignments — term ${term} (${courses.length} courses)`;
+        const body = courses.map(c => formatCourse(c, dt?.items[courseId(c)]));
 
         return {
-            content: [{ type: 'text', text: [header, dt?.header, '', ...courses].filter(l => l != null).join('\n') }],
+            content: [{ type: 'text', text: [header, dt?.header, '', ...body].filter(l => l != null).join('\n') }],
         };
     }
 );
 
-function formatAssignment(s: AssignmentCourseSummaryItem, delta?: string) {
+function courseId(c: TravauxSommaireModel.ListeSommaire) {
+    return `${c.NoCours}.${c.NoGroupe}`;
+}
+
+function formatCourse(c: TravauxSommaireModel.ListeSommaire, delta?: string) {
     const details: string[] = [];
-    details.push(`- Total: ${s.total_assignments}`);
-    if (s.new_assignments_count) details.push(`- New: ${s.new_assignments_count}`);
-    if (s.new_correction_count) details.push(`- New corrections: ${s.new_correction_count}`);
-    if (s.has_online_submission) details.push(`- Online submission available`);
+    details.push(`- Total: ${c.NbEnoncesTotal ?? 0}`);
+    if (c.NbNouveaute) details.push(`- New: ${c.NbNouveaute}`);
+    if (c.NouvellesCorrections) details.push(`- New corrections: ${c.NouvellesCorrections}`);
+    if ((c.DepotEnLigne ?? 0) > 0) details.push(`- Online hand-in available`);
+
+    const pending = (c.ListeTitreTravauxARemettre ?? []).filter(Boolean);
+    if (pending.length) {
+        details.push(`- Still to hand in according to Lea (${pending.length}):`);
+        details.push(...pending.map(title => `  - ${title}`));
+    }
 
     return [
-        `## ${s.course_title} (${s.course_id})`,
+        `## ${c.NomCours} (${courseId(c)})`,
         ...details,
         `- Changes: ${delta || '[no changes since last check]'}`,
         '',
