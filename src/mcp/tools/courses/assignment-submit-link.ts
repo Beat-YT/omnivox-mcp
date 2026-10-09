@@ -3,7 +3,7 @@ import { getDefaultTermId } from "@common/omnivoxHelper";
 import { isHttpMode } from "@common/transportMode";
 import { toDisplayDate } from "@common/transformHelpers";
 import { assignmentIdSchema, courseIdSchema, termIdSchema } from "@common/validation";
-import { depositFileLines, depositFiles, depositLine, dueMs } from "@common/assignmentHandIn";
+import { depositFiles, dueMs } from "@common/assignmentHandIn";
 import { createWebToken } from "src/security/omniWebToken";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
@@ -14,11 +14,17 @@ const input = z.object({
     term_id: termIdSchema.optional(),
 });
 
+const output = z.object({
+    url: z.string(),
+    msg: z.string(),
+});
+
 mcpServer.registerTool('get-assignment-submit-link',
     {
         title: 'Get Assignment Submit Link',
         description: 'Get a short link that opens the Omnivox hand-in page for an assignment, already logged in. Give it to the user so they can upload their file in their own browser — this tool never submits anything itself. Link expires after 15 minutes. Fails if online submission is closed for the assignment, or if the server has no public URL (MCP_SERVER_URL).',
         inputSchema: input,
+        outputSchema: output,
         annotations: {
             readOnlyHint: true,
             destructiveHint: false,
@@ -59,21 +65,18 @@ mcpServer.registerTool('get-assignment-submit-link',
         });
 
         const due = dueMs(t);
-        const lines = [
-            `# Submit link: ${t.Titre}`,
-            `- URL: ${serverBaseUrl}/link/assignment-submit?token=${token}`,
-            '- Expires: in 15 minutes',
-            due ? `- Due: ${toDisplayDate(due)}` : '- Due: no deadline set',
-            depositLine(t),
-            ...depositFileLines(t),
-            files.length
-                ? '- Note: uploading adds a file next to the existing one(s), it does not replace them'
-                : undefined,
-            '- Opening the link logs the user into Omnivox and lands on the upload page. Nothing is submitted until they upload there.',
-        ].filter(Boolean);
+        const depositNote = files.length
+            ? ` The deposit already holds ${files.length} file(s): ${files.map(f => f.NomFichierDepotEtudiant).join(', ')}. Uploading adds a file next to them, it does not replace them.`
+            : ' The deposit is empty.';
+
+        const result = {
+            url: `${serverBaseUrl}/link/assignment-submit?token=${token}`,
+            msg: `Submit link for "${t.Titre}" (expires in 15 minutes).${due ? ` Due ${toDisplayDate(due)}.` : ''}${depositNote} Opening it logs the user into Omnivox and lands on the upload page. Nothing is submitted until they upload there.`,
+        };
 
         return {
-            content: [{ type: 'text', text: lines.join('\n') }],
+            content: [{ type: 'text', text: JSON.stringify(result) }],
+            structuredContent: result,
         };
     }
 );
