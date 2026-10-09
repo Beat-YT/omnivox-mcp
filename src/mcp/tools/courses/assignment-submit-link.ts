@@ -14,6 +14,8 @@ const input = z.object({
     term_id: termIdSchema.optional(),
 });
 
+// Exempt from the markdown-only convention in CLAUDE.md: this tool keeps outputSchema and
+// structuredContent so clients can read the URL as a field instead of parsing text.
 const output = z.object({
     url: z.string(),
     msg: z.string(),
