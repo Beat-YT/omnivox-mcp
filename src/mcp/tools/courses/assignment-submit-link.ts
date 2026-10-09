@@ -1,7 +1,9 @@
 import { GetTravauxDetailModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
 import { isHttpMode } from "@common/transportMode";
+import { toDisplayDate } from "@common/transformHelpers";
 import { assignmentIdSchema, courseIdSchema, termIdSchema } from "@common/validation";
+import { depositFileLines, depositFiles, depositLine, dueMs } from "@common/assignmentHandIn";
 import { createWebToken } from "src/security/omniWebToken";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
@@ -12,18 +14,11 @@ const input = z.object({
     term_id: termIdSchema.optional(),
 });
 
-const output = z.object({
-    url: z.string(),
-    status: z.enum(['not_submitted', 'already_submitted']),
-    msg: z.string(),
-});
-
 mcpServer.registerTool('get-assignment-submit-link',
     {
         title: 'Get Assignment Submit Link',
         description: 'Get a short link that opens the Omnivox hand-in page for an assignment, already logged in. Give it to the user so they can upload their file in their own browser — this tool never submits anything itself. Link expires after 15 minutes. Fails if online submission is closed for the assignment, or if the server has no public URL (MCP_SERVER_URL).',
         inputSchema: input,
-        outputSchema: output,
         annotations: {
             readOnlyHint: true,
             destructiveHint: false,
@@ -38,19 +33,21 @@ mcpServer.registerTool('get-assignment-submit-link',
 
         const term = args.term_id || await getDefaultTermId();
         const model = await GetTravauxDetailModel(args.course_id, args.assignment_id, term);
-        const travail = model?.Travail;
+        const t = model?.Travail;
 
-        if (!travail) {
+        if (!t?.IDTravail) {
             return { isError: true, content: [{ type: 'text', text: 'Assignment not found.' }] };
         }
 
-        if (!travail.IsRemisePermise) {
-            const reason = travail.EstRemis && !travail.AutorisePlusieursRemises
-                ? 'it has already been submitted and the teacher does not allow multiple submissions'
-                : 'online submission is closed for it (deadline passed, or the teacher did not enable online hand-in)';
+        const files = depositFiles(t);
+
+        if (!t.IsRemisePermise) {
+            const reason = files.length && !t.AutorisePlusieursRemises
+                ? `the deposit already holds ${files.length} file(s) and the teacher allows a single upload`
+                : 'online hand-in is closed for it (deadline passed, or the teacher did not enable online hand-in)';
             return {
                 isError: true,
-                content: [{ type: 'text', text: `Cannot generate a submit link for "${travail.Titre}": ${reason}.` }],
+                content: [{ type: 'text', text: `Cannot generate a submit link for "${t.Titre}": ${reason}.` }],
             };
         }
 
@@ -61,16 +58,22 @@ mcpServer.registerTool('get-assignment-submit-link',
             termId: term,
         });
 
-        const url = `${serverBaseUrl}/link/assignment-submit?token=${token}`;
-        const result = {
-            url,
-            status: travail.EstRemis ? 'already_submitted' as const : 'not_submitted' as const,
-            msg: `Submit link for "${travail.Titre}" (expires in 15 minutes).${travail.EstRemis ? ' Already submitted once, uploading here will add another submission.' : ''} Opening it logs the user into Omnivox and lands on the upload page.`,
-        };
+        const due = dueMs(t);
+        const lines = [
+            `# Submit link: ${t.Titre}`,
+            `- URL: ${serverBaseUrl}/link/assignment-submit?token=${token}`,
+            '- Expires: in 15 minutes',
+            due ? `- Due: ${toDisplayDate(due)}` : '- Due: no deadline set',
+            depositLine(t),
+            ...depositFileLines(t),
+            files.length
+                ? '- Note: uploading adds a file next to the existing one(s), it does not replace them'
+                : undefined,
+            '- Opening the link logs the user into Omnivox and lands on the upload page. Nothing is submitted until they upload there.',
+        ].filter(Boolean);
 
         return {
-            content: [{ type: 'text', text: JSON.stringify(result) }],
-            structuredContent: result,
+            content: [{ type: 'text', text: lines.join('\n') }],
         };
     }
 );
