@@ -67,6 +67,5 @@ function formatAssignment(t: Travail) {
         ...handInInstructionLines(t),
         preview && `- Preview: ${preview}`,
         `- ID: ${t.IDTravail}`,
-        '',
-    ].filter(Boolean).join('\n');
+    ].filter(Boolean).join('\n') + '\n';
 }
