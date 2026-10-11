@@ -54,7 +54,7 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode o
           (src/omnivox-api/puppet/)
 ```
 
-- **API Requests** (`src/omnivox-api/requests/`): Raw calls to Omnivox mobile API endpoints. POST/JSON requests use `makeSkytechRequest()` which runs `Skytech.Commun.Utils.HttpRequestWorker.PostJSON` inside `page.evaluate()`. Download requests use `makePuppeteerDownload()` which opens a new browser page and runs `fetch()` with a custom `X-Ovx-Download` header — the request interceptor strips this header and overrides with navigation headers so Omnivox sees a real browser navigation.
+- **API Requests** (`src/omnivox-api/requests/`): Raw calls to Omnivox mobile API endpoints through the shared `omnivox` client (`src/omnivox-api/puppet/index.ts`). POST/JSON requests use `omnivox.postJson()` which runs `Skytech.Commun.Utils.HttpRequestWorker.PostJSON` inside `page.evaluate()` and throws `OmnivoxMoblError` when the response envelope signals a block, maintenance window or unavailable module (see `docs/README.md`). Download requests use `omnivox.download()` which runs `fetch()` with a custom `X-Ovx-Download` header — the request interceptor strips this header and overrides with navigation headers so Omnivox sees a real browser navigation.
 - **Transformers** (`src/mcp/transformers/`): Convert raw API responses into validated Zod schemas. Each transformer maps to a specific schema.
 - **Schemas** (`src/mcp/schemas/`): Zod schemas defining the structured output shapes.
 - **MCP Server** (`src/mcp/server.ts`): Creates and exports the `mcpServer` instance.
@@ -64,7 +64,7 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode o
 
 ### Omnivox Proxy (HTTP mode only)
 
-The `/Mobl/*` route (`src/express/routes/proxy.ts`) is a pass-through proxy to Omnivox's mobile API. Any HTTP method and content type is accepted. It uses `makeProxyFetch()` from the Puppeteer module to execute a `fetch()` inside the logged-in browser page, forwarding the request with Omnivox's session cookies and returning the raw response (status, content type, body). This lets external clients hit Omnivox endpoints directly through the server's authenticated session without going through an MCP tool.
+The `/Mobl/*` route (`src/express/routes/proxy.ts`) is a pass-through proxy to Omnivox's mobile API. Any HTTP method and content type is accepted. It uses `omnivox.request()` from the Puppeteer module to execute the request inside the logged-in browser page, forwarding it with Omnivox's session cookies and returning the raw response (status, content type, body). The envelope is not inspected on this path; clients see exactly what Omnivox returned. This lets external clients hit Omnivox endpoints directly through the server's authenticated session without going through an MCP tool.
 
 ### REST Tool Gateway and OpenAPI (HTTP mode only)
 
@@ -77,6 +77,12 @@ Not every agent harness speaks MCP. Several of them (OpenAI-style "actions", Lan
 Status codes carry meaning for the harness: `400` is invalid input with Zod issues, `409` means Omnivox refused to return data (an `OmnivoxMoblError`: mandatory document or survey block, maintenance window, unavailable module) and the body's `error` is the message to relay to the user, `500` is a server-side failure. The `409` is declared in the spec so harnesses can present it as a tool result rather than a crash.
 
 All endpoints require the access key, sent as `Authorization: Bearer <key>` (what the OpenAPI document declares and what harnesses send), as an `x-mcp-auth` header, or as a `key` query parameter. The gateway is implemented in `src/express/routes/tools.ts`, which reads from the `mcpServer` instance's internal tool registry and calls tool handlers directly, bypassing the MCP protocol entirely. Tool descriptions and input schemas are therefore shared by both transports: a change to a tool definition shows up in MCP and in the OpenAPI document alike.
+
+### Documentation (`docs/`)
+
+`docs/` documents the Omnivox mobile app and its `/Mobl/` API: endpoints, payload shapes, the response envelope, the service manifest, the native bridge and the web handoff. It does not describe this server, its tools or its transports; that belongs in `CLAUDE.md` and `SKILL.md`.
+
+Write docs in a technical, neutral and objective register. State what the app and the API do as observed, name the source when behavior was confirmed from the app's JS, mark unconfirmed semantics as such, and leave out opinions, recommendations and references to this server's implementation.
 
 ### Path Aliases (tsconfig.json)
 
@@ -97,7 +103,10 @@ All endpoints require the access key, sent as `Authorization: Bearer <key>` (wha
 
 Runs a Puppeteer browser logged into Omnivox. All requests go through this browser — there is no separate HTTP client.
 
-- **`index.ts`**: Exports `InitializePuppet()`, `waitForReady()`, `makeSkytechRequest<T>(url, data)`, `makePuppeteerDownload(url)`, and `loadPageInFrame(url)`. The browser instance is stored at module scope.
+- **`index.ts`**: Exports the shared `omnivox` instance of `OmnivoxClient`, built from the `BROWSER_SLEEP` and `BROWSER_REFRESH_INTERVAL` env vars, plus the `OmnivoxClient` and `BrowserManager` classes and the module types.
+- **`OmnivoxClient.ts`**: Entry point for everything that talks to Omnivox. Owns a `BrowserManager` and keeps it ready: lazy launch on first use, retry after a failed launch, idle sleep, periodic session refresh, and one relaunch when Chrome drops the page frame. Methods: `start()`, `stop()`, `health()`, `page()`, `postJson<T>(url, payload)`, `request(url, init)`, `download(url)`, `openFrame(url)`.
+- **`BrowserManager.ts`**: Chrome lifecycle only. `launch()` cleans up a previous Chrome from the PID file and lock files, launches Puppeteer with the persistent profile, imports cookies on first run and loads the Omnivox home page; `navigateHome()` reloads it; `destroy()` closes or kills the process and removes the PID file.
+- **`OmnivoxMoblError.ts`** (`src/omnivox-api/`): Thrown by `postJson()` when `isError(payload)` matches the envelope (`NaviguerPage` set, `IsPeriodeArret`, `IsAvailable: false`). The message is written for the model to relay; the raw envelope stays on `.payload`.
 - **`interceptors.ts`**: Blocks noisy requests (SaveLogJS, Omnigarder) and handles download request header overrides (strips `X-Ovx-Download`, injects navigation headers).
 - **`ovxInjection.js`**: Injects `OvxNatif` bridge so Omnivox's JS thinks it's running inside the native app.
 - **`userAgent.js`**: Builds the OVX user-agent string with device ID and auth code.
@@ -154,7 +163,7 @@ Avoid `structuredContent` and `outputSchema`. Tool output is written for an LLM 
 
 - **ES Modules**: Project uses `"type": "module"` - all imports use ESM syntax.
 - **Mixed JS/TS**: Entry point (`index.js`) and security files are JavaScript; MCP layer (tools, schemas, transformers), Express layer (server, routes), and API requests are TypeScript.
-- **All requests via Puppeteer**: POST/JSON uses `makeSkytechRequest()`, downloads use `makePuppeteerDownload()`, page rendering uses `loadPageInFrame()`. No axios or separate HTTP client.
+- **All requests via Puppeteer**: POST/JSON uses `omnivox.postJson()`, downloads use `omnivox.download()`, page rendering uses `omnivox.openFrame()`. No axios or separate HTTP client.
 - **Plugin Discovery**: Both MCP tools and routes are auto-loaded by scanning their directories - no manual registration needed.
 - **Term ID Caching**: `src/common/omnivoxHelper.ts` caches the current term ID for 5 days to avoid redundant API calls. Most tools accept an optional `term_id` parameter, falling back to cached current term.
 - **No named functions in `page.evaluate()`**: tsx/esbuild injects `__name()` wrappers on `function` declarations. Always use arrow functions inside `evaluate()`.

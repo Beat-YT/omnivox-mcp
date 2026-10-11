@@ -17,11 +17,17 @@ Most JSON responses include these fields:
 ```
 Updating              boolean
 IsPeriodeArret        boolean
-NaviguerPage          null
-DateRetourSysteme     number (epoch ms, usually 0)
+NaviguerPage          string | null    (module page, `{ModuleId}.{Action}[?query]`)
+DateRetourSysteme     number           (epoch ms, 0 when unset)
 CacheConfig           { ListeCleCacheOverride: string[], TempsCache: number }
 IsAvailable           boolean
 ```
+
+The server answers HTTP 200 for every outcome; errors are signalled through the envelope. The app checks these fields before rendering a response:
+
+- **`NaviguerPage`**: server-driven redirect. When non-null, the app navigates to the named page and passes the response as that page's model; the requested view is not rendered and the payload does not follow the endpoint's documented shape. Observed values are `ErrorPage.*` pages, e.g. `ErrorPage.DocumentCollegeBlock` (unread mandatory college document) and `ErrorPage.PeriodeArret`.
+- **`IsPeriodeArret`**: maintenance window. Data fields are empty; `DateRetourSysteme` is the expected return time, `0` when unknown.
+- **`IsAvailable`**: `false` when the module is gated behind an access code; the response carries `CodeAcces` and no data.
 
 ## Modules
 
