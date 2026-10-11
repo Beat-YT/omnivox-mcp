@@ -66,14 +66,17 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode o
 
 The `/Mobl/*` route (`src/express/routes/proxy.ts`) is a pass-through proxy to Omnivox's mobile API. Any HTTP method and content type is accepted. It uses `makeProxyFetch()` from the Puppeteer module to execute a `fetch()` inside the logged-in browser page, forwarding the request with Omnivox's session cookies and returning the raw response (status, content type, body). This lets external clients hit Omnivox endpoints directly through the server's authenticated session without going through an MCP tool.
 
-### REST Tool Gateway (HTTP mode only)
+### REST Tool Gateway and OpenAPI (HTTP mode only)
 
-For agents that don't support the MCP protocol, the Express server exposes all MCP tools over plain HTTP:
+Not every agent harness speaks MCP. Several of them (OpenAI-style "actions", LangChain/LlamaIndex OpenAPI toolkits, Dify, Open WebUI, and similar) load tools from an OpenAPI document instead: each operation in the spec becomes a tool the model can call, and each call is a stateless HTTP request with a JSON body. The REST gateway exists so this server works as a tool provider for those harnesses, with the same tool set as MCP. It is a first-class integration surface, not a debugging aid.
 
-- **`GET /tools`** — returns all registered tools with descriptions and JSON Schema input definitions.
-- **`POST /tools/{tool-name}`** — calls a tool by name. Send parameters as JSON body, get structured results back.
+- **`GET /openapi.json`** (`src/express/routes/openapi.ts`) — generates an OpenAPI 3.1 document from the registered MCP tools. Every enabled tool becomes `POST /tools/{tool-name}` with its Zod input schema converted to JSON Schema, its description as the operation description, and `x-readOnly` when the tool declares `readOnlyHint`. Harnesses point at this URL and pick up new tools automatically.
+- **`GET /tools`** — same tool list as JSON, for harnesses that take a flat tool list rather than a spec.
+- **`POST /tools/{tool-name}`** — calls a tool by name. Parameters go in the JSON body; the response is the tool's text output, or its `structuredContent` when a tool sets one.
 
-All endpoints require the `x-mcp-auth` header. This is implemented in `src/express/routes/tools.ts`, which reads from the `mcpServer` instance's internal tool registry and calls tool handlers directly — bypassing the MCP protocol entirely.
+Status codes carry meaning for the harness: `400` is invalid input with Zod issues, `409` means Omnivox refused to return data (an `OmnivoxMoblError`: mandatory document or survey block, maintenance window, unavailable module) and the body's `error` is the message to relay to the user, `500` is a server-side failure. The `409` is declared in the spec so harnesses can present it as a tool result rather than a crash.
+
+All endpoints require the access key, sent as `Authorization: Bearer <key>` (what the OpenAPI document declares and what harnesses send), as an `x-mcp-auth` header, or as a `key` query parameter. The gateway is implemented in `src/express/routes/tools.ts`, which reads from the `mcpServer` instance's internal tool registry and calls tool handlers directly, bypassing the MCP protocol entirely. Tool descriptions and input schemas are therefore shared by both transports: a change to a tool definition shows up in MCP and in the OpenAPI document alike.
 
 ### Path Aliases (tsconfig.json)
 
@@ -85,7 +88,7 @@ All endpoints require the `x-mcp-auth` header. This is implemented in `src/expre
 
 ### Authentication
 
-- **Access Key** (HTTP mode only): All REST routes (except token-validated download routes) require `x-mcp-auth` header. MCP endpoint requires `key` query parameter. Auto-generated 32-byte hex key stored in `<data dir>/accessKey.txt`. Not used in stdio mode — the MCP client manages access.
+- **Access Key** (HTTP mode only): All REST routes (except token-validated download routes) and the MCP endpoint require the access key. `src/security/accessKey.js` accepts it as an `x-mcp-auth` header, as `Authorization: Bearer <key>` (the scheme the OpenAPI document declares), or as a `key` query parameter (what MCP clients use at `/mcp?key=...`). Auto-generated 32-byte hex key stored in `<data dir>/accessKey.txt`. Not used in stdio mode — the MCP client manages access.
 - **Challenge-Response**: Handled automatically by Puppeteer — Omnivox's own JS (`Skytech.Commun.Utils.HttpRequestWorker.PostJSON`) manages the `x-ke` challenge internally.
 - **Web Tokens** (HTTP mode only): Time-limited tokens (15 min) for document/assignment file downloads without requiring the access key. Used by `get-document-link` and `get-assignment-file-link` tools. Also used by `get-assignment-submit-link`, whose `/link/assignment-submit` route (`src/express/routes/link.ts`) mints a fresh Omnivox `TokenRedirection` at click time and `302`s to the pre-authenticated Léa hand-in page. Token-exempt paths are listed in `src/security/accessKey.js`.
 - **Persistent Browser Profile**: Chrome profile at `<data dir>/browser/` persists across restarts. Cookies are imported from the Electron auth app's exported files on first launch.

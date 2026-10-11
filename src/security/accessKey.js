@@ -19,7 +19,7 @@ export function extractProvidedKey(req) {
     }
 
     if (typeof authHeader === 'string') {
-        const prefix = authHeader.substring(0, 6).toLocaleLowerCase();
+        const prefix = authHeader.substring(0, 6).toLowerCase();
         if (prefix === 'bearer' && authHeader.length > 7) {
             return authHeader.slice(7);
         }
