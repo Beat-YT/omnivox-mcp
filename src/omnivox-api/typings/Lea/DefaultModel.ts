@@ -1,5 +1,7 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace DefaultModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         AnSessionDisponible: AnSessionDisponible;
         AnSession: string;
         InfoCoursGroupeSelectionne: null;
@@ -7,25 +9,14 @@ export namespace DefaultModel {
         ListeCours: ListeCour[];
         ProchainCours: ProchainCours;
         HasError: boolean;
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         IsClasseADistanceDisponible: boolean;
         IsCoursDiffereDisponible: boolean;
         IsEtudiant: boolean;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
     }
 
     export interface AnSessionDisponible {
         AnSessionDisponible: string[];
         AnSessionDefault: string;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: string[];
-        TempsCache: number;
     }
 
     export interface ListeCour {

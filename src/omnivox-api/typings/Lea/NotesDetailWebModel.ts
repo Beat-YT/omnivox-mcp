@@ -1,18 +1,9 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace NotesDetailWebModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         InfosAutoLoginCvir: InfosAutoLoginCvir;
         NoteEvaluationWeb: NoteEvaluationWeb;
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface InfosAutoLoginCvir {

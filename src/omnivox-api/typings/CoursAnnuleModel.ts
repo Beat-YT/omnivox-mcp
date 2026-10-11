@@ -1,14 +1,10 @@
+import { ResponseEnvelope } from "./ResponseEnvelope";
+
 export namespace CoursAnnuleModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         ListeAnnulationCours: AnnulationCours[];
         DateCoursAnnule: number;
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         IndicateurAucunCoursAnnule: boolean;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
     }
 
     export interface AnnulationCours {
@@ -27,10 +23,5 @@ export namespace CoursAnnuleModel {
         HasCommentaireProfVocal: boolean;
         IDAnnulation: string;
         DateAbs: number;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: string[];
-        TempsCache: number;
     }
 }

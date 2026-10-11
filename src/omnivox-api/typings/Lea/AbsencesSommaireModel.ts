@@ -1,23 +1,14 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace AbsencesSommaireModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         ListeSommaire: ListeSommaire[];
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         AnSessionDisponible: AnSessionDisponible;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
     }
 
     export interface AnSessionDisponible {
         AnSessionDisponible: string[];
         AnSessionDefault: string;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface ListeSommaire {

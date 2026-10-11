@@ -1,21 +1,12 @@
+import { ResponseEnvelope } from "./ResponseEnvelope";
+
 export namespace HoraireModel {
-    export interface ResponseHoraire {
+    export interface ResponseHoraire extends ResponseEnvelope {
         AnSession: string;
         InfoAnSessionDisponible: InfoAnSessionDisponible;
         HoraireDex: HoraireDex;
         CoursInactifLea: any[];
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         CodeRetentionMessage: null;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: string[];
-        TempsCache: number;
     }
 
     export interface HoraireDex {

@@ -1,20 +1,11 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace DocumentsListeModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         ListeDocuments: ListeDocument[];
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         NoCours: null;
         NoGroupe: null;
         NomCours: null;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface ListeDocument {

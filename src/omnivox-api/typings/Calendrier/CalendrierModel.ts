@@ -1,9 +1,8 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace CalendrierModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         ListeEvenements: ListeEvenement[];
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         PositionNouvelleAujourdhui: number;
         IndicateurPagePrecedente: boolean;
         IndicateurPageSuivante: boolean;
@@ -19,14 +18,6 @@ export namespace CalendrierModel {
         DecalagePagination: number;
         ClasseDistanceDisponible: boolean;
         AnSessionDisponible: null;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface ListeEvenement {

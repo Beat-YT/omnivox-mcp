@@ -1,18 +1,9 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace TravauxDetailModel {
-    export interface ResponseModel {
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
+    export interface ResponseModel extends ResponseEnvelope {
         Travail: Travail;
         InfosAutoLoginCvir: InfosAutoLoginCvir;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface InfosAutoLoginCvir {

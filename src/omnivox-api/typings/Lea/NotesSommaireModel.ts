@@ -1,23 +1,14 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace NotesSommaireModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         ListeInfosNotes: ListeInfosNote[];
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         AnSessionDisponible: AnSessionDisponible;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
     }
 
     export interface AnSessionDisponible {
         AnSessionDisponible: string[];
         AnSessionDefault: string;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface ListeInfosNote {

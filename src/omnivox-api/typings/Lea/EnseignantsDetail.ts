@@ -1,17 +1,8 @@
-export namespace EnseignantsDetailModel {
-    export interface ResponseModel {
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
-        InfosDetailsEnseignants: InfosDetailsEnseignants;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
+import { ResponseEnvelope } from "../ResponseEnvelope";
 
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
+export namespace EnseignantsDetailModel {
+    export interface ResponseModel extends ResponseEnvelope {
+        InfosDetailsEnseignants: InfosDetailsEnseignants;
     }
 
     export interface InfosDetailsEnseignants {

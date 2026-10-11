@@ -1,21 +1,12 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace CommuniquesListeModel {
-    export interface ResponseModel {
+    export interface ResponseModel extends ResponseEnvelope {
         ListeInfosCommuniques: ListeInfosCommunique[];
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
         NoCours: null;
         NoGroupe: null;
         AnSession: null;
         NomCours: null;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface ListeInfosCommunique {

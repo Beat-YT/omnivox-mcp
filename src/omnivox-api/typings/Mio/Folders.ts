@@ -1,17 +1,8 @@
-export namespace MioFolders {
-    export interface ResponseModel {
-        ListeFolders: ListeFolder[];
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
+import { ResponseEnvelope } from "../ResponseEnvelope";
 
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
+export namespace MioFolders {
+    export interface ResponseModel extends ResponseEnvelope {
+        ListeFolders: ListeFolder[];
     }
 
     export interface ListeFolder {

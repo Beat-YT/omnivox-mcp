@@ -1,8 +1,7 @@
+import { ResponseEnvelope } from "../ResponseEnvelope";
+
 export namespace MioModel {
-    export interface ResponseModel {
-        Updating: boolean;
-        IsPeriodeArret: boolean;
-        NaviguerPage: null;
+    export interface ResponseModel extends ResponseEnvelope {
         ListeMessages: ListeMessage[];
         IsUpdateRequired: boolean;
         DateHeureServeur: number;
@@ -11,14 +10,6 @@ export namespace MioModel {
         AfficherMessagesCategorie: boolean;
         IsMioBloque: boolean;
         UtilisationQuota?: number;
-        DateRetourSysteme: number;
-        CacheConfig: CacheConfig;
-        IsAvailable: boolean;
-    }
-
-    export interface CacheConfig {
-        ListeCleCacheOverride: any[];
-        TempsCache: number;
     }
 
     export interface ListeMessage {
