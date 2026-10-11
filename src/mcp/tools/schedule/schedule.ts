@@ -56,7 +56,9 @@ function mapScheduleItemToText(s: ScheduleItem) {
     if (s.type) parts.push(`- Type: ${s.type}`);
     if (s.rooms?.length) parts.push(`- Room: ${s.rooms.join(', ')}`);
     for (const n of s.notes ?? []) {
-        parts.push('', '#### Teacher note', '', ...[n.title, n.content].filter(Boolean));
+        const noteTitle = n.title?.trim() || '(Untitled note)';
+        const note = n.content?.trim() || '(No content)';
+        parts.push('', '#### Teacher note', '', noteTitle, note);
     }
     return parts.join('\n');
 }
