@@ -24,6 +24,7 @@ export default class OmnivoxClient {
 
     private browser: BrowserManager | null = null;
     private starting: Promise<void> | null = null;
+    private startError: Error | null = null;
 
     private idleTimer: ReturnType<typeof setTimeout> | null = null;
     private refreshTimer: ReturnType<typeof setInterval> | null = null;
@@ -42,10 +43,12 @@ export default class OmnivoxClient {
             } catch (err) {
                 // Do not keep a rejected promise around, the next call must be able to retry
                 this.starting = null;
+                this.startError = err instanceof Error ? err : new Error(String(err));
                 await browser.destroy();
                 throw err;
             }
             this.browser = browser;
+            this.startError = null;
 
             this.scheduleRefresh();
             this.touch();
@@ -66,6 +69,9 @@ export default class OmnivoxClient {
 
     async health(): Promise<HealthStatus> {
         if (!this.browser && !this.starting) {
+            if (this.startError) {
+                return { ok: false, browser: false, page: false, omnivox: false, sleeping: false, error: this.startError.message };
+            }
             return { ok: true, browser: false, page: false, omnivox: false, sleeping: true };
         }
 
@@ -209,7 +215,9 @@ export default class OmnivoxClient {
 
     private async ensureReady(): Promise<void> {
         if (!this.starting) {
-            console.warn('[Omnivox] Waking browser from idle sleep');
+            console.warn(this.startError
+                ? '[Omnivox] Retrying browser launch after previous failure'
+                : '[Omnivox] Waking browser from idle sleep');
         }
         await this.start();
         this.touch();

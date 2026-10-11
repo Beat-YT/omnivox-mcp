@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import InitializeMcpTools from './mcp/tools.js';
 import { omnivox } from './omnivox-api/puppet/index.js';
+import { getConfig } from './omnivox-api/config.js';
 import { dataDir } from './common/dataDir.js';
 
 const useHttp = process.argv.includes('--http');
@@ -10,8 +11,13 @@ const { setHttpMode, setLogMode } = await import('./common/transportMode.js');
 setHttpMode(useHttp);
 setLogMode(useLog);
 
+// A missing or incomplete config is permanent, exit now instead of retrying forever
+getConfig();
+
 InitializeMcpTools();
-omnivox.start();
+omnivox.start().catch((err) => {
+    console.warn('[Omnivox] Browser failed to start, will retry on the next request:', err.message);
+});
 
 const shutdown = async () => {
     console.log('Shutting down...');

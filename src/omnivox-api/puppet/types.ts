@@ -30,4 +30,6 @@ export interface HealthStatus {
     page: boolean;
     omnivox: boolean;
     sleeping: boolean;
+    /** Why the last launch failed, when the browser is down for that reason */
+    error?: string;
 }
