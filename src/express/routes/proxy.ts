@@ -1,6 +1,6 @@
 import * as express from 'express';
 import { getConfig } from 'src/omnivox-api/config';
-import { makeProxyFetch } from 'src/omnivox-api/puppet';
+import { omnivox } from 'src/omnivox-api/puppet';
 import { ValidateAccessKey } from 'src/security/accessKey';
 
 const router = express.Router();
@@ -13,12 +13,11 @@ router.all('/Mobl/{*path}', ValidateAccessKey, express.raw({ type: '*/*', limit:
             ? req.body.toString('utf-8')
             : undefined;
 
-        const result = await makeProxyFetch(
-            target,
-            req.method,
+        const result = await omnivox.request(target, {
+            method: req.method,
             body,
-            body ? (req.headers['content-type'] as string) : undefined,
-        );
+            contentType: body ? (req.headers['content-type'] as string) : undefined,
+        });
 
         res.status(result.status);
         res.set('Content-Type', result.contentType);

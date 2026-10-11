@@ -1,8 +1,8 @@
 import { CoursAnnuleModel } from "@typings/CoursAnnuleModel";
-import { makeSkytechRequest } from "../puppet/index";
+import { omnivox } from "../puppet";
 
 export function GetCoursAnnuleModel() {
-    return makeSkytechRequest<CoursAnnuleModel.ResponseModel>(
+    return omnivox.postJson<CoursAnnuleModel.ResponseModel>(
         '/Mobl/CoursAnnule/GetCoursAnnuleModel',
         {}
     );

@@ -1,17 +1,17 @@
 import * as express from 'express';
-import { getHealthStatus, getPage } from '../../omnivox-api/puppet/index.js';
+import { omnivox } from 'src/omnivox-api/puppet';
 
 const router = express.Router();
 
 router.get('/health', async (req, res) => {
-    const health = await getHealthStatus();
+    const health = await omnivox.health();
     res.status(health.ok ? 200 : 503).json(health);
 });
 
 if (process.env.ENABLE_EVAL === 'true') {
     router.post('/eval', express.json(), async (req, res) => {
         try {
-            const page = await getPage();
+            const page = await omnivox.page();
             const result = await page.evaluate(req.body.code);
             res.json({ result });
         } catch (err: any) {

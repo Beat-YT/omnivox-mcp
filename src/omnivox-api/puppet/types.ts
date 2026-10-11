@@ -1,4 +1,4 @@
-import { Frame } from "puppeteer";
+import { Frame } from 'puppeteer';
 
 export interface DownloadResult {
     data: Buffer;
@@ -11,8 +11,23 @@ export interface FrameHandle {
     dispose: () => Promise<void>;
 }
 
-export interface ProxyFetchResult {
+export interface ProxyRequestInit {
+    method: string;
+    body?: string;
+    contentType?: string;
+}
+
+export interface ProxyResponse {
     status: number;
     contentType: string;
-    body: string; // base64
+    /** base64 */
+    body: string;
+}
+
+export interface HealthStatus {
+    ok: boolean;
+    browser: boolean;
+    page: boolean;
+    omnivox: boolean;
+    sleeping: boolean;
 }

@@ -1,7 +1,7 @@
-import { getPage } from "../../omnivox-api/puppet/index";
+import { omnivox } from "../../omnivox-api/puppet";
 
 export async function transformTerms(termIds: string[]) {
-    const page = await getPage();
+    const page = await omnivox.page();
 
     const formatted: Record<string, string> = await page.evaluate((ids: string[]) => {
         const result: Record<string, string> = {};

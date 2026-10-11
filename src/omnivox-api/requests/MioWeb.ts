@@ -1,5 +1,5 @@
 import { omnivoxVer } from "@common/constants";
-import { getPage, loadPageInFrame, makeSkytechRequest } from "../puppet";
+import { omnivox } from "../puppet";
 import { MioSearch } from "@typings/Mio/Search";
 import { HTTPResponse } from "puppeteer";
 
@@ -18,7 +18,7 @@ function skytechCall(frame: any, method: string, ...args: any[]): Promise<any> {
 // this is 100% going to break and be a nightmare to maintain but it is what it is.
 export async function GetCoursePeople(courseId: string) {
     const [courseCode, courseGroup] = courseId.split('.');
-    const page = await getPage();
+    const page = await omnivox.page();
 
     const baseUrl = new URL(page.url()).origin;
     const userOid = await page.evaluate(() => {
@@ -60,7 +60,7 @@ export async function GetCoursePeople(courseId: string) {
         }, 10000);
     });
 
-    const { frame, dispose } = await loadPageInFrame(mioUrl);
+    const { frame, dispose } = await omnivox.openFrame(mioUrl);
 
     try {
         // Click "One or many students or teachers from my classes" — triggers __doPostBack
@@ -87,7 +87,7 @@ export async function GetCoursePeople(courseId: string) {
         await skytechCall(frame, 'Sauvegarder', id, id);
 
         // Get the real recipient data from the mobile API
-        return await makeSkytechRequest<MioSearch.IndividuItem[]>(
+        return await omnivox.postJson<MioSearch.IndividuItem[]>(
             '/Mobl/Mio/ObtenirDestinatiaresWeb',
             { idRecherche: String(id) }
         );

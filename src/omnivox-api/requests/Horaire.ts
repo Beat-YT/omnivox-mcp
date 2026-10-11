@@ -1,8 +1,8 @@
 import { HoraireModel } from "@typings/HoraireModel";
-import { makeSkytechRequest } from "../puppet/index";
+import { omnivox } from "../puppet";
 
 export function GetHoraireModel(term?: string) {
-    return makeSkytechRequest<HoraireModel.ResponseHoraire>(
+    return omnivox.postJson<HoraireModel.ResponseHoraire>(
         '/Mobl/Horaire/GetHoraireModel',
         { AnSession: term || null }
     );

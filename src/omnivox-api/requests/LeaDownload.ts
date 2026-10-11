@@ -1,4 +1,4 @@
-import { makePuppeteerDownload, DownloadResult } from "../puppet";
+import { omnivox, DownloadResult } from "../puppet";
 import { getConfig, OmnivoxConfig } from "../config";
 
 function getOmnivoxBaseUrl(): string {
@@ -31,7 +31,7 @@ export function GetDocumentFichier(courseId: string, documentId: string, term: s
         nomFichierServeurFichier: documentId
     });
 
-    return makePuppeteerDownload(`${baseUrl}/Mobl/LeaEtudiant/GetDocumentFichier?${qs.toString()}`);
+    return omnivox.download(`${baseUrl}/Mobl/LeaEtudiant/GetDocumentFichier?${qs.toString()}`);
 }
 
 export function GetEnonceTravailFichier(courseId: string, assignmentId: string, assignmentFileId: string, term: string): Promise<DownloadResult> {
@@ -43,7 +43,7 @@ export function GetEnonceTravailFichier(courseId: string, assignmentId: string, 
         idClasse: courseId,
     });
 
-    return makePuppeteerDownload(`${baseUrl}/Mobl/LeaEtudiant/GetEnonceTravailFichier?${qs.toString()}`);
+    return omnivox.download(`${baseUrl}/Mobl/LeaEtudiant/GetEnonceTravailFichier?${qs.toString()}`);
 }
 
 export function GetDepotTravailFichier(courseId: string, assignmentId: string, submissionFileId: string, term: string): Promise<DownloadResult> {
@@ -55,7 +55,7 @@ export function GetDepotTravailFichier(courseId: string, assignmentId: string, s
         idClasse: courseId,
     });
 
-    return makePuppeteerDownload(`${baseUrl}/Mobl/LeaEtudiant/GetDepotTravailFichier?${qs.toString()}`);
+    return omnivox.download(`${baseUrl}/Mobl/LeaEtudiant/GetDepotTravailFichier?${qs.toString()}`);
 }
 
 export function GetCopieCorrigeTravailFichier(courseId: string, assignmentId: string, correctedFileId: string, term: string): Promise<DownloadResult> {
@@ -67,5 +67,5 @@ export function GetCopieCorrigeTravailFichier(courseId: string, assignmentId: st
         idClasse: courseId,
     });
 
-    return makePuppeteerDownload(`${baseUrl}/Mobl/LeaEtudiant/GetCopieCorrigeTravailFichier?${qs.toString()}`);
+    return omnivox.download(`${baseUrl}/Mobl/LeaEtudiant/GetCopieCorrigeTravailFichier?${qs.toString()}`);
 }

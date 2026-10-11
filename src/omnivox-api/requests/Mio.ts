@@ -1,18 +1,18 @@
 import { MioModel } from "@typings/Mio/Messages";
 import { MioSearch } from "@typings/Mio/Search";
-import { makeSkytechRequest, makePuppeteerDownload, DownloadResult } from "../puppet/index";
+import { omnivox, DownloadResult } from "../puppet";
 import { MioFolders } from "@typings/Mio/Folders";
 import { getConfig } from "../config";
 
 export function GetListeFoldersModel() {
-    return makeSkytechRequest<MioFolders.ResponseModel>(
+    return omnivox.postJson<MioFolders.ResponseModel>(
         '/Mobl/Mio/GetListeFoldersModel',
         {}
     );
 }
 
 export function GetLatestMessages(folder: string, count = 21) {
-    return makeSkytechRequest<MioModel.ResponseModel>(
+    return omnivox.postJson<MioModel.ResponseModel>(
         '/Mobl/Mio/GetLatestMessages',
         {
             "IdFolder": folder,
@@ -26,7 +26,7 @@ export function GetLatestMessages(folder: string, count = 21) {
 }
 
 export function GetMessages(folder: string, lastId: string, count = 20) {
-    return makeSkytechRequest<MioModel.ResponseModel>(
+    return omnivox.postJson<MioModel.ResponseModel>(
         '/Mobl/Mio/GetMessages',
         {
             "IdFolder": folder,
@@ -38,7 +38,7 @@ export function GetMessages(folder: string, lastId: string, count = 20) {
 }
 
 export function SearchMessages(folder: string, query: string, count = 21) {
-    return makeSkytechRequest<MioModel.ResponseModel>(
+    return omnivox.postJson<MioModel.ResponseModel>(
         '/Mobl/Mio/SearchMessages',
         {
             "IdFolder": folder,
@@ -49,7 +49,7 @@ export function SearchMessages(folder: string, query: string, count = 21) {
 }
 
 export function SendMessage(to: string, subject: string, message: string, cacheDestinataire = false) {
-    return makeSkytechRequest<any>(
+    return omnivox.postJson<any>(
         '/Mobl/Mio/SendMessage',
         {
             "IDMessage": null,
@@ -65,7 +65,7 @@ export function SendMessage(to: string, subject: string, message: string, cacheD
 }
 
 export function CategoriseMessage(messageId: string, folderId: string) {
-    return makeSkytechRequest<any>(
+    return omnivox.postJson<any>(
         '/Mobl/Mio/CategoriseMessage',
         {
             "oidMessage": messageId,
@@ -76,7 +76,7 @@ export function CategoriseMessage(messageId: string, folderId: string) {
 }
 
 export function SetIndicateursMessage(messageId: string, starFlag: boolean, reReadFlag: boolean) {
-    return makeSkytechRequest<any>(
+    return omnivox.postJson<any>(
         '/Mobl/Mio/SetIndicateursMessage',
         {
             "Id": messageId,
@@ -90,7 +90,7 @@ export function SetIndicateursMessage(messageId: string, starFlag: boolean, reRe
 }
 
 export function DeleteMessage(messageId: string) {
-    return makeSkytechRequest<any>(
+    return omnivox.postJson<any>(
         '/Mobl/Mio/DeleteMessage',
         {
             "Id": messageId,
@@ -101,7 +101,7 @@ export function DeleteMessage(messageId: string) {
 }
 
 export function RestoreMessage(messageId: string) {
-    return makeSkytechRequest<any>(
+    return omnivox.postJson<any>(
         '/Mobl/Mio/RestoreMessage',
         {
             "Id": messageId,
@@ -111,7 +111,7 @@ export function RestoreMessage(messageId: string) {
 }
 
 export function SetMessageLu(messageId: string, isEnvoi = false) {
-    return makeSkytechRequest<any>(
+    return omnivox.postJson<any>(
         '/Mobl/Mio/SetMessageLu',
         {
             "Id": messageId,
@@ -121,14 +121,14 @@ export function SetMessageLu(messageId: string, isEnvoi = false) {
 }
 
 export function RechercheIndividu(query: string) {
-    return makeSkytechRequest<MioSearch.IndividuItem[]>(
+    return omnivox.postJson<MioSearch.IndividuItem[]>(
         '/Mobl/Mio/RechercheIndividu',
         { "TexteRecherche": query }
     );
 }
 
 export function AjoutCategorie(nomCategorie: string) {
-    return makeSkytechRequest<any>(
+    return omnivox.postJson<any>(
         '/Mobl/Mio/AjoutCategorie',
         {
             "nomCategorie": nomCategorie
@@ -144,5 +144,5 @@ export function GetMioAttachment(messageId: string, attachmentId: string): Promi
         IdAttachement: attachmentId,
     });
 
-    return makePuppeteerDownload(`${baseUrl}/Mobl/Mio/GetAttachement?${qs.toString()}`);
+    return omnivox.download(`${baseUrl}/Mobl/Mio/GetAttachement?${qs.toString()}`);
 }

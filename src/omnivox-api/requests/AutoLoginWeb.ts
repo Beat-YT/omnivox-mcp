@@ -1,10 +1,10 @@
-import { getPage } from "../puppet/index";
+import { omnivox } from "../puppet";
 import { getConfig } from "../config";
 import { GetTokenRedirection } from "./Login";
 import { ServiceMenuItem } from "@typings/OffreService";
 
 async function GetServiceMenuItems(): Promise<ServiceMenuItem[]> {
-    const page = await getPage();
+    const page = await omnivox.page();
     return page.evaluate(() => (window as any).Skytech.Commun.Application.GetOffreServices() || []);
 }
 
@@ -25,7 +25,7 @@ async function FindService(idOrCode: string): Promise<ServiceMenuItem> {
 }
 
 async function BuildIntraflexAutoLoginUrl(intranetPath: string | null, withToken = true): Promise<string> {
-    const page = await getPage();
+    const page = await omnivox.page();
     const relative = await page.evaluate(
         (p: string | null) => (window as any).Skytech.Commun.Module.LoginWorker.CreerLienPreAuthentifierIntraflex(p),
         intranetPath,
@@ -34,7 +34,7 @@ async function BuildIntraflexAutoLoginUrl(intranetPath: string | null, withToken
 }
 
 export async function BuildCvirAutoLoginUrl(cvirPath: string, anSession?: string, withToken = true): Promise<string> {
-    const page = await getPage();
+    const page = await omnivox.page();
     const relative = await page.evaluate(
         (p: string, a?: string) => (window as any).Skytech.Commun.Module.LoginWorker.CreerLienPreAuthentifierCvir(p, a),
         cvirPath,

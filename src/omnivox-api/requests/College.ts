@@ -1,8 +1,8 @@
 import { Actualite } from "@typings/college";
-import { makeSkytechRequest } from "../puppet/index";
+import { omnivox } from "../puppet";
 
 export function GetListeActualite(count: number = 21) {
-    return makeSkytechRequest<Actualite[]>(
+    return omnivox.postJson<Actualite[]>(
         '/Mobl/College/ListeActualite',
         { NombreItem: count, ReferenceNouvelle: null }
     );

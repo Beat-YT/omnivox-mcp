@@ -1,4 +1,4 @@
-import { makeSkytechRequest } from "../puppet/index";
+import { omnivox } from "../puppet";
 
 export interface TokenRedirectionResponse {
     TokenRedirection: string;
@@ -9,6 +9,6 @@ export interface TokenRedirectionResponse {
  * be logged into the web portal via /Mobl/Login/AutoLogin?TokenRedirection=...
  */
 export function GetTokenRedirection() {
-    return makeSkytechRequest<TokenRedirectionResponse>('/Mobl/Login/GetTokenRedirection', {});
+    return omnivox.postJson<TokenRedirectionResponse>('/Mobl/Login/GetTokenRedirection', {});
 }
 

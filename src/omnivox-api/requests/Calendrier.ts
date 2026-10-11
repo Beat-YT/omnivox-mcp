@@ -1,8 +1,8 @@
-import { makeSkytechRequest } from "../puppet/index";
+import { omnivox } from "../puppet";
 import { CalendrierModel } from "@typings/Calendrier/CalendrierModel";
 
 export function GetCalendrierModel(page: number = 0) {
-    return makeSkytechRequest<CalendrierModel.ResponseModel>(
+    return omnivox.postJson<CalendrierModel.ResponseModel>(
         '/Mobl/Calendrier/GetCalendrierModel',
         {
             "decalagePagination": page,
@@ -29,14 +29,14 @@ export function GetCalendrierModel(page: number = 0) {
 }
 
 export function SetCalendarFilters(filters: any) {
-    return makeSkytechRequest<void>(
+    return omnivox.postJson<void>(
         '/Mobl/College/SetFiltre',
         filters
     );
 }
 
 export function FirstLoadTest() {
-    return makeSkytechRequest(
+    return omnivox.postJson(
         '/Mobl/College/EvenementsWeb_GetFirstLoad',
         {}
     );
