@@ -1,6 +1,7 @@
 import { ElementHandle, Page } from 'puppeteer';
 import BrowserManager from './BrowserManager';
 import { getConfig } from '../config';
+import { OmnivoxMoblError } from '../OmnivoxMoblError';
 import { clientConfig } from '@common/constants';
 import { dataDir } from '@common/dataDir';
 import { DownloadResult, FrameHandle, HealthStatus, ProxyRequestInit, ProxyResponse } from './types';
@@ -100,8 +101,8 @@ export default class OmnivoxClient {
     }
 
     /** POST a JSON payload to a mobile API endpoint through Omnivox's own request worker. */
-    postJson<T = any>(url: string, payload: unknown = {}): Promise<T> {
-        return this.withPage((page) =>
+    async postJson<T = any>(url: string, payload: unknown = {}): Promise<T> {
+        const result = await this.withPage((page) =>
             page.evaluate((url: string, payload: unknown) => {
                 return new Promise<any>((resolve, reject) => {
                     (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, payload,
@@ -111,6 +112,10 @@ export default class OmnivoxClient {
                 });
             }, url, payload),
         );
+
+        if (OmnivoxMoblError.isError(result)) throw new OmnivoxMoblError(result);
+
+        return result;
     }
 
     /** Forward an arbitrary HTTP request with the session cookies. Used by the /Mobl proxy route. */

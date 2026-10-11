@@ -3,6 +3,7 @@ import { mcpServer } from 'src/mcp/server';
 import { normalizeObjectSchema, safeParseAsync } from '@modelcontextprotocol/sdk/server/zod-compat.js';
 import { toJsonSchemaCompat } from '@modelcontextprotocol/sdk/server/zod-json-schema-compat.js';
 import { ValidateAccessKey } from 'src/security/accessKey';
+import { OmnivoxMoblError } from 'src/omnivox-api/OmnivoxMoblError';
 
 const router = express.Router();
 
@@ -74,6 +75,10 @@ router.post('/tools/:toolName', ValidateAccessKey, express.json({ type: '*/*' })
 
         res.type('text/plain').send(text);
     } catch (err: any) {
+        if (err instanceof OmnivoxMoblError) {
+            return res.status(409).json({ error: err.message, page: err.payload.NaviguerPage ?? null });
+        }
+
         console.error(`Error executing tool "${req.params.toolName}":`, err);
         res.status(500).json({ error: err.message || 'Internal tool error' });
     }

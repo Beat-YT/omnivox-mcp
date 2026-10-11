@@ -15,6 +15,12 @@ export function toIso(ms?: number) {
 }
 
 /** Readable local date for text output, e.g. "Thu, Sep 24 11:43". Adds the year outside the current one. */
+const INT_SENTINELS = new Set([0, 2147483647, -2147483648]);
+
+export function isRealInt(value: unknown): value is number {
+    return typeof value === 'number' && Number.isFinite(value) && !INT_SENTINELS.has(value);
+}
+
 export function toDisplayDate(ms?: number) {
     if (!ms || ms < 0) return undefined
     const d = new Date(ms)
