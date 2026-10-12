@@ -87,7 +87,7 @@ export default class OmnivoxClient {
         let omnivox = false;
         try {
             omnivox = await this.browser.page.evaluate(
-                () => !!(window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON,
+                () => !!(window as any).Skytech?.Commun?.Utils?.HttpRequestWorker?.PostJSON,
             );
         } catch { }
 
