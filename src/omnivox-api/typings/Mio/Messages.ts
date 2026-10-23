@@ -12,6 +12,10 @@ export namespace MioModel {
         UtilisationQuota?: number;
     }
 
+    export interface MessageResponse extends ResponseEnvelope {
+        MioMessage: ListeMessage;
+    }
+
     export interface ListeMessage {
         HasAttachment: boolean;
         NomCompletEnvoyeur: string;

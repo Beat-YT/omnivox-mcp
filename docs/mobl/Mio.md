@@ -135,6 +135,24 @@ NbMessages                  number     default 20
 
 ---
 
+## POST /Mobl/Mio/GetMessage
+
+Returns a single message by ID, from any folder. The app calls it (`MioWorker.GetMessageFromServer`) when a list item carries only `ExtraitMessage`, and to load `ListeDestinataires` before a reply-all.
+
+**Body:**
+```
+IdMessage    string     message GUID, case-insensitive
+```
+
+**Response:**
+```
+MioMessage    object     one `ListeMessages[]` item from `GetLatestMessages`, with `Message` (full HTML) and `ListeDestinataires` populated
+```
+
+`Attachements` is `null` rather than `[]` when the message has none. Does not mark the message as read. An unknown ID still returns the envelope with an empty `MioMessage` (`Id`, `Sujet`, `Message` and `OIDEnvoyeur` are `null`, `TimestampDateEnvoi` is `0`), not an error.
+
+---
+
 ## POST /Mobl/Mio/SearchMessages
 
 Searches messages by text.
@@ -182,12 +200,14 @@ To                   string     recipient OID(s)
 Sujet                string     subject
 Message              string     body HTML
 Attachements         any[]
-IDMessageReply       string     "undefined" for new, GUID for reply
-derniereAction       string     "0"
+IDMessageReply       string     "undefined" for new, GUID of the original for reply/forward
+derniereAction       string     "0" new, "1" reply, "2" forward, "3" reply all (MioWorker.TypeAction)
 CacheDestinataire    boolean
 ```
 
 **Response:** truthy value on success.
+
+Quoting is done client-side. For a reply the app (`Nouveau.getMessage`) HTML-encodes the typed text, appends `<br /><br />` + signature when enabled, then appends `Dictio.MIO.MSG_0130` filled with the original sender's name and date, followed by the original `Message` HTML with any `<body>` wrapper stripped. The English `MSG_0130` is `<br/><br/>__________________________________<br/>{0} wrote on {1} :<br />`; the date pattern is `$3_W j-$3_M-Y à H:i` (e.g. `tue 20-oct-2026 à 11:26`). The subject goes through `MioWorker.CreerTitreReponse`, which prepends `Dictio.MIO.MSG_0190` (`Re:`) unless the subject already starts with it. Forward uses `MSG_0185` (`Fw:`). The body is limited to 50 000 characters client-side.
 
 ---
 

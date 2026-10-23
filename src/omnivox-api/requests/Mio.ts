@@ -37,6 +37,13 @@ export function GetMessages(folder: string, lastId: string, count = 20) {
     );
 }
 
+export function GetMessage(messageId: string) {
+    return omnivox.postJson<MioModel.MessageResponse>(
+        '/Mobl/Mio/GetMessage',
+        { "IdMessage": messageId }
+    );
+}
+
 export function SearchMessages(folder: string, query: string, count = 21) {
     return omnivox.postJson<MioModel.ResponseModel>(
         '/Mobl/Mio/SearchMessages',
@@ -48,7 +55,7 @@ export function SearchMessages(folder: string, query: string, count = 21) {
     );
 }
 
-export function SendMessage(to: string, subject: string, message: string, cacheDestinataire = false) {
+export function SendMessage(to: string, subject: string, message: string, cacheDestinataire = false, replyToId?: string) {
     return omnivox.postJson<any>(
         '/Mobl/Mio/SendMessage',
         {
@@ -57,8 +64,8 @@ export function SendMessage(to: string, subject: string, message: string, cacheD
             "Message": message,
             "Sujet": subject,
             "Attachements": [],
-            "IDMessageReply": "undefined",
-            "derniereAction": "0",
+            "IDMessageReply": replyToId ?? "undefined",
+            "derniereAction": replyToId ? "1" : "0",
             "CacheDestinataire": cacheDestinataire
         }
     ).then(r => !!r);
