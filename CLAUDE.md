@@ -153,6 +153,8 @@ Tool text output is markdown. The shape below is what most tools follow and is t
 
 Avoid `structuredContent` and `outputSchema`. Tool output is written for an LLM to read, not for programs that need a structured shape. Clients that want raw structured data should go through the `/Mobl/*` proxy instead.
 
+The Zod schemas in `src/mcp/schemas/` and the transformers in `src/mcp/transformers/` are a legacy of the structured-content era. Do not add new ones. A new tool types the raw response in `src/omnivox-api/typings/`, calls its request function in `src/omnivox-api/requests/`, and builds the markdown text directly from the raw fields in the tool file, using the helpers in `src/common/transformHelpers.ts` for dates and HTML previews. MCP clients discover tools from the registry, so a new tool does not need to be added to the `get-overview` drill-down list.
+
 ### Logging
 
 - **HTTP request logs**: Always on in HTTP mode (console + `server.log` file). Gated by `isHttpMode()`.

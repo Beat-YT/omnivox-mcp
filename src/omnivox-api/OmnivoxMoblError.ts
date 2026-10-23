@@ -4,7 +4,7 @@ import { isRealInt, toDisplayDate } from '@common/transformHelpers';
 type Envelope = Partial<ResponseEnvelope> & { CodeAcces?: string };
 
 const naviguerMessages: Record<string, string> = {
-    'ErrorPage.DocumentCollegeBlock': 'Omnivox is blocked until the student opens a mandatory college document in Omnivox (Mes documents). Tell the student to open it in Omnivox, then retry.',
+    'ErrorPage.DocumentCollegeBlock': 'Omnivox is blocked until the student opens a mandatory college document in Omnivox (Mes documents). Call get-college-documents to name the document, tell the student to open it in Omnivox, then retry.',
     'ErrorPage.SondageVoteBlock': 'Omnivox is blocked until the student answers a mandatory survey or vote in Omnivox. Tell the student to answer it in Omnivox, then retry.',
     'ErrorPage.ModuleNonAccessible': 'This Omnivox module is not accessible for this account.',
 };
