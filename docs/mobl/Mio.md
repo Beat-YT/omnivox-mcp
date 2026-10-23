@@ -69,8 +69,8 @@ ListeMessages[]
   AfficheNoDa                     boolean
   MioEnvoi                        boolean
   IsDansCorbeille                 boolean
-  IDMessageReply                  string
-  DerniereAction                  number
+  IDMessageReply                  string     GUID of the message this one replies to or forwards, empty otherwise
+  DerniereAction                  number     action taken on this message: 0 none, 1 replied, 2 forwarded, 3 replied to all (MioWorker.TypeAction)
   NomCategorie                    string
   TypeIndividu                    number
   ImageTypeIndividu               string
