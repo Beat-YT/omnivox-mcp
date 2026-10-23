@@ -45,7 +45,7 @@ export namespace MioModel {
         NbDestinataires: number;
         AffichePhoto: boolean;
         AfficheNoDa: boolean;
-        OIDRecepteur: null;
+        OIDRecepteur: string | null;
         Attachements: Attachement[];
         Images: null;
         MioEnvoi: boolean;

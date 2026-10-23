@@ -55,7 +55,7 @@ export function SearchMessages(folder: string, query: string, count = 21) {
     );
 }
 
-export function SendMessage(to: string, subject: string, message: string, cacheDestinataire = false, replyToId?: string) {
+export function SendMessage(to: string, subject: string, message: string, cacheDestinataire = false, replyToId?: string, replyAll = false) {
     return omnivox.postJson<any>(
         '/Mobl/Mio/SendMessage',
         {
@@ -65,7 +65,7 @@ export function SendMessage(to: string, subject: string, message: string, cacheD
             "Sujet": subject,
             "Attachements": [],
             "IDMessageReply": replyToId ?? "undefined",
-            "derniereAction": replyToId ? "1" : "0",
+            "derniereAction": replyToId ? (replyAll ? "3" : "1") : "0",
             "CacheDestinataire": cacheDestinataire
         }
     ).then(r => !!r);
