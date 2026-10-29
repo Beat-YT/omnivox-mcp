@@ -4,7 +4,7 @@
 
 A self-hosted toolbox that logs into Omnivox once and lets anything talk to it — Claude over MCP, any assistant that can call plain HTTP tools, or your own scripts.
 
-Under the hood it runs a persistent Puppeteer browser logged into your Omnivox session, executing requests through the mobile app's own JavaScript — so challenge-response auth, cookies, and encoding are all handled natively.
+Under the hood it runs a persistent Puppeteer browser logged into your Omnivox session, executing requests through the mobile app's own JavaScript (without any scraping) — so challenge-response auth, cookies, and encoding are all handled natively.
 
 ### Core Features
 
