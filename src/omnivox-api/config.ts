@@ -51,7 +51,24 @@ export function InitializeConfig() {
     client.defaults.headers['Origin'] = defaultUrl.origin;
 }*/
 
+// Writes the file from an env var (raw or base64 JSON) when it does not exist yet. The file wins afterwards.
+function seedFromEnv(filePath: string, envVar: string) {
+    const value = process.env[envVar]?.trim();
+    if (!value || fs.existsSync(filePath)) return;
+
+    const json = value.startsWith('{') || value.startsWith('[')
+        ? value
+        : Buffer.from(value, 'base64').toString('utf-8');
+
+    JSON.parse(json);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    fs.writeFileSync(filePath, json, 'utf-8');
+    console.warn(`Seeded ${path.basename(filePath)} from ${envVar}`);
+}
+
 export function getElectronCookies(): any[] {
+    seedFromEnv(cookiePath, 'OMNIVOX_COOKIES');
+
     if (!fs.existsSync(cookiePath)) {
         console.error('Cookie file not found. Please ensure you have logged in through the Electron app first.');
         console.error('Expected cookie path (file not exist):', cookiePath);
@@ -65,6 +82,8 @@ export function getElectronCookies(): any[] {
 
 export function getConfig(): OmnivoxConfig {
     if (config) return config;
+
+    seedFromEnv(configPath, 'OMNIVOX_CONFIG');
 
     if (!fs.existsSync(configPath)) {
         console.error('Configuration file config.json not found. Please make sure the mcp was set up correctly.');

@@ -120,6 +120,7 @@ Separate Electron app that authenticates with Omnivox, captures session cookies,
 - `browser/` - Persistent Chrome profile (session cookies live here after first import)
 - `cookies.json` - Session cookies exported by the Electron auth app
 - `config.json` - Omnivox config (DefaultPage URL, auth Code, device ID)
+  - Fallback for hosts without a volume: when either file is missing, `src/omnivox-api/config.ts` writes it from `OMNIVOX_COOKIES` / `OMNIVOX_CONFIG` (raw or base64 JSON). The file wins once it exists. The volume stays the recommended setup.
 - `accessKey.txt` - API access key (HTTP mode only)
 - `deltaSnapshots.json` - Persisted delta tracker snapshots for "what changed since last call"
 

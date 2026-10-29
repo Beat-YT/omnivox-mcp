@@ -49,7 +49,6 @@ docker compose up -d
 ```
 
 The included [`docker-compose.example.yml`](docker-compose.example.yml) mounts your data folder into the container at `/data/omnivox`, exposes port 3000, sets a session-keeping refresh interval, and wires up a healthcheck. Your customized `docker-compose.yml` is gitignored.
-
 ### Re-authentication
 
 If your session expires or you want a different account, reset and log in again:
@@ -71,6 +70,7 @@ Set these as environment variables or in a `.env` file at the project root:
 |---|---|---|
 | `PORT` | `3000` | Server port |
 | `OMNIVOX_DATA_DIR` | `data/` at the project root | Data directory for config, cookies, browser profile, and access key |
+| `OMNIVOX_CONFIG` / `OMNIVOX_COOKIES` | *(none)* | Contents of `config.json` / `cookies.json` (JSON or base64), for hosts where a volume isn't an option. Only used when the file is missing. |
 | `BROWSER_LAUNCH_ARGS` | *(none)* | Extra Chrome flags appended to the default launch arguments, space-separated. Useful in Docker where Chrome runs as root and needs `--no-sandbox --disable-setuid-sandbox`. |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. Not recommended for Docker setups |
 | `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `true`. |
