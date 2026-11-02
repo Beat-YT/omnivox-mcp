@@ -107,7 +107,7 @@ mcpServer.registerTool('get-overview',
 
         const content = sections
             .filter((text): text is string => text !== null)
-            .map(text => ({ type: 'text' as const, text }));
+            .map(text => ({ type: 'text' as const, text: text + '\n' }));
 
         if (content.length === 0) {
             content.push({ type: 'text', text: 'Nothing new.' });
@@ -117,13 +117,13 @@ mcpServer.registerTool('get-overview',
             type: 'text',
             text: [
                 '## Drill down:',
-                '- Full schedule & evals → get-calendar',
-                '- Course documents → get-course-documents',
-                '- Course announcements → get-course-announcements',
-                '- Course assignments → get-course-assignments',
-                '- Grades detail → get-course-evals',
-                '- MIO messages → get-mio-messages',
-                '- All college news → get-college-news',
+                '• Full schedule & evals → get-calendar',
+                '• Course documents → get-course-documents',
+                '• Course announcements → get-course-announcements',
+                '• Course assignments → get-course-assignments',
+                '• Grades detail → get-course-evals',
+                '• MIO messages → get-mio-messages',
+                '• All college news → get-college-news',
             ].join('\n'),
             annotations: { audience: ['assistant'] },
         } as any);

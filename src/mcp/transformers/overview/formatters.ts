@@ -2,7 +2,7 @@ import { CalendarEvent } from "@schemas/calendar/calendar";
 import { CourseItem } from "@schemas/courses/summary";
 import { CollegeNewsItem } from "@schemas/college/college-news";
 import { NotificationItem } from "@schemas/overview/notifications";
-import { toLocalIso } from "@common/transformHelpers";
+import { extractHtmlPreview, isRealInt, toLocalIso } from "@common/transformHelpers";
 
 type DeltaText = { header: string; items: Record<string, string> } | null;
 
@@ -11,13 +11,15 @@ export function formatServiceUpdates(items: NotificationItem[], dt: DeltaText): 
         if (dt?.header) return `## Notifications: ${dt.header}`;
         return null;
     }
+    
+    isRealInt
 
     const lines = items.map(i => {
-        const desc = i.description ? ` — ${i.description}` : '';
+        const desc = i.description ? ` — ${extractHtmlPreview(i.description)}` : '';
         const showTitle = i.title && i.title !== String(i.count);
         const titlePart = showTitle ? `: ${i.title}` : '';
         const delta = dt?.items[i.service_id];
-        return `- ${i.label} (${i.count})${titlePart}${desc}${delta ? ' ' + delta : ''}`;
+        return `• ${i.label} (${i.count})${titlePart}${desc}${delta ? ' ' + delta : ''}`;
     });
 
     return [`## What's new?`, ...lines].join('\n');
@@ -50,7 +52,7 @@ export function formatCourseNewItems(courses: CourseItem[], newCounts: CourseNew
         }
 
         if (parts.length > 0) {
-            entries.push(`- ${c.title} (${c.id}): ${parts.join(', ')}`);
+            entries.push(`• ${c.title} (${c.id}): ${parts.join(', ')}`);
         }
     }
 
@@ -88,7 +90,7 @@ export function formatTodaySchedule(events: CalendarEvent[]): string | null {
         const course = e.course?.name ?? e.course?.course_id ?? '';
         const loc = e.location ? ` — ${e.location}` : '';
         const tag = e.category === 'eval' ? ' [EVAL]' : e.category === 'assignment' ? ' [DUE]' : '';
-        lines.push(`- ${time} — ${e.title}${tag}${course ? `, ${course}` : ''}${loc}`);
+        lines.push(`• ${time} — ${e.title}${tag}${course ? `, ${course}` : ''}${loc}`);
     }
     return lines.join('\n');
 }
@@ -106,7 +108,7 @@ export function formatUpcomingEvals(events: CalendarEvent[]): string | null {
         const time = e.allDay ? '' : ` ${new Date(e.start).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false })}`;
         const course = e.course?.name ?? e.course?.course_id ?? '';
         const weight = e.weight ? ` (${e.weight / 100}%)` : '';
-        lines.push(`- ${date}${time} — ${e.title}${weight}${course ? `, ${course}` : ''}`);
+        lines.push(`• ${date}${time} — ${e.title}${weight}${course ? `, ${course}` : ''}`);
     }
     
     lines.push('Important: Some professors do not post eval dates on Lea. Check course syllabus for the full schedule.');
