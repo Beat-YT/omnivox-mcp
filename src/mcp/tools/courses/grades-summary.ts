@@ -1,9 +1,9 @@
 import { GetNotesSommaireModel } from "@api/Lea";
 import { computeDelta, flattenSnapshot, itemDeltaText } from "@common/deltaTracker";
 import { getDefaultTermId } from "@common/omnivoxHelper";
-import { GradeSummaryItem } from "@schemas/courses";
-import { transformGradesSummary } from "@transformers/courses/grades-summary";
+import { isRealInt } from "@common/transformHelpers";
 import { termIdSchema } from "@common/validation";
+import { NotesSommaireModel } from "@typings/Lea/NotesSommaireModel";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
@@ -24,49 +24,81 @@ mcpServer.registerTool('get-grades-summary',
     async (args) => {
         const term = args.term_id || await getDefaultTermId();
         const model = await GetNotesSommaireModel(term);
-        const grades = transformGradesSummary(model, term);
+        const courses = model.ListeInfosNotes ?? [];
 
-        const snapshot = flattenSnapshot(grades.courses, c => c.course_id, {
-            new_evaluations_count: c => c.new_evaluations_count ?? 0,
-            accumulated_weight: c => c.accumulated_weight ?? 0,
+        const snapshot = flattenSnapshot(courses, c => `${c.NoCours}.${c.NoGroupe}`, {
+            new_evaluations_count: c => c.NouveauEvals ?? 0,
+            accumulated_weight: c => val(c.PourcentAccumul) ?? 0,
         });
         const deltas = computeDelta(`get-grades-summary:${term}`, snapshot);
         const dt = itemDeltaText(deltas, m => m.replace(/_/g, ' '));
 
-        const header = `# Grades — term ${term} (${grades.courses.length} courses)`;
-        const courses = grades.courses.map(c => formatGrade(c, dt?.items[c.course_id]));
+        const lines = [
+            `# Grades — term ${term} (${courses.length} courses)`,
+            dt?.header,
+            '',
+            ...courses.map(c => formatGrade(c, dt?.items[`${c.NoCours}.${c.NoGroupe}`])),
+        ];
 
         return {
-            content: [{ type: 'text', text: [header, dt?.header, '', ...courses].filter(l => l != null).join('\n') }],
+            content: [{ type: 'text', text: lines.filter(l => l != null).join('\n') }],
         };
     }
 )
 
-function formatGrade(c: GradeSummaryItem, delta?: string) {
-    const isFinal = c.has_final_grade;
-    const hasClassAvg = c.course_average != null && c.course_median != null;
+function formatGrade(c: NotesSommaireModel.ListeInfosNote, delta?: string) {
+    const earned = val(c.NotePonderee);
+    const graded = val(c.PourcentAccumul);
+    const projected = val(c.NoteProjetee);
+    const avg = val(c.Moyenne) || null;
+    const median = val(c.Mediane) || null;
+    const stdDev = val(c.EcartType) || null;
 
     const lines = [
-        `## ${c.title} (${c.course_code}.${c.group})${c.new_evaluations_count ? ' *new*' : ''}`,
+        `## ${c.NomCours} (${c.NoCours}.${c.NoGroupe})${c.NouveauEvals ? ' *new*' : ''}`,
     ];
 
-    if (isFinal) {
-        lines.push(`- Final grade: ${c.final_grade}%${c.class_average_final ? ` (class avg ${c.class_average_final}%)` : ''}`);
+    const finalGrade = Number(c.NoteFinale) || null;
+    if (finalGrade) {
+        lines.push(`- Final grade: ${finalGrade}%${c.MoyenneFinale ? ` (class avg ${c.MoyenneFinale}%)` : ''}`);
+    } else if (!graded && !earned) {
+        lines.push('- No evaluations graded yet, 100% of the final grade is still to come');
     } else {
-        lines.push(`- Current: ${c.projected_grade}/${c.accumulated_weight} (earned/weight), ${100 - (c.accumulated_weight ?? 0)}% remaining`);
+        lines.push(`- Current: ${fmt(earned)}/${fmt(graded)} (earned/graded weight), ${pct(100 - (graded ?? 0))} remaining`);
+        if (projected != null && earned != null && graded && projected !== round(earned / graded * 100)) {
+            lines.push(`- Projected grade (with bonuses/penalties): ${fmt(projected)}/100`);
+        }
     }
 
-    if (hasClassAvg) {
-        lines.push(`- Class: avg ${c.course_average}%, median ${c.course_median}%, std dev ${c.course_std_dev}%`);
+    if (avg && median) {
+        lines.push(`- Class: avg ${pct(avg)}, median ${pct(median)}${stdDev ? `, std dev ${pct(stdDev)}` : ''}`);
     }
 
-    if (c.new_evaluations_count) {
-        lines.push(`- New evals: ${c.new_evaluations_count}`);
+    if (c.NouveauEvals) {
+        lines.push(`- New evals: ${c.NouveauEvals}`);
     }
 
-    lines.push(`- Status: ${c.status}`);
     lines.push(`- Changes: ${delta || '[no changes since last check]'}`);
     lines.push('');
 
     return lines.join('\n');
+}
+
+// x100 fixed-point (number or numeric string) -> number, sentinels/empty -> null
+function val(n: number | string | null | undefined): number | null {
+    if (n == null || n === '') return null;
+    const num = Number(n);
+    return isRealInt(num) ? num / 100 : null;
+}
+
+function round(n: number, decimals = 2) {
+    return Number(n.toFixed(decimals));
+}
+
+function fmt(n: number | null, decimals = 2): string {
+    return n == null ? '—' : String(round(n, decimals));
+}
+
+function pct(n: number | null): string {
+    return n == null ? '—' : `${fmt(n, 1)}%`;
 }

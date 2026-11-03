@@ -118,16 +118,16 @@ function formatSummary(sommaire: NotesDetailModel.Sommaire): string[] {
         return lines;
     }
 
-    const progress = accumulated != null && accumulated < 100
-        ? ` — ${pct(accumulated)} of final grade evaluated, ${pct(100 - accumulated)} remaining`
-        : '';
-    lines.push(`Current grade: ${fmt(current)}/100${progress}`);
+    const remaining = accumulated != null && accumulated < 100 ? `, ${pct(100 - accumulated)} remaining` : '';
+    lines.push(`Current: ${fmt(current)}/${fmt(accumulated)} (earned/graded weight)${remaining}`);
 
-    if (projected != null && current != null && projected !== current) {
+    if (projected != null && current != null && accumulated && projected !== Number((current / accumulated * 100).toFixed(2))) {
         lines.push(`Projected grade (with bonuses/penalties): ${fmt(projected)}/100`);
     }
-    if (sommaire.NoteFinale) {
-        lines.push(`Final grade transmitted: ${sommaire.NoteFinale}%`);
+    // "0" while the final grade has not been transmitted
+    const finalGrade = Number(sommaire.NoteFinale) || null;
+    if (finalGrade) {
+        lines.push(`Final grade transmitted: ${finalGrade}%`);
     }
 
     // all-zero class stats mean the college doesn't publish them for this course
@@ -136,13 +136,13 @@ function formatSummary(sommaire: NotesDetailModel.Sommaire): string[] {
     if (median) classStats.push(`median ${pct(median)}`);
     if (stdDev) classStats.push(`std dev ${pct(stdDev)}`);
     if (classStats.length) {
-        const vs = avg != null && current != null ? ` (you: ${signed(current - avg)} vs avg)` : '';
+        const mine = current != null && accumulated ? current / accumulated * 100 : null;
+        const vs = avg != null && mine != null ? ` (you: ${signed(mine - avg)} vs avg)` : '';
         lines.push(`Class so far: ${classStats.join(', ')}${vs}`);
     }
     if (sommaire.MoyenneFinale) {
         const finalAvg = Number(sommaire.MoyenneFinale);
-        const mine = sommaire.NoteFinale ? Number(sommaire.NoteFinale) : null;
-        const vs = Number.isFinite(finalAvg) && mine != null ? ` (you: ${signed(mine - finalAvg)})` : '';
+        const vs = Number.isFinite(finalAvg) && finalGrade ? ` (you: ${signed(finalGrade - finalAvg)})` : '';
         lines.push(`Final class average: ${sommaire.MoyenneFinale}%${vs}`);
     }
 

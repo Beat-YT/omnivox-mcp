@@ -142,8 +142,8 @@ If the link tool says submission is closed, don't loop on it. Check the due date
 `get-grades-summary` gives the big picture — current earned marks, class stats, remaining weight. But to understand what's going on:
 - `get-course-evals` has the full breakdown with individual eval marks, class averages, and teacher comments.
 - An eval with `-` for the mark hasn't been graded yet (or hasn't happened). Cross-reference with the syllabus to know which.
-- "earned/weight" format (e.g. "33.2/50") means 33.2 points earned out of 50% of the final grade evaluated so far. The percentage is `earned / weight * 100`.
-- `status: no_data` means no grades exist for the course yet (e.g. "Encadrement" courses with no evaluations).
+- "earned/graded weight" format (e.g. "33.2/50") means 33.2 points banked out of the 50% of the final grade graded so far. The percentage is `earned / graded * 100` (66.4%). The "Projected grade" line, when shown, is already out of 100 and includes bonuses and penalties.
+- "No evaluations graded yet" means no grades exist for the course yet (e.g. "Encadrement" courses with no evaluations).
 
 ### Knowing What Changed
 

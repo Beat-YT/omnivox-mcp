@@ -2,7 +2,7 @@ import { CalendarEvent } from "@schemas/calendar/calendar";
 import { CourseItem } from "@schemas/courses/summary";
 import { CollegeNewsItem } from "@schemas/college/college-news";
 import { NotificationItem } from "@schemas/overview/notifications";
-import { extractHtmlPreview, isRealInt, toLocalIso } from "@common/transformHelpers";
+import { extractHtmlPreview, toLocalIso } from "@common/transformHelpers";
 
 type DeltaText = { header: string; items: Record<string, string> } | null;
 
@@ -11,8 +11,6 @@ export function formatServiceUpdates(items: NotificationItem[], dt: DeltaText): 
         if (dt?.header) return `## Notifications: ${dt.header}`;
         return null;
     }
-    
-    isRealInt
 
     const lines = items.map(i => {
         const desc = i.description ? ` — ${extractHtmlPreview(i.description)}` : '';
