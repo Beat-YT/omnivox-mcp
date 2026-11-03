@@ -14,8 +14,8 @@ export function formatServiceUpdates(items: NotificationItem[], dt: DeltaText): 
 
     const lines = items.map(i => {
         const desc = i.description ? ` — ${extractHtmlPreview(i.description)}` : '';
-        const showTitle = i.title && i.title !== String(i.count);
-        const titlePart = showTitle ? `: ${i.title}` : '';
+        const title = extractHtmlPreview(i.title);
+        const titlePart = title && title !== String(i.count) ? `: ${title}` : '';
         const delta = dt?.items[i.service_id];
         return `• ${i.label} (${i.count})${titlePart}${desc}${delta ? ' ' + delta : ''}`;
     });
