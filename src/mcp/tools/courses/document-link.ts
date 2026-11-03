@@ -3,11 +3,9 @@ import { GetDocumentFichier } from "@api/LeaDownload";
 import { mcpServer } from "src/mcp/server";
 import { isHttpMode } from "@common/transportMode";
 import { createWebToken } from "src/security/omniWebToken";
-import { dataDir } from "@common/dataDir";
+import { saveDownload } from "@common/downloads";
 import { courseIdSchema, termIdSchema } from "@common/validation";
 import { z } from "zod";
-import * as fs from "fs";
-import * as path from "path";
 
 const input = z.object({
     course_id: courseIdSchema,
@@ -45,16 +43,8 @@ mcpServer.registerTool('get-document-link',
         }
 
         // Save file to disk
-        const response = await GetDocumentFichier(args.course_id, args.document_id, term);
-
-        const disposition = response.contentDisposition || '';
-        const filenameMatch = disposition.match(/filename[^;=\n]*=["']?([^"';\n]*)["']?/);
-        const filename = filenameMatch?.[1] || `${args.document_id}.bin`;
-
-        const downloadsDir = path.join(dataDir, 'downloads');
-        fs.mkdirSync(downloadsDir, { recursive: true });
-        const filePath = path.join(downloadsDir, filename);
-        fs.writeFileSync(filePath, response.data);
+        const file = await GetDocumentFichier(args.course_id, args.document_id, term);
+        const filePath = await saveDownload(file, `${args.document_id}.bin`);
 
         return {
             content: [{ type: 'text', text: `File saved to: ${filePath}` }],

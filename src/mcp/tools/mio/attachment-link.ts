@@ -3,10 +3,8 @@ import { mcpServer } from "src/mcp/server";
 import { isHttpMode } from "@common/transportMode";
 import { messageIdSchema } from "@common/validation";
 import { createWebToken } from "src/security/omniWebToken";
-import { dataDir } from "@common/dataDir";
+import { saveDownload } from "@common/downloads";
 import { z } from "zod";
-import * as fs from "fs";
-import * as path from "path";
 
 const input = z.object({
     message_id: messageIdSchema.describe('The MIO message ID'),
@@ -40,16 +38,8 @@ mcpServer.registerTool('get-mio-attachment-link',
         }
 
         // Save file to disk
-        const response = await GetMioAttachment(args.message_id, args.attachment_id);
-
-        const disposition = response.contentDisposition || '';
-        const filenameMatch = disposition.match(/filename[^;=\n]*=["']?([^"';\n]*)["']?/);
-        const filename = filenameMatch?.[1] || `${args.attachment_id}.bin`;
-
-        const downloadsDir = path.join(dataDir, 'downloads');
-        fs.mkdirSync(downloadsDir, { recursive: true });
-        const filePath = path.join(downloadsDir, filename);
-        fs.writeFileSync(filePath, response.data);
+        const file = await GetMioAttachment(args.message_id, args.attachment_id);
+        const filePath = await saveDownload(file, `${args.attachment_id}.bin`);
 
         return {
             content: [{ type: 'text', text: `File saved to: ${filePath}` }],

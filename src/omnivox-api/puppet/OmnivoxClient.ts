@@ -2,8 +2,10 @@ import { ElementHandle, Page } from 'puppeteer';
 import BrowserManager from './BrowserManager';
 import { getConfig } from '../config';
 import { OmnivoxMoblError } from '../OmnivoxMoblError';
+import { OmnivoxSessionExpiredError } from '../OmnivoxSessionExpiredError';
 import { clientConfig } from '@common/constants';
 import { dataDir } from '@common/dataDir';
+import { fetchDownload } from './download';
 import { DownloadResult, FrameHandle, HealthStatus, ProxyRequestInit, ProxyResponse } from './types';
 
 export interface OmnivoxClientOptions {
@@ -102,16 +104,25 @@ export default class OmnivoxClient {
 
     /** POST a JSON payload to a mobile API endpoint through Omnivox's own request worker. */
     async postJson<T = any>(url: string, payload: unknown = {}): Promise<T> {
-        const result = await this.withPage((page) =>
-            page.evaluate((url: string, payload: unknown) => {
+        // Omnivox clears DefaultPage when it logs the session out
+        if (!getConfig().DefaultPage) throw new OmnivoxSessionExpiredError();
+
+        const result = await this.withPage(async (page) => {
+            // The login page defines Skytech without the mobile runtime
+            const loggedIn = await page.evaluate(
+                () => !!(window as any).Skytech?.Commun?.Utils?.HttpRequestWorker?.PostJSON,
+            );
+            if (!loggedIn) throw new OmnivoxSessionExpiredError();
+
+            return page.evaluate((url: string, payload: unknown) => {
                 return new Promise<any>((resolve, reject) => {
                     (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, payload,
                         (result: any) => resolve(result),
                         (error: any) => reject(error),
                     );
                 });
-            }, url, payload),
-        );
+            }, url, payload);
+        });
 
         if (OmnivoxMoblError.isError(result)) throw new OmnivoxMoblError(result);
 
@@ -147,32 +158,16 @@ export default class OmnivoxClient {
         );
     }
 
-    /** Fetch a file as a real browser navigation would. The interceptor rewrites the marker header. */
+    /** Fetch a file from Node with the browser's session. The body is streamed, never buffered. */
     async download(url: string): Promise<DownloadResult> {
-        const result = await this.withPage((page) =>
-            page.evaluate(async (url: string) => {
-                const res = await fetch(url, {
-                    credentials: 'include',
-                    headers: { 'X-Ovx-Download': '1' },
-                });
-                const bytes = new Uint8Array(await res.arrayBuffer());
-                let binary = '';
-                for (let i = 0; i < bytes.length; i++) {
-                    binary += String.fromCharCode(bytes[i]);
-                }
-                return {
-                    base64: btoa(binary),
-                    contentType: res.headers.get('content-type') || 'application/octet-stream',
-                    contentDisposition: res.headers.get('content-disposition') || '',
-                };
-            }, url),
-        );
+        await this.ensureReady();
+        const browser = this.requireBrowser();
 
-        return {
-            data: Buffer.from(result.base64, 'base64'),
-            contentType: result.contentType,
-            contentDisposition: result.contentDisposition,
-        };
+        return fetchDownload(url, {
+            cookies: await browser.cookies(),
+            userAgent: browser.userAgent,
+            referer: getConfig().DefaultPage,
+        });
     }
 
     /** Load a page in a hidden iframe on the main page. Caller must dispose the handle. */

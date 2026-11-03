@@ -146,9 +146,10 @@ export function AjoutCategorie(nomCategorie: string) {
 export function GetMioAttachment(messageId: string, attachmentId: string): Promise<DownloadResult> {
     const config = getConfig();
     const baseUrl = new URL(config.DefaultPage).origin;
+    // GetAttachement is case-sensitive and wants uppercase GUIDs, while GetMessage returns IDFichierAttachement in lowercase
     const qs = new URLSearchParams({
-        IdMessage: messageId,
-        IdAttachement: attachmentId,
+        IdMessage: messageId.toUpperCase(),
+        IdAttachement: attachmentId.toUpperCase(),
     });
 
     return omnivox.download(`${baseUrl}/Mobl/Mio/GetAttachement?${qs.toString()}`);

@@ -11,7 +11,7 @@ const { setHttpMode, setLogMode } = await import('./common/transportMode.js');
 setHttpMode(useHttp);
 setLogMode(useLog);
 
-// A missing or incomplete config is permanent, exit now instead of retrying forever
+// A missing config file is permanent, exit now instead of retrying forever
 getConfig();
 
 InitializeMcpTools();

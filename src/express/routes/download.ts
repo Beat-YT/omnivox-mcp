@@ -1,4 +1,5 @@
 import * as express from 'express';
+import { pipeline } from 'stream/promises';
 import { consumeWebToken } from 'src/security/omniWebToken';
 import { GetDocumentFichier, GetEnonceTravailFichier, GetDepotTravailFichier, GetCopieCorrigeTravailFichier } from '@api/LeaDownload';
 import { GetMioAttachment } from '@api/Mio';
@@ -20,14 +21,7 @@ router.get('/download/document', async (req, res) => {
     }
 
     const { courseId, termId, documentId } = dataToken;
-    const result = await GetDocumentFichier(courseId, documentId, termId);
-
-    const disposition = result.contentDisposition?.replace('attachment;', 'inline;') || 'inline';
-
-    res.set('Content-Disposition', disposition);
-    res.set('Content-Type', result.contentType);
-    res.set('Cache-Control', 'private, max-age=600');
-    res.send(result.data);
+    await serveFile(res, () => GetDocumentFichier(courseId, documentId, termId));
 });
 
 router.get('/download/assignment-file', async (req, res) => {
@@ -45,28 +39,23 @@ router.get('/download/assignment-file', async (req, res) => {
 
     const { courseId, assignmentId, fileId, role, termId } = dataToken;
 
-    let result: DownloadResult;
+    let fetchFile: () => Promise<DownloadResult>;
     switch (role) {
         case 'teacher_document':
-            result = await GetEnonceTravailFichier(courseId, assignmentId, fileId, termId);
+            fetchFile = () => GetEnonceTravailFichier(courseId, assignmentId, fileId, termId);
             break;
         case 'submission':
-            result = await GetDepotTravailFichier(courseId, assignmentId, fileId, termId);
+            fetchFile = () => GetDepotTravailFichier(courseId, assignmentId, fileId, termId);
             break;
         case 'correction':
-            result = await GetCopieCorrigeTravailFichier(courseId, assignmentId, fileId, termId);
+            fetchFile = () => GetCopieCorrigeTravailFichier(courseId, assignmentId, fileId, termId);
             break;
         default:
             res.status(400).send('Error: Invalid role in token.');
             return;
     }
 
-    const disposition = result.contentDisposition?.replace('attachment;', 'inline;') || 'inline';
-
-    res.set('Content-Disposition', disposition);
-    res.set('Content-Type', result.contentType);
-    res.set('Cache-Control', 'private, max-age=600');
-    res.send(result.data);
+    await serveFile(res, fetchFile);
 });
 
 router.get('/download/mio-attachment', async (req, res) => {
@@ -83,14 +72,31 @@ router.get('/download/mio-attachment', async (req, res) => {
     }
 
     const { messageId, attachmentId } = dataToken;
-    const result = await GetMioAttachment(messageId, attachmentId);
-
-    const disposition = result.contentDisposition?.replace('attachment;', 'inline;') || 'inline';
-
-    res.set('Content-Disposition', disposition);
-    res.set('Content-Type', result.contentType);
-    res.set('Cache-Control', 'private, max-age=600');
-    res.send(result.data);
+    await serveFile(res, () => GetMioAttachment(messageId, attachmentId));
 });
+
+/** Streams the file to the client. A failure before the first byte gets a status, after that the transfer is cut short. */
+async function serveFile(res: express.Response, fetchFile: () => Promise<DownloadResult>) {
+    let file: DownloadResult;
+    try {
+        file = await fetchFile();
+    } catch (err: any) {
+        console.error('[Download]', err);
+        res.status(502).send(`Error: ${err?.message || 'Download failed'}`);
+        return;
+    }
+
+    res.status(200);
+    res.set('Content-Type', file.contentType);
+    res.set('Content-Disposition', file.contentDisposition.replace(/^attachment/i, 'inline') || 'inline');
+    if (file.contentLength !== undefined) res.set('Content-Length', String(file.contentLength));
+    res.set('Cache-Control', 'private, max-age=600');
+
+    try {
+        await pipeline(file.body, res);
+    } catch (err: any) {
+        console.warn('[Download] Transfer aborted:', err?.message);
+    }
+}
 
 export default router;

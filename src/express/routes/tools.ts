@@ -4,6 +4,7 @@ import { normalizeObjectSchema, safeParseAsync } from '@modelcontextprotocol/sdk
 import { toJsonSchemaCompat } from '@modelcontextprotocol/sdk/server/zod-json-schema-compat.js';
 import { ValidateAccessKey } from 'src/security/accessKey';
 import { OmnivoxMoblError } from 'src/omnivox-api/OmnivoxMoblError';
+import { OmnivoxSessionExpiredError } from 'src/omnivox-api/OmnivoxSessionExpiredError';
 
 const router = express.Router();
 
@@ -77,6 +78,9 @@ router.post('/tools/:toolName', ValidateAccessKey, express.json({ type: '*/*' })
     } catch (err: any) {
         if (err instanceof OmnivoxMoblError) {
             return res.status(409).json({ error: err.message, page: err.payload.NaviguerPage ?? null });
+        }
+        if (err instanceof OmnivoxSessionExpiredError) {
+            return res.status(409).json({ error: err.message, page: null });
         }
 
         console.error(`Error executing tool "${req.params.toolName}":`, err);

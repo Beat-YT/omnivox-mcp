@@ -94,12 +94,11 @@ export function getConfig(): OmnivoxConfig {
     const configFile = fs.readFileSync(configPath, 'utf-8');
     config = JSON.parse(configFile);
 
-    config.DefaultPage = decodeURIComponent(config.DefaultPage);
+    config.DefaultPage = config.DefaultPage ? decodeURIComponent(config.DefaultPage) : '';
 
+    // Omnivox clears DefaultPage on logout. The server still starts; postJson() reports the expired session.
     if (!config.DefaultPage) {
-        console.error('Configuration file is missing required fields. Please check omnivox-config.json.');
-        console.error('Required fields: omnivoxBaseUrl');
-        throw new Error('Missing required configuration fields');
+        console.warn('Warning: Configuration file has no "DefaultPage". The Omnivox session is logged out, log in again with the auth app.');
     }
 
     if (!config.Code) {

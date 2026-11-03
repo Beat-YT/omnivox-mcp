@@ -1,9 +1,15 @@
+import { Readable } from 'stream';
 import { Frame } from 'puppeteer';
 
 export interface DownloadResult {
-    data: Buffer;
+    /** The file bytes, streamed from Omnivox. Pipe it, it is not buffered. */
+    body: Readable;
     contentType: string;
     contentDisposition: string;
+    /** From Content-Length, when Omnivox sent one */
+    contentLength?: number;
+    /** From Content-Disposition, when Omnivox sent one */
+    filename?: string;
 }
 
 export interface FrameHandle {
