@@ -1,8 +1,8 @@
 import { GetDocumentsListeModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
-import { CourseDocument } from "@schemas/courses";
-import { transformDocuments } from "@transformers/courses/document";
+import { extractHtmlPreview, formatBytes, toDisplayDate } from "@common/transformHelpers";
 import { courseIdSchema, termIdSchema } from "@common/validation";
+import { DocumentsListeModel } from "@typings/Lea/DocumentsListeModel";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
@@ -23,37 +23,56 @@ mcpServer.registerTool('get-course-documents',
     },
     async (args) => {
         const term = args.term_id || await getDefaultTermId();
-        const course_id = args.course_id;
-        const model = await GetDocumentsListeModel(course_id, term);
-        const documents = transformDocuments(model, term, course_id);
+        const model = await GetDocumentsListeModel(args.course_id, term);
+        const documents = model.ListeDocuments ?? [];
 
-        const unviewed = documents.documents.filter(d => !d.is_viewed).length;
-        const title = documents.course_name ? `${documents.course_name} (${course_id})` : course_id;
-        const header = `# Documents: ${title}`;
-        const meta = `${documents.documents.length} document(s)${unviewed ? `, ${unviewed} unread` : ''}`;
-        const docs = documents.documents.map(formatDocument);
+        const courseName = model.NomCours || documents[0]?.NomCours;
+        const title = courseName ? `${courseName} (${args.course_id})` : args.course_id;
+        const unviewed = documents.filter(d => !d.IndicateurDocumentVisualise).length;
+
+        const lines = [
+            `# Documents: ${title}`,
+            `${documents.length} document(s)${unviewed ? `, ${unviewed} unread` : ''}`,
+            '',
+        ];
+
+        if (documents.length === 0) {
+            lines.push('No documents for this course.');
+        }
+
+        lines.push(...documents.map(formatDocument));
 
         return {
-            content: [{ type: 'text', text: [header, meta, '', ...docs].join('\n') }],
+            content: [{ type: 'text', text: lines.join('\n') }],
         };
     }
 )
 
-function formatDocument(doc: CourseDocument) {
-    const marker = doc.is_viewed ? '' : ' *new*';
-    const date = doc.published_at ? doc.published_at.slice(0, 10) : '?';
+function formatDocument(doc: DocumentsListeModel.ListeDocument) {
+    const now = Date.now();
+    const expired = doc.DateFinDistributionDateTime > 0 && doc.DateFinDistributionDateTime < now;
+    const readBy = toDisplayDate(doc.DateLectureDocument);
+    const unread = !doc.IndicateurDocumentVisualise;
+    const tags = [
+        unread ? ' *new*' : '',
+        expired ? ' [EXPIRED]' : '',
+    ].join('');
 
-    const details: string[] = [];
-    details.push(`- Published: ${date}`);
-    if (doc.category) details.push(`- Category: ${doc.category}`);
-    if (doc.description) details.push(`- Description: ${doc.description}`);
-    if (doc.filename) details.push(`- File: ${doc.filename}`);
-    if (doc.external_url) details.push(`- URL: ${doc.external_url}`);
-    details.push(`- ID: ${doc.id}`);
+    const description = extractHtmlPreview(doc.Description);
+    const externalUrl = doc.UrlLienExterne ? decodeURIComponent(doc.UrlLienExterne) : undefined;
+    const opened = unread ? undefined : toDisplayDate(doc.DateConsultationDateTime);
+    const size = formatBytes(doc.TailleOctet);
 
-    return [
-        `## ${doc.title}${marker}`,
-        ...details,
-        '',
-    ].join('\n');
+    const details = [
+        `- Published: ${toDisplayDate(doc.DateDebutDistributionDateTime) ?? '?'}`,
+        readBy && `- Must read by: ${readBy}`,
+        opened && `- Opened: ${opened}`,
+        doc.TitreCategorie && `- Category: ${doc.TitreCategorie}`,
+        description && `- Description: ${description}`,
+        doc.NomDocument && `- File: ${doc.NomDocument}${size ? ` (${size})` : ''}`,
+        externalUrl && `- URL: ${externalUrl}`,
+        `- ID: ${doc.IdDocCoursDocument}`,
+    ].filter(Boolean);
+
+    return [`## ${extractHtmlPreview(doc.Titre) || doc.NomDocument || doc.IdDocCoursDocument}${tags}`, ...details, ''].join('\n');
 }

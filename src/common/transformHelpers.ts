@@ -32,6 +32,13 @@ export function toDisplayDate(ms?: number) {
     return `${date} ${time}`
 }
 
+export function formatBytes(bytes?: number) {
+    if (!bytes || bytes < 0) return undefined
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export function extractHtmlPreview(html?: string, maxLength = 350) {
     if (!html) return undefined
 

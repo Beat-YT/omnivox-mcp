@@ -1,5 +1,5 @@
 import { GetDocMessageCollegeModel } from "@api/DocMessageCollege";
-import { toDisplayDate } from "@common/transformHelpers";
+import { formatBytes, toDisplayDate } from "@common/transformHelpers";
 import { DocumentCollege } from "@typings/DocMessageCollege";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
@@ -76,15 +76,9 @@ function formatDocument(doc: DocumentCollege) {
         expires && `- Expires: ${expires}`,
         opened && `- Opened: ${opened}`,
         description && `- Description: ${description}`,
-        doc.Extention && `- File: ${doc.Extention}${doc.TailleOctet ? `, ${formatSize(doc.TailleOctet)}` : ''}`,
+        doc.Extention && `- File: ${doc.Extention}${doc.TailleOctet ? `, ${formatBytes(doc.TailleOctet)}` : ''}`,
         `- ID: ${doc.IDDocument}`,
     ].filter(Boolean);
 
     return [`## ${doc.Titre.trim()}${tags}`, ...details, ''].join('\n');
-}
-
-function formatSize(bytes: number) {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

@@ -1,5 +1,4 @@
 export * from './absences'
 export * from './announcements'
-export * from './document'
 export *  from './grades-summary'
 export * from './summary'

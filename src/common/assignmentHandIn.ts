@@ -1,4 +1,4 @@
-import { toDisplayDate } from "@common/transformHelpers";
+import { formatBytes, toDisplayDate } from "@common/transformHelpers";
 import { TravauxListeModel } from "@typings/Lea/TravauxListeModel";
 
 /**
@@ -103,10 +103,3 @@ export const FINAL_VERSION_NOTE =
     'A file in the deposit only means something was uploaded. It is not a sign the work is finished. ' +
     'While hand-in is open and the deadline is ahead, confirm with the user that the uploaded file is the version they want graded, ' +
     'and keep tracking the deadline until it passes or they confirm.';
-
-export function formatBytes(bytes?: number) {
-    if (!bytes || bytes < 0) return undefined;
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}

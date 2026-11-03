@@ -1,13 +1,12 @@
 import { GetTravauxDetailModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
-import { extractHtmlPreview, toDisplayDate } from "@common/transformHelpers";
+import { extractHtmlPreview, formatBytes, toDisplayDate } from "@common/transformHelpers";
 import { assignmentIdSchema, courseIdSchema, termIdSchema } from "@common/validation";
 import {
     depositFiles,
     depositLine,
     dueMs,
     FINAL_VERSION_NOTE,
-    formatBytes,
     handInInstructionLines,
     headingTags,
     isLateDeposit,
