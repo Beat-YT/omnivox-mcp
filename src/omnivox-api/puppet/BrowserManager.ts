@@ -1,4 +1,4 @@
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer, { Browser, Cookie, Page } from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getElectronCookies, OmnivoxConfig } from '../config';
@@ -24,6 +24,9 @@ export default class BrowserManager {
     private readonly browserDataDir: string;
     private readonly pidFile: string;
 
+    /** The user agent the main page runs with, for requests made outside the browser. */
+    readonly userAgent: string;
+
     private browser: Browser | null = null;
     private mainPage: Page | null = null;
 
@@ -32,11 +35,17 @@ export default class BrowserManager {
         this.clientConfig = clientConfig;
         this.browserDataDir = path.join(dataDir, 'browser');
         this.pidFile = path.join(dataDir, 'chrome.pid');
+        this.userAgent = buildUserAgent(config.IdAppareil!, config.Code!);
     }
 
     get page(): Page {
         if (!this.mainPage) throw new Error('Puppeteer page not initialized');
         return this.mainPage;
+    }
+
+    /** Every cookie in the profile. The live Omnivox session is here, not in cookies.json. */
+    cookies(): Promise<Cookie[]> {
+        return this.requireBrowser().cookies();
     }
 
     get connected(): boolean {
@@ -113,6 +122,11 @@ export default class BrowserManager {
 
     /** Reloads the Omnivox default page and waits for the Skytech runtime. */
     async navigateHome(): Promise<void> {
+        if (!this.config.DefaultPage) {
+            console.warn('[Puppet] No Omnivox page configured, the session is logged out');
+            return;
+        }
+
         await this.page.goto(this.config.DefaultPage);
         await this.page.waitForFunction(
             () => (window as any).Skytech !== undefined,
@@ -144,13 +158,12 @@ export default class BrowserManager {
     private async setupMainPage(): Promise<void> {
         const browser = this.requireBrowser();
         const device = this.clientConfig.device;
-        const userAgent = buildUserAgent(this.config.IdAppareil!, this.config.Code!);
 
         this.mainPage = await browser.newPage();
 
         await this.mainPage.setViewport(device.viewport);
         await this.mainPage.setUserAgent({
-            userAgent,
+            userAgent: this.userAgent,
             platform: device.platform,
             userAgentMetadata: device.userAgentMetadata,
         });

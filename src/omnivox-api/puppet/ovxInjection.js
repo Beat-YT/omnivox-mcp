@@ -139,6 +139,7 @@ export async function setupPageInjection(page) {
             }
 
             case 'WebUI.SetDefaultPage': {
+                // Omnivox sends an empty Url on logout; postJson() treats an empty DefaultPage as an expired session
                 updateConfig({ DefaultPage: args.Url ? decodeURIComponent(args.Url) : "" });
                 callback(null);
                 break;

@@ -60,7 +60,7 @@ router.get('/openapi.json', (req, res) => {
                 description: 'Invalid input',
             },
             '409': {
-                description: 'Omnivox refused to return data: the student must act in Omnivox (mandatory document, survey), a maintenance window is in progress, or the module is unavailable. Relay the error message to the user.',
+                description: 'Omnivox refused to return data: the student must act in Omnivox (mandatory document, survey), a maintenance window is in progress, the module is unavailable, or the Omnivox session is logged out and the student must log in again. Relay the error message to the user.',
                 content: {
                     'application/json': {
                         schema: {

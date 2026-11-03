@@ -3,11 +3,9 @@ import { GetEnonceTravailFichier, GetDepotTravailFichier, GetCopieCorrigeTravail
 import { mcpServer } from "src/mcp/server";
 import { isHttpMode } from "@common/transportMode";
 import { createWebToken } from "src/security/omniWebToken";
-import { dataDir } from "@common/dataDir";
+import { saveDownload } from "@common/downloads";
 import { assignmentFileIdSchema, assignmentIdSchema, courseIdSchema, termIdSchema } from "@common/validation";
 import { z } from "zod";
-import * as fs from "fs";
-import * as path from "path";
 
 const input = z.object({
     course_id: courseIdSchema,
@@ -49,27 +47,20 @@ mcpServer.registerTool('get-assignment-file-link',
         }
 
         // Save file to disk
-        let response;
+        let file;
         switch (args.role) {
             case 'teacher_document':
-                response = await GetEnonceTravailFichier(args.course_id, args.assignment_id, args.file_id, term);
+                file = await GetEnonceTravailFichier(args.course_id, args.assignment_id, args.file_id, term);
                 break;
             case 'submission':
-                response = await GetDepotTravailFichier(args.course_id, args.assignment_id, args.file_id, term);
+                file = await GetDepotTravailFichier(args.course_id, args.assignment_id, args.file_id, term);
                 break;
             case 'correction':
-                response = await GetCopieCorrigeTravailFichier(args.course_id, args.assignment_id, args.file_id, term);
+                file = await GetCopieCorrigeTravailFichier(args.course_id, args.assignment_id, args.file_id, term);
                 break;
         }
 
-        const disposition = response.contentDisposition || '';
-        const filenameMatch = disposition.match(/filename[^;=\n]*=["']?([^"';\n]*)["']?/);
-        const filename = filenameMatch?.[1] || `${args.file_id}.bin`;
-
-        const downloadsDir = path.join(dataDir, 'downloads');
-        fs.mkdirSync(downloadsDir, { recursive: true });
-        const filePath = path.join(downloadsDir, filename);
-        fs.writeFileSync(filePath, response.data);
+        const filePath = await saveDownload(file, `${args.file_id}.bin`);
 
         return {
             content: [{ type: 'text', text: `File saved to: ${filePath}` }],

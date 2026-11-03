@@ -1,6 +1,7 @@
 import * as express from 'express';
 import { getConfig } from 'src/omnivox-api/config';
 import { omnivox } from 'src/omnivox-api/puppet';
+import { OmnivoxSessionExpiredError } from 'src/omnivox-api/OmnivoxSessionExpiredError';
 import { ValidateAccessKey } from 'src/security/accessKey';
 
 const router = express.Router();
@@ -23,6 +24,10 @@ router.all('/Mobl/{*path}', ValidateAccessKey, express.raw({ type: '*/*', limit:
         res.set('Content-Type', result.contentType);
         res.send(Buffer.from(result.body, 'base64'));
     } catch (err: any) {
+        if (err instanceof OmnivoxSessionExpiredError) {
+            return res.status(409).json({ error: err.message });
+        }
+
         console.error('[Proxy]', err);
         res.status(502).json({ error: err.message || 'Proxy error' });
     }

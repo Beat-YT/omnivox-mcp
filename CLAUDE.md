@@ -54,7 +54,7 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode o
           (src/omnivox-api/puppet/)
 ```
 
-- **API Requests** (`src/omnivox-api/requests/`): Raw calls to Omnivox mobile API endpoints through the shared `omnivox` client (`src/omnivox-api/puppet/index.ts`). POST/JSON requests use `omnivox.postJson()` which runs `Skytech.Commun.Utils.HttpRequestWorker.PostJSON` inside `page.evaluate()` and throws `OmnivoxMoblError` when the response envelope signals a block, maintenance window or unavailable module (see `docs/README.md`). Download requests use `omnivox.download()` which runs `fetch()` with a custom `X-Ovx-Download` header — the request interceptor strips this header and overrides with navigation headers so Omnivox sees a real browser navigation.
+- **API Requests** (`src/omnivox-api/requests/`): Raw calls to Omnivox mobile API endpoints through the shared `omnivox` client (`src/omnivox-api/puppet/index.ts`). POST/JSON requests use `omnivox.postJson()` which runs `Skytech.Commun.Utils.HttpRequestWorker.PostJSON` inside `page.evaluate()` and throws `OmnivoxMoblError` when the response envelope signals a block, maintenance window or unavailable module (see `docs/README.md`). File downloads use `omnivox.download()`, which does not go through the page at all: the file endpoints need the session cookies but not the challenge, so `src/omnivox-api/puppet/download.ts` requests the file from Node with undici, using the browser's cookies and user agent and Chrome's navigation headers, and returns the body as a stream. Consumers pipe it (to the HTTP response or to disk) and never buffer it, so file size does not matter.
 - **Transformers** (`src/mcp/transformers/`): Convert raw API responses into validated Zod schemas. Each transformer maps to a specific schema.
 - **Schemas** (`src/mcp/schemas/`): Zod schemas defining the structured output shapes.
 - **MCP Server** (`src/mcp/server.ts`): Creates and exports the `mcpServer` instance.
@@ -64,7 +64,7 @@ MCP Tools (src/mcp/tools/)     Express Routes (src/express/routes/) [HTTP mode o
 
 ### Omnivox Proxy (HTTP mode only)
 
-The `/Mobl/*` route (`src/express/routes/proxy.ts`) is a pass-through proxy to Omnivox's mobile API. Any HTTP method and content type is accepted. It uses `omnivox.request()` from the Puppeteer module to execute the request inside the logged-in browser page, forwarding it with Omnivox's session cookies and returning the raw response (status, content type, body). The envelope is not inspected on this path; clients see exactly what Omnivox returned. This lets external clients hit Omnivox endpoints directly through the server's authenticated session without going through an MCP tool.
+The `/Mobl/*` route (`src/express/routes/proxy.ts`) is a pass-through proxy to Omnivox's mobile API. Any HTTP method and content type is accepted. It uses `omnivox.request()` from the Puppeteer module to execute the request inside the logged-in browser page, forwarding it with Omnivox's session cookies and returning the raw response (status, content type, body). The envelope is not inspected on this path; clients see exactly what Omnivox returned. The one exception is a logged-out session: the request is not sent and the route answers `409` with the `OmnivoxSessionExpiredError` message in `error`. This lets external clients hit Omnivox endpoints directly through the server's authenticated session without going through an MCP tool.
 
 ### REST Tool Gateway and OpenAPI (HTTP mode only)
 
@@ -74,7 +74,7 @@ Not every agent harness speaks MCP. Several of them (OpenAI-style "actions", Lan
 - **`GET /tools`** — same tool list as JSON, for harnesses that take a flat tool list rather than a spec.
 - **`POST /tools/{tool-name}`** — calls a tool by name. Parameters go in the JSON body; the response is the tool's text output, or its `structuredContent` when a tool sets one.
 
-Status codes carry meaning for the harness: `400` is invalid input with Zod issues, `409` means Omnivox refused to return data (an `OmnivoxMoblError`: mandatory document or survey block, maintenance window, unavailable module) and the body's `error` is the message to relay to the user, `500` is a server-side failure. The `409` is declared in the spec so harnesses can present it as a tool result rather than a crash.
+Status codes carry meaning for the harness: `400` is invalid input with Zod issues, `409` means Omnivox refused to return data (an `OmnivoxMoblError`: mandatory document or survey block, maintenance window, unavailable module; or an `OmnivoxSessionExpiredError`: the session is logged out) and the body's `error` is the message to relay to the user, `500` is a server-side failure. The `409` is declared in the spec so harnesses can present it as a tool result rather than a crash.
 
 All endpoints require the access key, sent as `Authorization: Bearer <key>` (what the OpenAPI document declares and what harnesses send), as an `x-mcp-auth` header, or as a `key` query parameter. The gateway is implemented in `src/express/routes/tools.ts`, which reads from the `mcpServer` instance's internal tool registry and calls tool handlers directly, bypassing the MCP protocol entirely. Tool descriptions and input schemas are therefore shared by both transports: a change to a tool definition shows up in MCP and in the OpenAPI document alike.
 
@@ -96,18 +96,21 @@ Write docs in a technical, neutral and objective register. State what the app an
 
 - **Access Key** (HTTP mode only): All REST routes (except token-validated download routes) and the MCP endpoint require the access key. `src/security/accessKey.js` accepts it as an `x-mcp-auth` header, as `Authorization: Bearer <key>` (the scheme the OpenAPI document declares), or as a `key` query parameter (what MCP clients use at `/mcp?key=...`). Auto-generated 32-byte hex key stored in `<data dir>/accessKey.txt`. Not used in stdio mode — the MCP client manages access.
 - **Challenge-Response**: Handled automatically by Puppeteer — Omnivox's own JS (`Skytech.Commun.Utils.HttpRequestWorker.PostJSON`) manages the `x-ke` challenge internally.
+- **Session Expiry**: When Omnivox logs the session out it sends `WebUI.SetDefaultPage("")`, which is written to `config.json` as is. `OmnivoxClient` checks the session in one place, `withSession()`, used by `postJson()` and `request()`: it throws `OmnivoxSessionExpiredError` when `DefaultPage` is empty or when the page lacks the mobile runtime (what the login page looks like). Tools and routes do not check anything themselves; the error surfaces as an `isError` tool result over MCP and as a `409` on the REST gateway and the `/Mobl/*` proxy. An empty `DefaultPage` is not fatal at startup: the browser launches and stays on a blank page until the student logs in again.
 - **Web Tokens** (HTTP mode only): Time-limited tokens (15 min) for document/assignment file downloads without requiring the access key. Used by `get-document-link` and `get-assignment-file-link` tools. Also used by `get-assignment-submit-link`, whose `/link/assignment-submit` route (`src/express/routes/link.ts`) mints a fresh Omnivox `TokenRedirection` at click time and `302`s to the pre-authenticated Léa hand-in page. Token-exempt paths are listed in `src/security/accessKey.js`.
 - **Persistent Browser Profile**: Chrome profile at `<data dir>/browser/` persists across restarts. Cookies are imported from the Electron auth app's exported files on first launch.
 
 ### Puppeteer Module (`src/omnivox-api/puppet/`)
 
-Runs a Puppeteer browser logged into Omnivox. All requests go through this browser — there is no separate HTTP client.
+Runs a Puppeteer browser logged into Omnivox. API requests go through this browser — there is no separate HTTP client for them. File downloads are the one exception: `download()` reads the cookies out of the browser and fetches the file from Node.
 
 - **`index.ts`**: Exports the shared `omnivox` instance of `OmnivoxClient`, built from the `BROWSER_SLEEP` and `BROWSER_REFRESH_INTERVAL` env vars, plus the `OmnivoxClient` and `BrowserManager` classes and the module types.
 - **`OmnivoxClient.ts`**: Entry point for everything that talks to Omnivox. Owns a `BrowserManager` and keeps it ready: lazy launch on first use, retry after a failed launch, idle sleep, periodic session refresh, and one relaunch when Chrome drops the page frame. Methods: `start()`, `stop()`, `health()`, `page()`, `postJson<T>(url, payload)`, `request(url, init)`, `download(url)`, `openFrame(url)`.
 - **`BrowserManager.ts`**: Chrome lifecycle only. `launch()` cleans up a previous Chrome from the PID file and lock files, launches Puppeteer with the persistent profile, imports cookies on first run and loads the Omnivox home page; `navigateHome()` reloads it; `destroy()` closes or kills the process and removes the PID file.
 - **`OmnivoxMoblError.ts`** (`src/omnivox-api/`): Thrown by `postJson()` when `isError(payload)` matches the envelope (`NaviguerPage` set, `IsPeriodeArret`, `IsAvailable: false`). The message is written for the model to relay; the raw envelope stays on `.payload`.
-- **`interceptors.ts`**: Blocks noisy requests (SaveLogJS, Omnigarder) and handles download request header overrides (strips `X-Ovx-Download`, injects navigation headers).
+- **`OmnivoxSessionExpiredError.ts`** (`src/omnivox-api/`): Thrown by `postJson()` and `request()` before any request when the session is logged out (empty `DefaultPage`, or no mobile runtime on the page). The message tells the model what the student has to do.
+- **`download.ts`**: `fetchDownload()` is the Node-side file fetch, built on undici's `request()` with its decompress interceptor. Not the global `fetch()`: the Fetch spec makes it overwrite `Sec-Fetch-Mode` with `cors`. It sends the headers Chrome sends for a document navigation, in Chrome's order, with the OVX user agent, builds the `Cookie` header from the browser's cookie jar for each hop, follows redirects itself, fails with a readable message when Omnivox redirects to a web page (expired session), and returns a `DownloadResult` whose `body` is a Node stream, with the file name parsed from `Content-Disposition`. The download routes pipe the body to the response; the tools' local-save path pipes it to disk through `saveDownload()` in `src/common/downloads.ts`.
+- **`interceptors.ts`**: Blocks noisy requests (SaveLogJS, Omnigarder, analytics).
 - **`ovxInjection.js`**: Injects `OvxNatif` bridge so Omnivox's JS thinks it's running inside the native app.
 - **`userAgent.js`**: Builds the OVX user-agent string with device ID and auth code.
 
@@ -119,7 +122,7 @@ Separate Electron app that authenticates with Omnivox, captures session cookies,
 
 - `browser/` - Persistent Chrome profile (session cookies live here after first import)
 - `cookies.json` - Session cookies exported by the Electron auth app
-- `config.json` - Omnivox config (DefaultPage URL, auth Code, device ID)
+- `config.json` - Omnivox config (DefaultPage URL, auth Code, device ID). `DefaultPage` and `Code` become empty when Omnivox logs the session out; the server still starts, and tools fail with `OmnivoxSessionExpiredError` until a new login is installed.
   - Fallback for hosts without a volume: when either file is missing, `src/omnivox-api/config.ts` writes it from `OMNIVOX_COOKIES` / `OMNIVOX_CONFIG` (raw or base64 JSON). The file wins once it exists. The volume stays the recommended setup.
 - `accessKey.txt` - API access key (HTTP mode only)
 - `deltaSnapshots.json` - Persisted delta tracker snapshots for "what changed since last call"
@@ -166,7 +169,7 @@ The Zod schemas in `src/mcp/schemas/` and the transformers in `src/mcp/transform
 
 - **ES Modules**: Project uses `"type": "module"` - all imports use ESM syntax.
 - **Mixed JS/TS**: Entry point (`index.js`) and security files are JavaScript; MCP layer (tools, schemas, transformers), Express layer (server, routes), and API requests are TypeScript.
-- **All requests via Puppeteer**: POST/JSON uses `omnivox.postJson()`, downloads use `omnivox.download()`, page rendering uses `omnivox.openFrame()`. No axios or separate HTTP client.
+- **API requests via Puppeteer**: POST/JSON uses `omnivox.postJson()`, page rendering uses `omnivox.openFrame()`. No axios or separate HTTP client. File downloads use `omnivox.download()`, which runs in Node through undici with the browser's cookies and streams the body.
 - **Plugin Discovery**: Both MCP tools and routes are auto-loaded by scanning their directories - no manual registration needed.
 - **Term ID Caching**: `src/common/omnivoxHelper.ts` caches the current term ID for 5 days to avoid redundant API calls. Most tools accept an optional `term_id` parameter, falling back to cached current term.
 - **No named functions in `page.evaluate()`**: tsx/esbuild injects `__name()` wrappers on `function` declarations. Always use arrow functions inside `evaluate()`.
