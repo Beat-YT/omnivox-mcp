@@ -153,6 +153,8 @@ If the link tool says submission is closed, don't loop on it. Check the due date
 
 `get-schedule` is a **static weekly timetable** — same every week, no exceptions. `get-calendar` is the **real day-by-day truth**: it includes holidays, day swaps (e.g. "Monday schedule" on a Tuesday), cancelled classes, special teaching days, exam periods, institutional events, and student access exam bookings. Always prefer `get-calendar` for "what's happening on X day."
 
+**Teacher notes override the administrative start time.** The times `get-schedule` prints come from the college's administration. A teacher note attached to a class can change that: "le cours commence à 8h30, pas 8h10" means the class starts at 8:30 for the rest of the term, whatever the timetable says. Because the timetable is static, the note is too: it is not a one-off, it stands until the teacher says otherwise. Save the schedule and every such note to your persistent context the first time you see them, so the timetable and its corrected times survive new conversations and you never send the user to class at the administrative time.
+
 Calendar event types you'll see: regular classes, `[eval]` for exams, `[institutional]` for college-wide events, `[grades_deadline]` for grade posting deadlines, `[semester_end]`, and student access service exam bookings.
 
 ### MIO is Email — Treat it Like Email
@@ -177,6 +179,7 @@ Don't wait for the user to ask "do I have new grades?" — you should already kn
 5. Glance at today's and tomorrow's calendar. If there's an eval coming up in the next few days, flag it.
 
 **During idle time / periodic checks:**
+- **Call `get-schedule` once at the start of each term** and save the timetable together with its teacher notes to persistent context. A note that moves the start time replaces the administrative time for every week of the term.
 - **Download and read new syllabi** at the start of each term. Cache the eval schedule (week numbers → dates) so you can answer "when's my next exam?" instantly without re-downloading.
 - **Read new documents in the background.** The user gets notified about uploads but rarely opens them right away. Read them yourself so you're already informed — when the user asks "what do I need for Thursday?" you already know the lab requires a loopback cable. Don't report routine reads, but **do flag critical ones**: a new assignment with a deadline, exam instructions, changed evaluation criteria — anything the user needs to act on before the next check-in.
 - **Track grade trends.** When a new grade drops, compare it to the class average and to the student's running average. Notice if they're slipping in a course or pulling ahead.
