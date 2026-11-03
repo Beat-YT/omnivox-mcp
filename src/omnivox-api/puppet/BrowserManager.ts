@@ -1,7 +1,7 @@
 import puppeteer, { Browser, Cookie, Page } from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getElectronCookies, OmnivoxConfig } from '../config';
+import { getConfig, getElectronCookies, OmnivoxConfig } from '../config';
 import { OmnivoxClientConfig } from '@common/constants';
 import { buildUserAgent } from './userAgent';
 import { setupPageInterceptors } from './interceptors';
@@ -24,9 +24,6 @@ export default class BrowserManager {
     private readonly browserDataDir: string;
     private readonly pidFile: string;
 
-    /** The user agent the main page runs with, for requests made outside the browser. */
-    readonly userAgent: string;
-
     private browser: Browser | null = null;
     private mainPage: Page | null = null;
 
@@ -35,7 +32,15 @@ export default class BrowserManager {
         this.clientConfig = clientConfig;
         this.browserDataDir = path.join(dataDir, 'browser');
         this.pidFile = path.join(dataDir, 'chrome.pid');
-        this.userAgent = buildUserAgent(config.IdAppareil!, config.Code!);
+    }
+
+    /**
+     * The user agent the main page runs with, for requests made outside the browser.
+     * Omnivox rotates the Code through Storage.SetCodeUserAgent, so it is rebuilt from the current config on every read.
+     */
+    get userAgent(): string {
+        const { IdAppareil, Code } = getConfig();
+        return buildUserAgent(IdAppareil!, Code!);
     }
 
     get page(): Page {
