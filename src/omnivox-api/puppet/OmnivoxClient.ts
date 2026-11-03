@@ -104,25 +104,16 @@ export default class OmnivoxClient {
 
     /** POST a JSON payload to a mobile API endpoint through Omnivox's own request worker. */
     async postJson<T = any>(url: string, payload: unknown = {}): Promise<T> {
-        // Omnivox clears DefaultPage when it logs the session out
-        if (!getConfig().DefaultPage) throw new OmnivoxSessionExpiredError();
-
-        const result = await this.withPage(async (page) => {
-            // The login page defines Skytech without the mobile runtime
-            const loggedIn = await page.evaluate(
-                () => !!(window as any).Skytech?.Commun?.Utils?.HttpRequestWorker?.PostJSON,
-            );
-            if (!loggedIn) throw new OmnivoxSessionExpiredError();
-
-            return page.evaluate((url: string, payload: unknown) => {
+        const result = await this.withSession((page) =>
+            page.evaluate((url: string, payload: unknown) => {
                 return new Promise<any>((resolve, reject) => {
                     (window as any).Skytech.Commun.Utils.HttpRequestWorker.PostJSON(url, payload,
                         (result: any) => resolve(result),
                         (error: any) => reject(error),
                     );
                 });
-            }, url, payload);
-        });
+            }, url, payload),
+        );
 
         if (OmnivoxMoblError.isError(result)) throw new OmnivoxMoblError(result);
 
@@ -133,7 +124,7 @@ export default class OmnivoxClient {
     request(url: string, init: ProxyRequestInit): Promise<ProxyResponse> {
         const contentType = withLatin1Charset(init.contentType);
 
-        return this.withPage((page) =>
+        return this.withSession((page) =>
             page.evaluate(
                 (url: string, method: string, body: string | undefined, contentType: string | undefined) => {
                     return new Promise<any>((resolve, reject) => {
@@ -236,6 +227,22 @@ export default class OmnivoxClient {
             await this.start();
             return await run(this.requireBrowser().page);
         }
+    }
+
+    /** withPage() for calls that need a logged-in session. Throws OmnivoxSessionExpiredError otherwise. */
+    private async withSession<T>(run: (page: Page) => Promise<T>): Promise<T> {
+        // Omnivox clears DefaultPage when it logs the session out
+        if (!getConfig().DefaultPage) throw new OmnivoxSessionExpiredError();
+
+        return this.withPage(async (page) => {
+            // The login page defines Skytech without the mobile runtime
+            const loggedIn = await page.evaluate(
+                () => !!(window as any).Skytech?.Commun?.Utils?.HttpRequestWorker?.PostJSON,
+            );
+            if (!loggedIn) throw new OmnivoxSessionExpiredError();
+
+            return run(page);
+        });
     }
 
     /** Marks activity, pushing back the idle sleep. */
