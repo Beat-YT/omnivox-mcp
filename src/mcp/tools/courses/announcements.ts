@@ -1,8 +1,8 @@
 import { GetCommuniquesListeModel } from "@api/Lea";
 import { getDefaultTermId } from "@common/omnivoxHelper";
-import { AnnouncementItem } from "@schemas/courses/announcements";
-import { transformAnnouncements } from "@transformers/courses/announcements";
+import { htmlToText, toDisplayDay } from "@common/transformHelpers";
 import { courseIdSchema, termIdSchema } from "@common/validation";
+import { CommuniquesListeModel } from "@typings/Lea/CommuniquesListeModel";
 import { mcpServer } from "src/mcp/server";
 import { z } from "zod";
 
@@ -24,27 +24,46 @@ mcpServer.registerTool('get-course-announcements',
     async (args) => {
         const term = args.term_id || await getDefaultTermId();
         const model = await GetCommuniquesListeModel(args.course_id, term);
-        const result = transformAnnouncements(model, term, args.course_id);
+        const announcements = (model.ListeInfosCommuniques ?? [])
+            .sort((a, b) => b.DateDebutDiffusion - a.DateDebutDiffusion);
 
-        const title = result.course_name ? `${result.course_name} (${args.course_id})` : args.course_id;
+        const courseName = model.NomCours || announcements[0]?.NomCours;
+        const title = courseName ? `${courseName} (${args.course_id})` : args.course_id;
+        const unread = announcements.filter(a => !a.Visionne).length;
+
         const lines = [
             `# Announcements: ${title}`,
-            `${result.announcements.length} announcement(s)`,
+            `${announcements.length} announcement(s)${unread ? `, ${unread} unread` : ''}`,
             '',
-            ...result.announcements.map(mapAnnouncementToText),
         ];
+
+        if (announcements.length === 0) {
+            lines.push('No announcements for this course.');
+        }
+
+        lines.push(...announcements.map(formatAnnouncement));
 
         return {
             content: [{ type: 'text', text: lines.join('\n') }],
-            structuredContent: result,
         };
     }
 );
 
-function mapAnnouncementToText(a: AnnouncementItem) {
-    return [
-        `## ${a.title}${a.is_read ? '' : ' *new*'}${a.is_active ? '' : ' [EXPIRED]'}`,
-        a.published_at && `- Published: ${a.published_at}`,
-        a.text_preview && `- Preview: ${a.text_preview}`,
-    ].filter(Boolean).join('\n') + '\n';
+function formatAnnouncement(a: CommuniquesListeModel.ListeInfosCommunique) {
+    const expires = toDisplayDay(a.DateFinDiffusion);
+    const tags = [
+        a.Visionne ? '' : ' *new*',
+        expires && a.DateFinDiffusion < Date.now() ? ' [EXPIRED]' : '',
+    ].join('');
+
+    const lines = [
+        `## ${a.Titre?.trim() || '(no title)'}${tags}`,
+        `- Published: ${toDisplayDay(a.DateDebutDiffusion) ?? '?'}`,
+        expires && `- Expires: ${expires}`,
+    ].filter(Boolean);
+
+    const body = htmlToText(a.Contenu);
+    if (body) lines.push('', body);
+
+    return [...lines, ''].join('\n');
 }

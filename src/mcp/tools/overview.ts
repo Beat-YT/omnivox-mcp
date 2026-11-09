@@ -5,7 +5,6 @@ import { GetDefaultModel } from "@api/Lea";
 import { GetListeFoldersModel } from "@api/Mio";
 import { computeDelta, flattenSnapshot, itemDeltaText } from "@common/deltaTracker";
 import { transformCalendarModel } from "@transformers/calendar/calendar";
-import { transformCollegeNews } from "@transformers/college/college-news";
 import { transformCoursesSummary } from "@transformers/courses/summary";
 import { transformMioFolders } from "@transformers/mio/folders";
 import {
@@ -94,7 +93,6 @@ mcpServer.registerTool('get-overview',
 
         // --- Build content blocks ---
         const calPage = transformCalendarModel(calModel);
-        const news = transformCollegeNews(newsData);
 
         const sections = [
             formatTodaySchedule(calPage.events),
@@ -102,7 +100,7 @@ mcpServer.registerTool('get-overview',
             formatCourseNewItems(courseSummary.courses, courseNewCounts),
             formatMioInbox(mioDt),
             formatUpcomingEvals(calPage.events),
-            formatFeaturedNews(news),
+            formatFeaturedNews(newsData),
         ];
 
         const content = sections

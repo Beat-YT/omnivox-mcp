@@ -11,7 +11,7 @@ export interface Actualite {
     Source: string;
     SourceURL: string;
     Resume: string;
-    ListeImage: any[];
+    ListeImage: { IdImage: string; Legende: string }[];
     Contenu: string;
     TimestampDateDebutPublication: number;
     TimestampDateFinPublication: number;
@@ -28,5 +28,5 @@ export interface Actualite {
     CouleurMesureUrgence: null;
     IsMesureUrgenceBlanche: boolean;
     CouleurTexteMesureUrgence: null;
-    UrlMesureUrgence: null;
+    UrlMesureUrgence: string | null;
 }

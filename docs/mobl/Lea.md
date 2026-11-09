@@ -113,6 +113,8 @@ ListeInfosCommuniques[]
   IsPermetVisionnement         boolean
 ```
 
+`DateDebutDiffusion` is local midnight of the publication day; no time of day is sent. `DateFinDiffusion` is `253402300799999` (.NET `DateTime.MaxValue`, 9999-12-31) when the announcement has no end date. The app marks an announcement as new when `Visionne` is false, and only sends the read receipt when `IsPermetVisionnement` is also true (confirmed from the app's JS).
+
 ---
 
 ## POST /Mobl/LeaEtudiant/GetDocumentsSommaireModel

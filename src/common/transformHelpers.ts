@@ -21,15 +21,27 @@ export function isRealInt(value: unknown): value is number {
     return typeof value === 'number' && Number.isFinite(value) && !INT_SENTINELS.has(value);
 }
 
+// .NET DateTime.MaxValue (9999-12-31), sent when there is no end date
+const DOTNET_MAX_DATE = 253402300799999;
+
+function isRealDate(ms?: number): ms is number {
+    return !!ms && ms > 0 && ms < DOTNET_MAX_DATE
+}
+
 export function toDisplayDate(ms?: number) {
-    if (!ms || ms < 0) return undefined
+    if (!isRealDate(ms)) return undefined
+    const time = new Date(ms).toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false })
+    return `${toDisplayDay(ms)} ${time}`
+}
+
+/** Readable local day without a time, e.g. "Thu, Oct 29", for dates Omnivox sends as midnight. */
+export function toDisplayDay(ms?: number) {
+    if (!isRealDate(ms)) return undefined
     const d = new Date(ms)
-    const date = d.toLocaleDateString('en-CA', {
+    return d.toLocaleDateString('en-CA', {
         weekday: 'short', month: 'short', day: 'numeric',
         year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric'
     })
-    const time = d.toLocaleTimeString('en-CA', { hour: '2-digit', minute: '2-digit', hour12: false })
-    return `${date} ${time}`
 }
 
 export function formatBytes(bytes?: number) {
@@ -37,6 +49,35 @@ export function formatBytes(bytes?: number) {
     if (bytes < 1024) return `${bytes} B`
     if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** Full HTML body as plain text, keeping line breaks, list items and link targets. */
+export function htmlToText(html?: string) {
+    if (!html) return undefined
+
+    return html
+        .replace(/\s+/g, ' ')
+        .replace(/<a\b[^>]*?\bhref=["']([^"']*)["'][^>]*>(.*?)<\/a>/gi, (_, href: string, label: string) => {
+            const text = label.replace(/<[^>]*>/g, '').trim()
+            const target = href.replace(/^mailto:/i, '')
+            return !text || text === target ? target : `[${text}](${href})`
+        })
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<li\b[^>]*>/gi, '- ')
+        .replace(/<\/?(ul|ol)\b[^>]*>/gi, '\n')
+        .replace(/<\/(p|div|li|h[1-6]|tr|blockquote)>/gi, '\n')
+        .replace(/<[^>]*>/g, '')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+        .replace(/&#x([0-9a-f]+);/gi, (_, code: string) => String.fromCodePoint(parseInt(code, 16)))
+        .replace(/&amp;/gi, '&')
+        .replace(/[ \t ]+/g, ' ')
+        .replace(/ *\n */g, '\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim()
 }
 
 export function extractHtmlPreview(html?: string, maxLength = 350) {

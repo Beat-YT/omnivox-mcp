@@ -1,8 +1,8 @@
 import { CalendarEvent } from "@schemas/calendar/calendar";
 import { CourseItem } from "@schemas/courses/summary";
-import { CollegeNewsItem } from "@schemas/college/college-news";
 import { NotificationItem } from "@schemas/overview/notifications";
 import { extractHtmlPreview, toLocalIso } from "@common/transformHelpers";
+import { Actualite } from "@typings/college";
 
 type DeltaText = { header: string; items: Record<string, string> } | null;
 
@@ -113,10 +113,10 @@ export function formatUpcomingEvals(events: CalendarEvent[]): string | null {
     return lines.join('\n');
 }
 
-export function formatFeaturedNews(items: CollegeNewsItem[]): string | null {
-    const featured = items.find(n => n.is_featured);
+export function formatFeaturedNews(items: Actualite[]): string | null {
+    const featured = items.find(n => n.IndicateurNouvelleALaUne);
     if (!featured) return null;
-    let preview = featured.content_preview ?? '';
-    if (preview.length > 120) preview = preview.slice(0, 120).trimEnd() + '…';
-    return `## Featured news:\n${featured.title}${preview ? ` — ${preview}` : ''}`;
+    const title = `${extractHtmlPreview(featured.Titre)} (ID ${featured.IdActualite})`;
+    const preview = extractHtmlPreview(featured.Contenu?.trim() ? featured.Contenu : featured.Resume, 120);
+    return `## Featured news:\n${title}${preview ? ` — ${preview}` : ''}`;
 }
