@@ -56,6 +56,11 @@ async function createWindow() {
     const win = new BrowserWindow({
         width: 1000,
         height: 638,
+        minWidth: 420,
+        minHeight: 560,
+        title: "Omnivox MCP",
+        backgroundColor: "#0b0f29",
+        autoHideMenuBar: true,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
             partition: PARTITION,

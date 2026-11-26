@@ -4,59 +4,94 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sign In</title>
+    <title>Omnivox MCP</title>
     <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
-    <div class="container">
-        <form class="login-card" method="POST"
-            action="https://mobl.omnivox.ca/intr/Module/Identification/Login/Mobile/LN.ashx">
-            <h1 class="title">Sign in</h1>
-            <p class="subtitle">Enter your identifier and date of birth to continue</p>
-
-            <input type="hidden" name="TypeUtilisateur" value="1" />
-
-            <div class="field">
-                <label for="identifier">Omnivox ID</label>
-                <input type="text" id="identifier" name="n" placeholder="12345678" required />
-            </div>
-
-            <div class="field">
-                <label for="dob">Date of Birth</label>
-                <input type="date" id="dob" class="date-input" required />
-            </div>
-
-            <input type="hidden" name="d" id="dobFormatted" />
-            <input type="hidden" name="L" value="ANG" />
-            <input type="hidden" name="LangueAppareil" value="en-CA" />
-            <input type="hidden" name="typeAppareil" value="tablet" />
-
-            <button type="submit" class="btn-primary">
-                Continue
-            </button>
-        </form>
+    <div class="backdrop" aria-hidden="true">
+        <i class="orbit a"></i><i class="orbit b"></i><i class="orbit c"></i>
+        <i class="dot a"></i><i class="dot b"></i><i class="dot c"></i>
+        <span class="keycap lea">LÉA</span>
+        <span class="keycap mio">MIO</span>
+        <span class="keycap mcp">/mcp</span>
+        <span class="keycap rest">REST</span>
     </div>
 
-    <script>
-        const dob = document.getElementById("dob");
-        dob.addEventListener("click", () => dob.showPicker());
+    <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="fr">FR</button>
+    </div>
 
-        // set default date to 18 years ago
-        const currentYear = new Date().getFullYear();
-        dob.value = `${currentYear - 18}-01-01`;
+    <main class="shell">
+        <header class="brand">
+            <p class="wordmark">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <g fill="#fff">
+                        <circle cx="50" cy="27" r="21" />
+                        <circle cx="73.8" cy="44.3" r="21" />
+                        <circle cx="64.7" cy="72.2" r="21" />
+                        <circle cx="35.3" cy="72.2" r="21" />
+                        <circle cx="26.2" cy="44.3" r="21" />
+                        <circle cx="50" cy="52" r="24" />
+                    </g>
+                    <circle cx="50" cy="52" r="13.5" fill="#f5821f" />
+                </svg>
+                <span>Omnivox <em>MCP</em></span>
+            </p>
+            <p class="tagline" data-i18n="tagline">Your own personal bridge to Omnivox</p>
+        </header>
 
-        // Omnivox sends the identifier back when it returns to the login page
-        const identifier = new URLSearchParams(location.search).get("n");
-        if (identifier) document.getElementById("identifier").value = identifier;
+        <form class="panel" method="POST" novalidate
+            action="https://mobl.omnivox.ca/intr/Module/Identification/Login/Mobile/LN.ashx">
+            <h1 data-i18n="signInTitle">Sign in</h1>
+            <p class="lede" data-i18n="signInLede">Start with your student ID and date of birth. Omnivox takes over from there.</p>
 
-        // handle form submission
-        const form = document.querySelector("form");
-        form.addEventListener("submit", () => {
-            const dobFormatted = document.getElementById("dobFormatted");
-            dobFormatted.value = dob.value.replaceAll("-", "")
-        });
-    </script>
+            <input type="hidden" name="TypeUtilisateur" value="1" />
+            <input type="hidden" name="d" id="dobFormatted" />
+            <input type="hidden" name="L" id="langOmnivox" value="ANG" />
+            <input type="hidden" name="LangueAppareil" id="langDevice" value="en-CA" />
+            <input type="hidden" name="typeAppareil" value="tablet" />
+
+            <div class="field" id="idField">
+                <label for="identifier" data-i18n="idLabel">Student ID</label>
+                <input class="input" type="text" id="identifier" name="n" inputmode="numeric" autocomplete="off"
+                    spellcheck="false" placeholder="1234567" autofocus />
+                <p class="hint" data-hint></p>
+            </div>
+
+            <div class="field" id="dobField">
+                <span class="label" id="dobLabel" data-i18n="dobLabel">Date of birth</span>
+                <div class="dob" role="group" aria-labelledby="dobLabel">
+                    <input class="yyyy" id="dobYear" inputmode="numeric" maxlength="4" autocomplete="off"
+                        placeholder="YYYY" data-i18n-placeholder="yearPh" data-i18n-aria="year" />
+                    <span class="sep">/</span>
+                    <input class="mm" id="dobMonth" inputmode="numeric" maxlength="2" autocomplete="off"
+                        placeholder="MM" data-i18n-aria="month" />
+                    <span class="sep">/</span>
+                    <input class="dd" id="dobDay" inputmode="numeric" maxlength="2" autocomplete="off"
+                        placeholder="DD" data-i18n-placeholder="dayPh" data-i18n-aria="day" />
+                    <output id="dobSpoken"></output>
+                </div>
+                <p class="hint" data-hint></p>
+            </div>
+
+            <button type="submit" class="btn">
+                <span data-i18n="continue">Continue</span><span class="arrow">-&gt;</span>
+            </button>
+
+            <p class="fineprint">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <rect x="3" y="7" width="10" height="7" rx="2" />
+                    <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" />
+                </svg>
+                <span data-i18n="fineprint">Your password and 2-step verification are entered on Omnivox's own page. This app never sees them.</span>
+            </p>
+        </form>
+    </main>
+
+    <script src="./ui.js"></script>
+    <script src="./login.js"></script>
 </body>
 
 </html>

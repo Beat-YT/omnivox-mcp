@@ -26,7 +26,7 @@ npm install
 npm start
 ```
 
-A login form is displayed where you enter your Omnivox identifier and date of birth. After authentication, a success page appears with two download buttons. Save both files into the server's data folder — the `data/` folder at the project root, or your `OMNIVOX_DATA_DIR` — so the MCP server can pick them up.
+A login form is displayed where you enter your student ID and date of birth; the form is posted to Omnivox, which continues with its own password and 2-step verification pages. The EN/FR switch also sets the language Omnivox uses for those pages. After authentication, a success page appears with two download buttons. Save both files into the server's data folder — the `data/` folder at the project root, or your `OMNIVOX_DATA_DIR` — so the MCP server can pick them up.
 
 ## Output files
 
@@ -43,9 +43,12 @@ The MCP server's Puppeteer instance imports these on first launch to establish i
 
 ```
 content/
-  index.html      Login form (identifier + date of birth)
+  index.html      Login form (student ID + date of birth), posted to Omnivox
+  login.js        Segmented date-of-birth input and form validation
   success.html    Post-auth download page for cookies.json and config.json
+  ui.js           Interface strings (EN/FR) and the language switch
   styles.css      Shared styling
+  fonts/          Figtree and JetBrains Mono (OFL-1.1), bundled so the UI needs no network
   ovx.js          Page-level injection: navigator spoofing + callback dispatch
   ComNatifOvx.js  Omnivox's own native bridge JS (reference copy)
   App.js          Omnivox's bundled mobile app JS (reference copy)

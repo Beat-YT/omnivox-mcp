@@ -4,42 +4,88 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Session Captured</title>
+    <title>Omnivox MCP</title>
     <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body>
-    <div class="container">
-        <div class="login-card">
-            <h1 class="title">Session captured</h1>
-            <p class="subtitle" id="hint">Waiting for session data...</p>
-
-            <button class="btn-primary" id="dl-config" disabled>Download config.json</button>
-            <button class="btn-primary btn-outline" id="dl-cookies" disabled>Download cookies.json</button>
-        </div>
+    <div class="backdrop" aria-hidden="true">
+        <i class="orbit a"></i><i class="orbit b"></i><i class="orbit c"></i>
+        <i class="dot a"></i><i class="dot b"></i><i class="dot c"></i>
+        <span class="keycap lea">LÉA</span>
+        <span class="keycap mio">MIO</span>
+        <span class="keycap mcp">/mcp</span>
+        <span class="keycap rest">REST</span>
     </div>
 
+    <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en">EN</button>
+        <button type="button" data-lang="fr">FR</button>
+    </div>
+
+    <main class="shell">
+        <header class="brand">
+            <p class="wordmark">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <g fill="#fff">
+                        <circle cx="50" cy="27" r="21" />
+                        <circle cx="73.8" cy="44.3" r="21" />
+                        <circle cx="64.7" cy="72.2" r="21" />
+                        <circle cx="35.3" cy="72.2" r="21" />
+                        <circle cx="26.2" cy="44.3" r="21" />
+                        <circle cx="50" cy="52" r="24" />
+                    </g>
+                    <circle cx="50" cy="52" r="13.5" fill="#f5821f" />
+                </svg>
+                <span>Omnivox <em>MCP</em></span>
+            </p>
+            <p class="tagline" data-i18n="tagline">Your own personal bridge to Omnivox</p>
+        </header>
+
+        <section class="panel">
+            <h1 data-i18n="doneTitle">You're signed in</h1>
+            <p class="lede" data-i18n="doneLede">Save the two session files. They are the only copy: closing this window forgets the login.</p>
+
+            <div class="files">
+                <div class="file" data-file="config.json">
+                    <div>
+                        <div class="name">config.json</div>
+                        <div class="what" data-i18n="configWhat">Entry page and device identity</div>
+                    </div>
+                    <button type="button" class="btn" disabled data-i18n="save">Save</button>
+                </div>
+                <div class="file" data-file="cookies.json">
+                    <div>
+                        <div class="name">cookies.json</div>
+                        <div class="what" data-i18n="cookiesWhat">Session cookies</div>
+                    </div>
+                    <button type="button" class="btn" disabled data-i18n="save">Save</button>
+                </div>
+            </div>
+
+            <ol class="steps">
+                <li data-i18n-html="step1">Put both files in the server's <code>data/</code> folder, or your <code>OMNIVOX_DATA_DIR</code>.</li>
+                <li data-i18n-html="step2">Start the server with <code>npm start</code>.</li>
+            </ol>
+        </section>
+    </main>
+
+    <script src="./ui.js"></script>
     <script>
         AuthData.onReady((data) => {
-            const configBtn = document.getElementById('dl-config');
-            const cookiesBtn = document.getElementById('dl-cookies');
-            const hint = document.getElementById('hint');
+            const contents = { 'config.json': data.config, 'cookies.json': data.cookies };
 
-            configBtn.disabled = false;
-            cookiesBtn.disabled = false;
-            hint.textContent = 'Download both files and place them in your omnivox data folder (the data/ folder in the project, or your OMNIVOX_DATA_DIR)';
-
-            configBtn.addEventListener('click', async () => {
-                if (await AuthData.saveFile('config.json', data.config)) {
-                    configBtn.textContent = 'config.json — saved';
-                }
-            });
-
-            cookiesBtn.addEventListener('click', async () => {
-                if (await AuthData.saveFile('cookies.json', data.cookies)) {
-                    cookiesBtn.textContent = 'cookies.json — saved';
-                }
-            });
+            for (const row of document.querySelectorAll('.file')) {
+                const button = row.querySelector('button');
+                button.disabled = false;
+                button.addEventListener('click', async () => {
+                    if (await AuthData.saveFile(row.dataset.file, contents[row.dataset.file])) {
+                        row.classList.add('saved');
+                        button.dataset.i18n = 'saved';
+                        button.textContent = UI.t('saved');
+                    }
+                });
+            }
         });
     </script>
 </body>
