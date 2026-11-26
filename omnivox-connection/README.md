@@ -11,6 +11,8 @@ Omnivox's mobile web app expects to run inside a native iOS/Android shell that p
 3. The main process handles the Omnivox native command protocol — static device responses, storage read/write, theme, user-agent updates, etc. Commands that aren't needed are silently acknowledged or ignored.
 4. When Omnivox calls `WebUI.SetDefaultPage` (which happens after a successful login), the app navigates to a success page with download buttons for `cookies.json` and `config.json`.
 
+The login session is kept in memory only. Every launch starts logged out with a new device ID, and closing the app discards the cookies; the two downloaded files are the only copy.
+
 ## Prerequisites
 
 - Node.js

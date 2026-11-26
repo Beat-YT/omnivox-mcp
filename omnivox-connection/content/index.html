@@ -18,7 +18,7 @@
             <input type="hidden" name="TypeUtilisateur" value="1" />
 
             <div class="field">
-                <label for="identifier">Identifiant Omnivox</label>
+                <label for="identifier">Omnivox ID</label>
                 <input type="text" id="identifier" name="n" placeholder="12345678" required />
             </div>
 
@@ -45,6 +45,10 @@
         // set default date to 18 years ago
         const currentYear = new Date().getFullYear();
         dob.value = `${currentYear - 18}-01-01`;
+
+        // Omnivox sends the identifier back when it returns to the login page
+        const identifier = new URLSearchParams(location.search).get("n");
+        if (identifier) document.getElementById("identifier").value = identifier;
 
         // handle form submission
         const form = document.querySelector("form");

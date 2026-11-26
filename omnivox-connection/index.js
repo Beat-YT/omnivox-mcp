@@ -8,6 +8,9 @@ const { staticResponses, nullCallbackCommands, silentCommands } = require("../sh
 
 app.commandLine.appendSwitch("disable-features", "OutOfBlinkCors");
 
+const LOGIN_PAGE = path.join(__dirname, "content", "index.html");
+const SUCCESS_PAGE = path.join(__dirname, "content", "success.html");
+
 let idAppareil = crypto.randomBytes(20).toString("hex");
 let codeUserAgent = "";
 
@@ -19,8 +22,22 @@ function getUserAgent() {
     return `OVX InfoDevice=${deviceInfo} AppVer=${omnivoxVer} IdAppareil=${idAppareil} Code=${codeUserAgent}`;
 }
 
+// The login session lives in memory only: every launch starts logged out, and the
+// cookies handed to the server are never left behind in this app's profile.
+const PARTITION = "auth";
+
+/** Removes the on-disk session that versions using "persist:main" left behind. */
+function removeLegacySession() {
+    try {
+        fs.rmSync(path.join(app.getPath("userData"), "Partitions", "main"), { recursive: true, force: true });
+    } catch (err) {
+        console.warn("Could not remove the old persisted session:", err.message);
+    }
+}
+
 async function createWindow() {
-    const ses = session.fromPartition("persist:main");
+    removeLegacySession();
+    const ses = session.fromPartition(PARTITION);
 
     ses.webRequest.onBeforeRequest((details, callback) => {
         const lowerUrl = details.url.toLowerCase();
@@ -41,7 +58,7 @@ async function createWindow() {
         height: 638,
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
-            partition: "persist:main",
+            partition: PARTITION,
             sandbox: false,
         }
     });
@@ -51,6 +68,15 @@ async function createWindow() {
      */
     function fireCallback(command, data) {
         win.webContents.send("Ovx-Callback", command + "CallBack", data);
+    }
+
+    let captured = false;
+
+    function showLogin(args) {
+        captured = false;
+        const query = {};
+        if (args.Identifiant) query.n = String(args.Identifiant);
+        win.loadFile(LOGIN_PAGE, { query });
     }
 
     function handleOvxCommand(command, args) {
@@ -122,18 +148,33 @@ async function createWindow() {
             }
 
             case 'Display.ViewLogin': {
-                win.loadFile("content/index.html");
+                showLogin(args);
                 break;
             }
 
             case 'WebUI.SetDefaultPage': {
-                if (!args?.Url) {
-                    console.warn("No Url in SetDefaultPage command");
+                // An empty Url is Omnivox logging the session out, not a login.
+                if (!args.Url) {
+                    fireCallback(command, null);
                     return;
                 }
 
-                const url = new URL(decodeURIComponent(args.Url));
+                let url;
+                try {
+                    url = new URL(decodeURIComponent(args.Url));
+                } catch {
+                    console.warn("Invalid Url in SetDefaultPage command:", args.Url);
+                    fireCallback(command, null);
+                    return;
+                }
                 url.hash = "";
+
+                // Omnivox can repeat the command; the first one is the login.
+                if (captured) {
+                    fireCallback(command, null);
+                    return;
+                }
+                captured = true;
 
                 const config = {
                     DefaultPage: url.href,
@@ -143,16 +184,15 @@ async function createWindow() {
 
                 fireCallback(command, null);
 
-                ses.cookies.get({}).then(cookies => {
-                    win.loadFile("content/success.html");
-                    win.webContents.once('did-finish-load', () => {
-                        win.webContents.send("auth-data", {
-                            cookies: JSON.stringify(cookies, null, 2),
-                            config: JSON.stringify(config, null, 2)
-                        });
+                ses.cookies.get({}).then(async cookies => {
+                    await win.loadFile(SUCCESS_PAGE);
+                    win.webContents.send("auth-data", {
+                        cookies: JSON.stringify(cookies, null, 2),
+                        config: JSON.stringify(config, null, 2)
                     });
                 }).catch(err => {
-                    console.error("Error getting cookies:", err);
+                    captured = false;
+                    console.error("Error capturing the session:", err);
                 });
                 break;
             }
@@ -165,9 +205,17 @@ async function createWindow() {
 
     ipcMain.on("OvxNatif-ExecuteCommand", (evt, command, args) => {
         if (typeof args === 'string') {
-            args = JSON.parse(args);
+            try {
+                args = JSON.parse(args);
+            } catch {
+                args = {};
+            }
         }
-        handleOvxCommand(command, args);
+        try {
+            handleOvxCommand(command, args && typeof args === 'object' ? args : {});
+        } catch (err) {
+            console.error("[OVX Command]", `${command} failed:`, err);
+        }
     });
 
     ipcMain.handle('save-file', async (evt, filename, content) => {
@@ -185,7 +233,7 @@ async function createWindow() {
     win.webContents.setUserAgent(getUserAgent());
     ses.setUserAgent(getUserAgent());
 
-    win.loadFile("content/index.html");
+    win.loadFile(LOGIN_PAGE);
 }
 
 app.whenReady().then(createWindow);
