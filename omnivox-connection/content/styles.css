@@ -251,6 +251,24 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: var(--muted);
 }
 
+/* Test mode: barely visible link at the bottom of the page */
+
+.test-mode {
+  position: fixed;
+  right: 22px;
+  bottom: 14px;
+  font: 500 11px var(--mono);
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.16);
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.12s;
+}
+
+.test-mode:hover {
+  color: var(--muted);
+}
+
 /* Narrow window: panel only */
 
 @media (max-width: 820px) {

@@ -20,6 +20,13 @@ class AppSession {
                 event.sender.send('save-session-result', success);
             });
         });
+
+        ipcMain.addListener('open-test-mode', (event) => {
+            const win = BrowserWindow.fromWebContents(event.sender);
+            if (this.configuration.DefaultPage) {
+                win.loadURL(this.configuration.DefaultPage);
+            }
+        });
     }
 
     async saveSessionFile(win) {

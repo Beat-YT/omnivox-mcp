@@ -14,8 +14,6 @@ class Bridge extends EventEmitter {
 
         ipcMain.on('ovx-command', async (event, command, json) => {
             const args = JSON.parse(json || '{}');
-            console.log('[OVX Command]', command, args);
-
             const data = await this.executeCommand(command, args);
             if (data !== undefined) this.executeCallback(command, data);
         });
