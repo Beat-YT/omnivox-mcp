@@ -140,3 +140,5 @@ docker-compose.yml
 omnivox-connection/cookies.json
 omnivox-connection/config.json
 .mcp.json
+
+dev-references/

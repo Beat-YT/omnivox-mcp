@@ -2,19 +2,21 @@
 
 Electron app that authenticates with Omnivox and captures the session for the MCP server.
 
-Omnivox's mobile web app expects to run inside a native iOS/Android shell that provides an `OvxNatif` bridge. This app emulates that bridge in Electron so the authentication flow completes normally, then lets you download the resulting session files.
+Omnivox's mobile web app expects to run inside a native iOS/Android shell that provides an `OvxNatif` bridge. This app emulates that bridge in Electron so the authentication flow completes normally, then lets you save the resulting session file.
 
 ## How it works
 
-1. The app opens a BrowserWindow with a spoofed mobile user-agent (`OVX InfoDevice=... AppVer=... IdAppareil=... Code=...`).
-2. A preload script injects `OvxNatif` into the page via `contextBridge`, forwarding all native commands to the main process over IPC.
-3. The main process handles the Omnivox native command protocol — static device responses, storage read/write, theme, user-agent updates, etc. Commands that aren't needed are silently acknowledged or ignored.
-4. When Omnivox calls `WebUI.SetDefaultPage` (which happens after a successful login), the app navigates to a success page with download buttons for `cookies.json` and `config.json`.
+1. The app picks a random Android tablet from `src/devices.js` and opens a BrowserWindow that presents itself as that device, with the OVX user agent (`OVX InfoDevice=... AppVer=... IdAppareil=... Code=...`).
+2. A preload script exposes `OvxNatif` to the page via `contextBridge` and forwards native commands to the main process over IPC.
+3. The main process answers the Omnivox native command protocol: static device responses, storage read/write, theme, user-agent updates. Commands it does not know are accepted and ignored.
+4. When Omnivox calls `WebUI.SetDefaultPage` (which happens after a successful login), the app navigates to a success page with a download button for `session.json`.
+
+The browser session is kept in memory only. Nothing carries over between launches.
 
 ## Prerequisites
 
 - Node.js
-- The `shared/` directory at the repo root (provides `constants.cjs` and `nativeCommands.cjs`)
+- The `shared/` directory at the repo root (provides `staticCommands.json` and `omnivoxApp.json`)
 
 ## Usage
 
@@ -24,41 +26,38 @@ npm install
 npm start
 ```
 
-A login form is displayed where you enter your Omnivox identifier and date of birth. After authentication, a success page appears with two download buttons. Save both files into the server's data folder — the `data/` folder at the project root, or your `OMNIVOX_DATA_DIR` — so the MCP server can pick them up.
+A login form is displayed where you enter your Omnivox identifier and date of birth. After authentication, a success page appears with a download button. Save the file into the server's data folder: the `data/` folder at the project root, or your `OMNIVOX_DATA_DIR`.
 
-## Output files
+## Output file
 
-Both files are downloaded via save dialogs — nothing is written to disk automatically.
+The file is saved through a save dialog. Nothing is written to disk automatically.
 
 | File | Contents |
 |---|---|
-| `cookies.json` | Full cookie jar from the Electron session |
-| `config.json` | `{ DefaultPage, Code, IdAppareil }` — the entry URL and auth credentials |
-
-The MCP server's Puppeteer instance imports these on first launch to establish its own authenticated session.
+| `session.json` | `configuration` (`DefaultPage`, `Code`, `IdAppareil`), `device` (the tablet the app presented itself as) and `cookies` (the full cookie jar) |
 
 ## Architecture
 
 ```
 content/
   index.html      Login form (identifier + date of birth)
-  success.html    Post-auth download page for cookies.json and config.json
+  success.html    Post-auth page with the session.json download
   styles.css      Shared styling
-  ovx.js          Page-level injection: navigator spoofing + callback dispatch
   ComNatifOvx.js  Omnivox's own native bridge JS (reference copy)
   App.js          Omnivox's bundled mobile app JS (reference copy)
 
-index.js          Electron main process — window, IPC handlers, native command emulation
-preload.js        Exposes OvxNatif and AuthData bridges, injects ovx.js, forwards callbacks
+src/
+  app.js          Electron main process: window, request filter, wiring
+  bridge.js       Native command emulation, the app side of OvxNatif
+  appSession.js   Device, configuration and cookies of the session, saved as session.json
+  devices.js      Android tablets the app can present itself as
+  preload.js      Exposes OvxNatif and AuthData to the pages
 ```
 
 ### Native command emulation
 
-The main process handles three categories of Omnivox native commands:
+`Bridge.executeCommand` answers a command by what it returns: nothing sends no callback, `null` fires the callback without data, anything else is the callback data.
 
-- **Static responses** — commands with fixed return values (device info, biometry, notifications)
-- **Null-callback commands** — UI acknowledgments that just fire `callback(null)`
-- **Silent commands** — fire-and-forget commands (window management, navigation, display)
-- **Custom logic** — `Storage.SetCodeUserAgent`, `Storage.Set/GetInfo`, `Theme.Set/GetTheme`, `WebUI.SetDefaultPage`
-
-These are defined in `shared/nativeCommands.cjs` and shared with the MCP server's own Puppeteer injection.
+- **Static responses**: fixed answers listed in `shared/staticCommands.json` (device stats, biometry, notifications). A `null` entry is a plain acknowledgment.
+- **Custom logic**: `Application.GetDeviceInfo`, `Storage.SetCodeUserAgent`, `Storage.Set/GetInfo`, `Theme.Set/GetTheme`, `WebUI.SetDefaultPage`, `WebUI.ResetSession`, `Display.ViewLogin`
+- **Everything else**: fire and forget, accepted without a callback
