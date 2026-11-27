@@ -416,7 +416,7 @@ Evaluations[]
   EcartType                  number | null    ×100, standard deviation
   DateEvaluation             number | null    epoch ms
   TypeEvaluation             number           1 = normal, 20 = bonus ("bonifiant la note"), 40 = penalty ("pénalisant la note")
-  IDCategorie                string           negative = pseudo-category (e.g. "-20" = bonus; label comes from the app dictionary, not the API)
+  IDCategorie                string           negative = pseudo-category, see below (label comes from the app dictionary, not the API)
   RangEval                   string
   IsVisualise                boolean
   Ajustements[]
@@ -434,11 +434,11 @@ Evaluations[]
 Categories[]
   IDCategorie                    string
   NomCategorie                   string     empty for pseudo-categories
-  PonderationCategorie           number | null    ×100
-  MoyenneCategorie               number           ×100
+  PonderationCategorie           number | null    ×100, null for pseudo-categories
+  MoyenneCategorie               number           ×100, points earned toward the final grade
   MoyenneMinimalCategorie        number | null
   TypeCategorie                  number | null
-  NombreEvaluationIgnoreCategorie number
+  NombreEvaluationIgnoreCategorie number           evaluations the category leaves out of the grade, see below
   NoteFinaleMaximumCategorie     number | null
 
 Sommaire
@@ -458,6 +458,18 @@ UniquementNonCategorise         boolean
 ListeIdEvaluationNonConsulte    string
 IsPeutVisualiser                boolean
 ```
+
+Evaluations that the teacher did not place in a category are grouped under pseudo-categories. These have a negative `IDCategorie`, an empty `NomCategorie` and a null `PonderationCategorie`:
+
+| `IDCategorie` | `TypeEvaluation` of its evaluations | Group |
+|---|---|---|
+| `-1` | `1` (normal, each with its own `Ponderation`) | Uncategorized |
+| `-20` | `20` | Bonus to final grade |
+| `-40` | `40` | Penalty to final grade |
+
+`-1` and `-20` were observed in responses. `-40` is inferred from the pattern and has not been observed. For `-1`, `MoyenneCategorie` is the sum of the points earned on its graded evaluations, and Léa displays the summed `Ponderation` of the group as its weight.
+
+`Sommaire.NotePonderee` is the sum of `MoyenneCategorie` over the categories, and `Sommaire.PourcentAccumul` is the summed `Ponderation` of the graded evaluations. With `NombreEvaluationIgnoreCategorie` set, that many graded evaluations of the category are left out of `PourcentAccumul`: a 20% category of eleven 2% evaluations with a value of `1` counted for 18% once ten were graded. Which evaluations are left out was not confirmed; the lowest mark is assumed.
 
 Competency/rubric lines shown on the CVIR web grade page are not included — the mobile app has no competency feature; that data requires the `GetNotesDetailWebModel` webview.
 

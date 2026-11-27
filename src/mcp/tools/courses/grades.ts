@@ -155,20 +155,25 @@ function formatCategory(category: NotesDetailModel.Category, model: NotesDetailM
         .sort((a, b) => Number(a.RangEval) - Number(b.RangEval));
     if (!evals.length) return [];
 
-    const weight = val(category.PonderationCategorie);
     const earned = val(category.MoyenneCategorie);
+    // the uncategorized group comes without a weight: sum its evaluations
+    const weight = val(category.PonderationCategorie)
+        ?? (evals[0].TypeEvaluation === 1 ? sumWeight(evals) : null);
+    const released = releasedWeight(evals, category.NombreEvaluationIgnoreCategorie);
 
     const lines: string[] = [];
     if (!model.UniquementNonCategorise) {
-        const name = category.NomCategorie
-            || (evals[0].TypeEvaluation === 40 ? 'Penalties to final grade' : 'Bonuses to final grade');
-        const hasGraded = evals.some(e => val(e.Note) != null);
-        const header = [`## ${name}`];
+        const header = [`## ${category.NomCategorie || pseudoCategoryName(evals[0].TypeEvaluation)}`];
         if (weight != null) {
             header.push(`— weight ${pct(weight)}`);
-            if (earned != null && hasGraded) header.push(`| your avg ${pct(earned / weight * 100)} (${fmt(earned)}/${fmt(weight, 1)} pts)`);
+            if (earned != null && released) {
+                const scope = released === weight ? '' : ' graded so far';
+                header.push(`| your avg ${pct(earned / released * 100)} (${fmt(earned)}/${fmt(released, 1)} pts${scope})`);
+            }
         }
         lines.push(header.join(' '));
+        const dropped = category.NombreEvaluationIgnoreCategorie;
+        if (dropped > 0) lines.push(`Lowest ${dropped} evaluation${dropped > 1 ? 's' : ''} dropped`);
         if (category.MoyenneMinimalCategorie != null) {
             const cap = category.NoteFinaleMaximumCategorie != null
                 ? `, otherwise final grade capped at ${fmt(val(category.NoteFinaleMaximumCategorie), 1)}`
@@ -180,6 +185,26 @@ function formatCategory(category: NotesDetailModel.Category, model: NotesDetailM
     evals.forEach((ev, i) => lines.push(...formatEval(ev, i + 1, newIds)));
     lines.push('');
     return lines;
+}
+
+// nameless categories: -1 uncategorized (normal evals), -20 bonus, -40 penalty
+function pseudoCategoryName(type: number): string {
+    if (type === 20) return 'Bonuses to final grade';
+    if (type === 40) return 'Penalties to final grade';
+    return 'Uncategorized';
+}
+
+function sumWeight(evals: NotesDetailModel.Evaluation[]): number {
+    const total = evals.reduce((sum, e) => sum + (val(e.Ponderation) ?? 0), 0);
+    return Number(total.toFixed(2));
+}
+
+// weight of the graded evaluations, minus the lowest ones the category drops
+function releasedWeight(evals: NotesDetailModel.Evaluation[], dropped: number): number {
+    const graded = evals
+        .filter(e => val(e.Note) != null)
+        .sort((a, b) => Number(a.Note) / a.NbPts - Number(b.Note) / b.NbPts);
+    return sumWeight(graded.slice(dropped));
 }
 
 function formatEval(ev: NotesDetailModel.Evaluation, position: number, newIds: Set<string>): string[] {

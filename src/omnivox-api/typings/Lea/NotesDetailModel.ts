@@ -22,7 +22,7 @@ export namespace NotesDetailModel {
         EcartType: number | null;     // x100, standard deviation
         DateEvaluation: number | null; // epoch ms
         TypeEvaluation: number;       // 1 = normal, 20 = bonus, 40 = penalty
-        IDCategorie: string;          // negative = pseudo-category (bonus/penalty)
+        IDCategorie: string;          // negative = pseudo-category (-1 uncategorized, -20 bonus, -40 penalty)
         RangEval: string;
         IsVisualise: boolean;
         Ajustements: Ajustement[];
@@ -47,11 +47,11 @@ export namespace NotesDetailModel {
     export interface Category {
         IDCategorie: string;
         NomCategorie: string;         // empty for pseudo-categories
-        PonderationCategorie: number | null; // x100
+        PonderationCategorie: number | null; // x100, null for pseudo-categories
         MoyenneCategorie: number;     // x100, points earned toward final grade
         MoyenneMinimalCategorie: number | null;
         TypeCategorie: number | null;
-        NombreEvaluationIgnoreCategorie: number;
+        NombreEvaluationIgnoreCategorie: number; // lowest evaluations left out of the grade
         NoteFinaleMaximumCategorie: number | null;
     }
 
