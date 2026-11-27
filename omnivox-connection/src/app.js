@@ -13,11 +13,19 @@ async function createWindow() {
     const win = new BrowserWindow({
         width: 1000,
         height: 638,
+        show: false,
         webPreferences: {
             sandbox: false,
             partition: 'in-memory',
             preload: path.join(__dirname, 'preload.js'),
         }
+    });
+
+    // The portable exe starts the app minimized, so bring the window up ourselves
+    win.once('ready-to-show', () => {
+        win.show();
+        win.restore();
+        win.focus();
     });
 
     win.webContents.session.webRequest.onBeforeRequest((details, callback) => {

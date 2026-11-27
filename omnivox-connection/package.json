@@ -4,13 +4,37 @@
   "main": "src/app.js",
   "scripts": {
     "start": "electron .",
+    "build": "electron-builder",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "build": {
+    "files": [
+      "src",
+      "content"
+    ],
+    "extraResources": [
+      {
+        "from": "../shared",
+        "to": "shared",
+        "filter": [
+          "staticCommands.json",
+          "omnivoxApp.json"
+        ]
+      }
+    ],
+    "win": {
+      "target": "portable"
+    },
+    "portable": {
+      "artifactName": "omnivox-connection.exe"
+    }
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
-    "electron": "^40.10.6"
+    "electron": "^40.10.6",
+    "electron-builder": "^26.18.0"
   }
 }

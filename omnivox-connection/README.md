@@ -28,6 +28,14 @@ npm start
 
 A login form is displayed where you enter your Omnivox identifier and date of birth. After authentication, a success page appears with a download button. Save the file into the server's data folder: the `data/` folder at the project root, or your `OMNIVOX_DATA_DIR`.
 
+## Build
+
+```bash
+npm run build
+```
+
+Produces `dist/omnivox-connection.exe`, a portable Windows executable: one file, no installer. The two JSON files from `shared/` are copied next to the packaged app, so the build has to run from inside the repo.
+
 ## Output file
 
 The file is saved through a save dialog. Nothing is written to disk automatically.
