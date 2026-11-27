@@ -1,0 +1,30 @@
+{
+    "name": "Samsung Galaxy Tab S8",
+    "deviceInfo": "Android-14_samsung_SM-X700_Build/UP1A.231005.007",
+    "device": {
+        "viewport": {
+            "width": 1205,
+            "height": 753,
+            "deviceScaleFactor": 2,
+            "isMobile": true,
+            "hasTouch": true,
+            "isLandscape": true
+        },
+        "platform": "Linux armv8l",
+        "userAgentMetadata": {
+            "platform": "Android",
+            "platformVersion": "14",
+            "architecture": "",
+            "model": "SM-X700",
+            "mobile": true
+        }
+    },
+    "deviceInfoMeta": {
+        "Manufacturer": "samsung",
+        "Model": "SM-X700",
+        "OsVersion": "14",
+        "Device": "gts8wifi",
+        "IsOsModified": false
+    },
+    "diskSpace": 111400001536
+}

@@ -1,9 +1,8 @@
 import { ElementHandle, Page } from 'puppeteer';
 import BrowserManager from './BrowserManager';
-import { getConfig } from '../config';
+import { omnivoxConfig } from '../config';
 import { OmnivoxMoblError } from '../OmnivoxMoblError';
 import { OmnivoxSessionExpiredError } from '../OmnivoxSessionExpiredError';
-import { clientConfig } from '@common/constants';
 import { dataDir } from '@common/dataDir';
 import { fetchDownload } from './download';
 import { DownloadResult, FrameHandle, HealthStatus, ProxyRequestInit, ProxyResponse } from './types';
@@ -40,7 +39,7 @@ export default class OmnivoxClient {
         if (this.starting) return this.starting;
 
         this.starting = (async () => {
-            const browser = new BrowserManager(getConfig(), clientConfig, dataDir);
+            const browser = new BrowserManager(omnivoxConfig, dataDir);
             try {
                 await browser.launch();
             } catch (err) {
@@ -157,7 +156,7 @@ export default class OmnivoxClient {
         return fetchDownload(url, {
             cookies: await browser.cookies(),
             userAgent: browser.userAgent,
-            referer: getConfig().DefaultPage,
+            referer: omnivoxConfig.DefaultPage,
         });
     }
 
@@ -232,7 +231,7 @@ export default class OmnivoxClient {
     /** withPage() for calls that need a logged-in session. Throws OmnivoxSessionExpiredError otherwise. */
     private async withSession<T>(run: (page: Page) => Promise<T>): Promise<T> {
         // Omnivox clears DefaultPage when it logs the session out
-        if (!getConfig().DefaultPage) throw new OmnivoxSessionExpiredError();
+        if (!omnivoxConfig.DefaultPage) throw new OmnivoxSessionExpiredError();
 
         return this.withPage(async (page) => {
             // The login page defines Skytech without the mobile runtime

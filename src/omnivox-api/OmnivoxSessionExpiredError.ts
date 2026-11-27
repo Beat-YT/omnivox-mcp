@@ -6,7 +6,7 @@
  */
 export class OmnivoxSessionExpiredError extends Error {
     constructor() {
-        super('The Omnivox session has expired or was logged out, so Omnivox cannot be queried. The student must log in again with the auth app and set the server up again with the new cookies.json and config.json (see the reset steps in the README), then restart the server.');
+        super('The Omnivox session has expired or was logged out, so Omnivox cannot be queried. The student must log in again with the auth app, place the new session.json in the server\'s data folder, then restart the server.');
         this.name = 'OmnivoxSessionExpiredError';
     }
 }

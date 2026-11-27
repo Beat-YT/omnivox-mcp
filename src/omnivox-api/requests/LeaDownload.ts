@@ -1,22 +1,21 @@
 import { omnivox, DownloadResult } from "../puppet";
-import { getConfig, OmnivoxConfig } from "../config";
+import { omnivoxConfig } from "../config";
 
 function getOmnivoxBaseUrl(): string {
-    let config: OmnivoxConfig | undefined = undefined;
+    const defaultPage = omnivoxConfig.DefaultPage;
 
     try {
-        config = getConfig();
-        const parsedUrl = new URL(config.DefaultPage);
+        const parsedUrl = new URL(defaultPage);
 
         // sanity check url
         if (!parsedUrl.hostname.toLowerCase().endsWith('.omnivox.ca')) {
-            throw new Error(`Invalid Omnivox base URL: ${config.DefaultPage} (not ending with .omnivox.ca)`);
+            throw new Error(`Invalid Omnivox base URL: ${defaultPage} (not ending with .omnivox.ca)`);
         }
 
         return parsedUrl.origin;
     } catch (error) {
-        console.error(`Error parsing Omnivox base URL ${config?.DefaultPage}`, error);
-        throw new Error(`Invalid Omnivox base URL: ${config?.DefaultPage}`);
+        console.error(`Error parsing Omnivox base URL ${defaultPage}`, error);
+        throw new Error(`Invalid Omnivox base URL: ${defaultPage}`);
     }
 }
 

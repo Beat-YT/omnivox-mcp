@@ -26,8 +26,8 @@ npm install
 # 2. Authenticate on a desktop with UI (first time only)
 cd omnivox-connection
 npm install && npm start
-# Log in through the Electron window, save cookies.json + config.json,
-# then place them in a folder named data/ at the project root (or your OMNIVOX_DATA_DIR)
+# Log in through the Electron window, save session.json,
+# then place it in a folder named data/ at the project root (or your OMNIVOX_DATA_DIR)
 
 # 3. Start the server
 cd ..
@@ -51,16 +51,9 @@ docker compose up -d
 The included [`docker-compose.example.yml`](docker-compose.example.yml) mounts your data folder into the container at `/data/omnivox`, exposes port 3000, sets a session-keeping refresh interval, and wires up a healthcheck. Your customized `docker-compose.yml` is gitignored.
 ### Re-authentication
 
-If your session expires or you want a different account, reset and log in again:
+If your session expires or you want a different account, log in again with the Electron app, place the new `session.json` in your data folder and restart the server. On startup it wipes the browser profile, imports the new session into it, writes `config.json` and deletes `session.json`.
 
-```bash
-npm run reset
-cd omnivox-connection && npm start
-# Log in, save the two files, place them back in your data folder
-cd .. && npm start
-```
-
-`npm run reset` clears `browser/`, `cookies.json`, `config.json`, and `accessKey.txt` from the data folder so the server starts fresh.
+`npm run reset` clears `browser/`, `config.json`, and `accessKey.txt` from the data folder so the server starts fresh.
 
 ### Configuration
 
@@ -70,7 +63,7 @@ Set these as environment variables or in a `.env` file at the project root:
 |---|---|---|
 | `PORT` | `3000` | Server port |
 | `OMNIVOX_DATA_DIR` | `data/` at the project root | Data directory for config, cookies, browser profile, and access key |
-| `OMNIVOX_CONFIG` / `OMNIVOX_COOKIES` | *(none)* | Contents of `config.json` / `cookies.json` (JSON or base64), for hosts where a volume isn't an option. Only used when the file is missing. |
+| `OMNIVOX_SESSION` | *(none)* | Contents of `session.json` (JSON or base64), for hosts where a volume isn't an option. Last resort: only used when there is no `session.json` and the `browser/` folder doesn't exist. |
 | `BROWSER_LAUNCH_ARGS` | *(none)* | Extra Chrome flags appended to the default launch arguments, space-separated. Useful in Docker where Chrome runs as root and needs `--no-sandbox --disable-setuid-sandbox`. |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. Not recommended for Docker setups |
 | `BROWSER_REFRESH_INTERVAL` | *(disabled)* | Interval in **minutes** between automatic page refreshes to keep the Omnivox session alive. Recommended for long-lived instances (e.g. `10`). Disabled when `BROWSER_SLEEP` is `true`. |

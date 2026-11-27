@@ -1,10 +1,8 @@
 import { Page } from "puppeteer";
 import crypto from "crypto";
-import { getConfig, updateConfig } from "../config";
-import { buildUserAgent } from "./userAgent";
+import { OmnivoxConfig } from "../config";
 import { isLogMode } from "../../common/transportMode";
-import { device } from "@common/constants";
-import { staticResponses, nullCallbackCommands, silentCommands } from "@common/nativeCommands";
+import staticCommands from "../../../shared/staticCommands.json" with { type: "json" };
 
 /*
  * Fakes the Android side of the Omnivox WebView <-> native bridge (ComNatifOvx.js)
@@ -16,7 +14,7 @@ import { staticResponses, nullCallbackCommands, silentCommands } from "@common/n
  * whenever, so Omnivox's JS must run against every app build still installed anywhere:
  * errors from OvxNatif.ExecuteCommand are caught and logged, commands whose callback
  * never fires are tolerated, and new commands sit behind IsMinimumVersion gates. That
- * gate reads AppVer= from the user agent we build (omnivoxVer in shared/constants.cjs),
+ * gate reads AppVer= from the user agent we build (version in shared/omnivoxApp.json),
  * so the page never emits a command newer than the version we declare. An unhandled
  * command below degrades a page feature we do not use; it cannot break the bridge.
  * See "Backward compatibility" and "Version pinning" in docs/native-bridge.md.
@@ -25,8 +23,9 @@ import { staticResponses, nullCallbackCommands, silentCommands } from "@common/n
 /**
  *
  * @param {Page} page
+ * @param {OmnivoxConfig} config
  */
-export async function setupPageInjection(page) {
+export async function setupPageInjection(page, config) {
     const token = crypto.randomBytes(16).toString('hex');
 
     // In-memory stores for native command emulation
@@ -45,7 +44,9 @@ export async function setupPageInjection(page) {
             }, callbackName, cb_data);
         };
 
-        handleCommand(command, args, callback);
+        handleCommand(command, args, callback).catch((err) => {
+            console.warn("[OVX COMMAND]", `${command} failed:`, err.message);
+        });
     });
 
     await page.evaluateOnNewDocument((t, platform) => {
@@ -86,7 +87,7 @@ export async function setupPageInjection(page) {
 
         // define the bridge
         window.OvxNatif = { ExecuteCommand: ExecuteCommand };
-    }, token, device.platform);
+    }, token, config.Device.data.device.platform);
 
     /**
     *
@@ -94,30 +95,33 @@ export async function setupPageInjection(page) {
     * @param {any} args
     * @param {(data: any) => void} callback
     */
-    function handleCommand(command, args, callback) {
+    async function handleCommand(command, args, callback) {
         if (isLogMode()) console.warn("[OVX COMMAND]", `Handling command: ${command} with args:`, args);
 
-        // Static responses (always the same data)
-        if (staticResponses[command]) {
-            callback(staticResponses[command]);
+        // Fixed answers, a null entry fires the callback without data
+        if (command in staticCommands) {
+            callback(staticCommands[command]);
             return;
         }
 
-        // UI acknowledgments (callback with null)
-        if (nullCallbackCommands.has(command)) {
-            callback(null);
-            return;
-        }
-
-        // Fire-and-forget (no callback)
-        if (silentCommands.has(command)) return;
-
-        // Commands with custom logic
+        // Commands with custom logic. Anything else is fire and forget.
         switch (command) {
+            case 'Application.GetDeviceInfo': {
+                callback(config.Device.data.deviceInfoMeta);
+                break;
+            }
+
+            case 'Application.DeviceStats': {
+                // "HeadlessChrome/131.0.6778.85"
+                const chromeVersion = (await page.browser().version()).split('/').pop();
+                callback(config.Device.stats(chromeVersion));
+                break;
+            }
+
             case 'Storage.SetCodeUserAgent': {
                 if (isLogMode()) console.warn("[OVX COMMAND]", `Set codeUserAgent to: ${args.Code}`);
-                const config = updateConfig({ Code: args.Code || "" });
-                const ua = buildUserAgent(config.IdAppareil, config.Code);
+                config.update({ Code: args.Code || "" });
+                const ua = config.userAgent;
                 page.setUserAgent(ua);
                 callback({ UserAgentRequete: ua });
                 break;
@@ -126,8 +130,7 @@ export async function setupPageInjection(page) {
             case 'Storage.SetInfo': {
                 if (isLogMode()) console.warn("[OVX COMMAND]", `Storage.SetInfo: ${args.Key} = ${args.Value}`);
                 kvStore.set(args.Key, args.Value);
-                const ua = buildUserAgent(getConfig().IdAppareil, getConfig().Code);
-                callback({ UserAgentRequete: ua });
+                callback({ UserAgentRequete: config.userAgent });
                 break;
             }
 
@@ -140,7 +143,7 @@ export async function setupPageInjection(page) {
 
             case 'WebUI.SetDefaultPage': {
                 // Omnivox sends an empty Url on logout; postJson() treats an empty DefaultPage as an expired session
-                updateConfig({ DefaultPage: args.Url ? decodeURIComponent(args.Url) : "" });
+                config.update({ DefaultPage: args.Url ? decodeURIComponent(args.Url) : "" });
                 callback(null);
                 break;
             }

@@ -1,127 +1,70 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
-import { omnivoxVer, deviceInfo } from '@common/constants';
 import { dataDir } from '@common/dataDir';
+import omnivoxApp from '../../shared/omnivoxApp.json' with { type: 'json' };
+import DeviceConfig from './DeviceConfig';
 
 const configPath = path.join(dataDir, 'config.json');
-const cookiePath = path.join(dataDir, 'cookies.json');
-let config: OmnivoxConfig;
+const sessionPath = path.join(dataDir, 'session.json');
+const browserPath = path.join(dataDir, 'browser');
 
-export interface OmnivoxConfig {
+export class OmnivoxConfig {
     DefaultPage: string;
-    Code?: string;
-    IdAppareil?: string;
-}
+    Code: string;
+    IdAppareil: string;
+    Device: DeviceConfig;
 
-/*
-export function InitializeConfig() {
-    if (configExists) {
-        const configFile = fs.readFileSync(configPath, 'utf-8');
-        config = JSON.parse(configFile);
-    } else {
-        console.error('Configuration file config.json not found. Please make sure the mcp was set up correctly.');
-        console.error('Expected config path (file not exist):', configPath);
-        return process.exit(1);
-    }
+    /** Cookies of a new session, until BrowserManager has put them in an empty profile */
+    sessionCookies: any[] | null = null;
 
-    if (!config.DefaultPage) {
-        console.error('Configuration file is missing required fields. Please check omnivox-config.json.');
-        console.error('Required fields: omnivoxBaseUrl');
-        return process.exit(1);
-    }
-
-    if (!config.Code) {
-        console.warn('Warning: Configuration file is missing optional field "Code". Some features may not work properly.');
-    }
-
-    if (!config.IdAppareil) {
-        console.warn('Warning: Configuration file is missing optional field "IdAppareil". A new IdAppareil will be generated for this session.');
-    }
-
-    const defaultUrl = new URL(config.DefaultPage);
-    client.defaults.baseURL = defaultUrl.origin;
-
-    const IdAppareil = config.IdAppareil || crypto.randomBytes(20).toString("hex");
-    const AuthHash = config.Code || '';
-    const userAgent = `OVX InfoDevice=${deviceInfo} AppVer=${omnivoxVer} IdAppareil=${IdAppareil} Code=${AuthHash}`;
-
-    client.defaults.headers['User-Agent'] = userAgent;
-    client.defaults.headers['X-User-Agent-Ovx'] = userAgent;
-    client.defaults.headers['Origin'] = defaultUrl.origin;
-}*/
-
-// Writes the file from an env var (raw or base64 JSON) when it does not exist yet. The file wins afterwards.
-function seedFromEnv(filePath: string, envVar: string) {
-    const value = process.env[envVar]?.trim();
-    if (!value || fs.existsSync(filePath)) return;
-
-    const json = value.startsWith('{') || value.startsWith('[')
-        ? value
-        : Buffer.from(value, 'base64').toString('utf-8');
-
-    JSON.parse(json);
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, json, 'utf-8');
-    console.warn(`Seeded ${path.basename(filePath)} from ${envVar}`);
-}
-
-export function getElectronCookies(): any[] {
-    seedFromEnv(cookiePath, 'OMNIVOX_COOKIES');
-
-    if (!fs.existsSync(cookiePath)) {
-        console.error('Cookie file not found. Please ensure you have logged in through the Electron app first.');
-        console.error('Expected cookie path (file not exist):', cookiePath);
-        throw new Error('Cookie file not found');
-    }
-
-    const cookieFile = fs.readFileSync(cookiePath, 'utf-8');
-    const cookies = JSON.parse(cookieFile);
-    return cookies;
-}
-
-export function getConfig(): OmnivoxConfig {
-    if (config) return config;
-
-    seedFromEnv(configPath, 'OMNIVOX_CONFIG');
-
-    if (!fs.existsSync(configPath)) {
-        console.error('Configuration file config.json not found. Please make sure the mcp was set up correctly.');
-        console.error('Expected config path (file not exist):', configPath);
-        throw new Error('Configuration file not found');
-    }
-
-    const configFile = fs.readFileSync(configPath, 'utf-8');
-    config = JSON.parse(configFile);
-
-    config.DefaultPage = config.DefaultPage ? decodeURIComponent(config.DefaultPage) : '';
-
-    // Omnivox clears DefaultPage on logout. The server still starts; postJson() reports the expired session.
-    if (!config.DefaultPage) {
-        console.warn('Warning: Configuration file has no "DefaultPage". The Omnivox session is logged out, log in again with the auth app.');
-    }
-
-    if (!config.Code) {
-        console.warn('Warning: Configuration file is missing optional field "Code". Some features may not work properly.');
-        config.Code = '';
-    }
-
-    if (!config.IdAppareil) {
-        console.warn('Warning: Configuration file is missing optional field "IdAppareil". A new IdAppareil will be generated for this session.');
-        config.IdAppareil = crypto.randomBytes(20).toString("hex");
-    }
-
-    return config;
-}
-
-export function updateConfig(updatedConfig: Partial<OmnivoxConfig>) {
-    config = { ...config, ...updatedConfig };
-    
-    fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8', (err) => {
-        if (err) {
-            console.error('Error writing configuration file:', err);
+    constructor() {
+        const session = readSession();
+        if (session) {
+            fs.mkdirSync(dataDir, { recursive: true });
+            fs.writeFileSync(configPath, JSON.stringify({ ...session.configuration, Device: session.device }, null, 2));
+            this.sessionCookies = session.cookies;
         }
-    });
 
-    return config;
+        if (!fs.existsSync(configPath)) {
+            throw new Error(`No config.json in ${dataDir}. Log in with the auth app and place session.json there.`);
+        }
+
+        const file = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        this.DefaultPage = decodeURIComponent(file.DefaultPage || '');
+        this.Code = file.Code || '';
+        this.IdAppareil = file.IdAppareil || crypto.randomBytes(20).toString('hex');
+        this.Device = new DeviceConfig(file.Device);
+    }
+
+    get userAgent(): string {
+        return `OVX InfoDevice=${this.Device.data.deviceInfo} AppVer=${omnivoxApp.version} IdAppareil=${this.IdAppareil} Code=${this.Code}`;
+    }
+
+    update(changes: { DefaultPage?: string; Code?: string }) {
+        Object.assign(this, changes);
+
+        const file = { DefaultPage: this.DefaultPage, Code: this.Code, IdAppareil: this.IdAppareil, Device: this.Device.data };
+        fs.writeFile(configPath, JSON.stringify(file, null, 2), (err) => {
+            if (err) console.error('Error writing config.json:', err);
+        });
+    }
+
+    /** session.json is one time only */
+    sessionInstalled() {
+        this.sessionCookies = null;
+        fs.rmSync(sessionPath, { force: true });
+    }
 }
+
+function readSession() {
+    if (fs.existsSync(sessionPath)) return JSON.parse(fs.readFileSync(sessionPath, 'utf-8'));
+
+    // Last resort for hosts without a volume: OMNIVOX_SESSION (raw or base64 JSON), only when there is no browser profile
+    const env = process.env.OMNIVOX_SESSION?.trim();
+    if (!env || fs.existsSync(browserPath)) return null;
+
+    return JSON.parse(env.startsWith('{') ? env : Buffer.from(env, 'base64').toString('utf-8'));
+}
+
+export const omnivoxConfig = new OmnivoxConfig();

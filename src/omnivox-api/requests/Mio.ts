@@ -2,7 +2,7 @@ import { MioModel } from "@typings/Mio/Messages";
 import { MioSearch } from "@typings/Mio/Search";
 import { omnivox, DownloadResult } from "../puppet";
 import { MioFolders } from "@typings/Mio/Folders";
-import { getConfig } from "../config";
+import { omnivoxConfig } from "../config";
 
 export function GetListeFoldersModel() {
     return omnivox.postJson<MioFolders.ResponseModel>(
@@ -144,8 +144,7 @@ export function AjoutCategorie(nomCategorie: string) {
 }
 
 export function GetMioAttachment(messageId: string, attachmentId: string): Promise<DownloadResult> {
-    const config = getConfig();
-    const baseUrl = new URL(config.DefaultPage).origin;
+    const baseUrl = new URL(omnivoxConfig.DefaultPage).origin;
     // GetAttachement is case-sensitive and wants uppercase GUIDs, while GetMessage returns IDFichierAttachement in lowercase
     const qs = new URLSearchParams({
         IdMessage: messageId.toUpperCase(),

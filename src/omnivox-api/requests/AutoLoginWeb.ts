@@ -1,5 +1,5 @@
 import { omnivox } from "../puppet";
-import { getConfig } from "../config";
+import { omnivoxConfig } from "../config";
 import { GetTokenRedirection } from "./Login";
 import { ServiceMenuItem } from "@typings/OffreService";
 
@@ -76,7 +76,7 @@ export async function BuildAssignmentSubmitUrl(courseId: string, assignmentId: s
 }
 
 async function finalize(relativeUrl: string, withToken: boolean): Promise<string> {
-    const origin = new URL(getConfig().DefaultPage).origin;
+    const origin = new URL(omnivoxConfig.DefaultPage).origin;
     let url = relativeUrl.startsWith('http') ? relativeUrl : origin + relativeUrl;
     if (withToken) {
         const { TokenRedirection } = await GetTokenRedirection();

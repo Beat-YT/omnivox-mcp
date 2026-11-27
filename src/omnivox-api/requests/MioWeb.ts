@@ -1,4 +1,4 @@
-import { omnivoxVer } from "@common/constants";
+import omnivoxApp from "../../../shared/omnivoxApp.json" with { type: "json" };
 import { omnivox } from "../puppet";
 import { MioSearch } from "@typings/Mio/Search";
 import { HTTPResponse } from "puppeteer";
@@ -32,7 +32,7 @@ export async function GetCoursePeople(courseId: string) {
     const mioUrl = generateOmnivoxMessagingUrl({
         baseUrl: baseUrl,
         creatorId: userOid,
-        appVersion: omnivoxVer
+        appVersion: omnivoxApp.version
     });
 
     // Intercept the POST response to extract categories from embedded JS

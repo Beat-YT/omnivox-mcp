@@ -1,9 +1,7 @@
 import puppeteer, { Browser, Cookie, Page } from 'puppeteer';
 import * as fs from 'fs';
 import * as path from 'path';
-import { getConfig, getElectronCookies, OmnivoxConfig } from '../config';
-import { OmnivoxClientConfig } from '@common/constants';
-import { buildUserAgent } from './userAgent';
+import { OmnivoxConfig } from '../config';
 import { setupPageInterceptors } from './interceptors';
 import { setupPageInjection } from './ovxInjection';
 import { cleanupPreviousChrome } from './cleanup';
@@ -20,27 +18,21 @@ const extraLaunchArgs = (process.env.BROWSER_LAUNCH_ARGS ?? '').split(/\s+/).fil
  */
 export default class BrowserManager {
     private readonly config: OmnivoxConfig;
-    private readonly clientConfig: OmnivoxClientConfig;
     private readonly browserDataDir: string;
     private readonly pidFile: string;
 
     private browser: Browser | null = null;
     private mainPage: Page | null = null;
 
-    constructor(config: OmnivoxConfig, clientConfig: OmnivoxClientConfig, dataDir: string) {
+    constructor(config: OmnivoxConfig, dataDir: string) {
         this.config = config;
-        this.clientConfig = clientConfig;
         this.browserDataDir = path.join(dataDir, 'browser');
         this.pidFile = path.join(dataDir, 'chrome.pid');
     }
 
-    /**
-     * The user agent the main page runs with, for requests made outside the browser.
-     * Omnivox rotates the Code through Storage.SetCodeUserAgent, so it is rebuilt from the current config on every read.
-     */
+    /** The user agent the main page runs with, for requests made outside the browser. Read from the config every time. */
     get userAgent(): string {
-        const { IdAppareil, Code } = getConfig();
-        return buildUserAgent(IdAppareil!, Code!);
+        return this.config.userAgent;
     }
 
     get page(): Page {
@@ -48,7 +40,7 @@ export default class BrowserManager {
         return this.mainPage;
     }
 
-    /** Every cookie in the profile. The live Omnivox session is here, not in cookies.json. */
+    /** Every cookie in the profile. The live Omnivox session is here. */
     cookies(): Promise<Cookie[]> {
         return this.requireBrowser().cookies();
     }
@@ -62,9 +54,16 @@ export default class BrowserManager {
     }
 
     async launch(): Promise<void> {
-        const isFirstRun = !fs.existsSync(this.browserDataDir);
-
         cleanupPreviousChrome(this.browserDataDir, this.pidFile);
+
+        // A new session starts from an empty profile: nothing of the previous session is kept
+        const sessionCookies = this.config.sessionCookies;
+        if (sessionCookies) {
+            console.warn('[Puppet] Starting from an empty browser profile for the new session');
+            fs.rmSync(this.browserDataDir, { recursive: true, force: true });
+        } else if (!fs.existsSync(this.browserDataDir)) {
+            console.warn('[Puppet] No browser profile and no session, the session is logged out');
+        }
 
         this.browser = await puppeteer.launch({
             headless: true,
@@ -103,13 +102,15 @@ export default class BrowserManager {
 
         await this.closeRestoredPages();
 
-        // Import Electron cookies only on first run to bootstrap the session.
-        // After that, Chrome's own storage keeps cookies alive across restarts.
-        if (isFirstRun) {
-            await this.importCookies();
+        // After this, Chrome's own storage keeps the cookies alive across restarts
+        if (sessionCookies) {
+            await this.requireBrowser().setCookie(...sessionCookies);
         }
 
         await this.setupMainPage();
+
+        // Deleted only once the launch went through, so a failed one retries with the same session
+        if (sessionCookies) this.config.sessionInstalled();
     }
 
     async destroy(): Promise<void> {
@@ -144,11 +145,6 @@ export default class BrowserManager {
         return this.browser;
     }
 
-    private async importCookies(): Promise<void> {
-        const cookies = getElectronCookies();
-        await this.requireBrowser().setCookie(...cookies);
-    }
-
     private async closeRestoredPages(): Promise<void> {
         const pages = await this.requireBrowser().pages();
 
@@ -162,7 +158,7 @@ export default class BrowserManager {
 
     private async setupMainPage(): Promise<void> {
         const browser = this.requireBrowser();
-        const device = this.clientConfig.device;
+        const device = this.config.Device.data.device;
 
         this.mainPage = await browser.newPage();
 
@@ -174,7 +170,7 @@ export default class BrowserManager {
         });
 
         await setupPageInterceptors(this.mainPage);
-        await setupPageInjection(this.mainPage);
+        await setupPageInjection(this.mainPage, this.config);
 
         await this.navigateHome();
     }

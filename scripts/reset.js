@@ -7,7 +7,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const dataDir = process.env.OMNIVOX_DATA_DIR || path.join(projectRoot, 'data');
 const electronDataDir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'omnivox-connection');
 
-const targets = ['browser', 'cookies.json', 'config.json', 'accessKey.txt'];
+const targets = ['browser', 'config.json', 'accessKey.txt'];
 
 for (const target of targets) {
     const fp = path.join(dataDir, target);

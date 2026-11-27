@@ -1,5 +1,4 @@
 import * as express from 'express';
-import { getConfig } from 'src/omnivox-api/config';
 import { omnivox } from 'src/omnivox-api/puppet';
 import { OmnivoxSessionExpiredError } from 'src/omnivox-api/OmnivoxSessionExpiredError';
 import { ValidateAccessKey } from 'src/security/accessKey';

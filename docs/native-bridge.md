@@ -95,4 +95,4 @@ Two other checks read the same version:
 - `Skytech.Commun.Application.IsModuleActif` also requires `IsMinimumVersion(VersionMinimum, VersionMinimum)` from the service manifest (`App/GetOffreService`), so a service can hide itself below a minimum app version.
 - `IsLatestAppVersion` compares against `ServerConfig.AppVersionStore`. When behind, the page shows an update prompt as an interception, subject to the cadence rules in `doitAfficherPopupUpdateAppNative`. It does not block.
 
-This project declares `AppVer=3.8.9` (`omnivoxVer` in `shared/constants.cjs`) and emulates the Android side in `src/omnivox-api/puppet/ovxInjection.js`.
+This project declares `AppVer=3.8.9` (`version` in `shared/omnivoxApp.json`) and emulates the Android side in `src/omnivox-api/puppet/ovxInjection.js`.
