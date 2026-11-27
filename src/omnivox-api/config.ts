@@ -41,6 +41,10 @@ export class OmnivoxConfig {
         return `OVX InfoDevice=${this.Device.data.deviceInfo} AppVer=${omnivoxApp.version} IdAppareil=${this.IdAppareil} Code=${this.Code}`;
     }
 
+    get appVersion(): string {
+        return omnivoxApp.version;
+    }
+
     update(changes: { DefaultPage?: string; Code?: string }) {
         Object.assign(this, changes);
 

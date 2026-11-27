@@ -52,6 +52,7 @@ export default class OmnivoxClient {
             this.browser = browser;
             this.startError = null;
 
+            this.verifyNativeAppVersion();
             this.scheduleRefresh();
             this.touch();
         })();
@@ -211,6 +212,28 @@ export default class OmnivoxClient {
         }
         await this.start();
         this.touch();
+    }
+
+    private async verifyNativeAppVersion(): Promise<void> {
+        const version = await this.withSession((page) =>
+            page.evaluate(() => {
+                try {
+                    // says IsLatestAppVersion but really is just min version check
+                    const isSupported = (window as any).Skytech.Commun.Utils.Support.IsLatestAppVersion(); 
+                    const minVersion = (window as any).Skytech.Commun.Application.ServerConfig.AppVersionStore.Android;
+                    return { isSupported, minVersion };
+                } catch (e) {
+                    return null;
+                }
+            }),
+        );
+
+        if (!version) console.warn('[Omnivox] Could not determine native app version support');
+        else if (!version.isSupported) {
+            console.warn(`[Omnivox] Native app version ${omnivoxConfig.appVersion} is below the reported minimum supported version ${version.minVersion}`);
+        } else {
+            console.log(`[Omnivox] Current native app version is supported (minimum ${version.minVersion})`);
+        }
     }
 
     private async withPage<T>(run: (page: Page) => Promise<T>): Promise<T> {
