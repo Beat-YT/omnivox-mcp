@@ -6,7 +6,7 @@ const { AppSession } = require('./appSession');
 
 const currentDevice = getRandomDevice();
 
-const loginPage = path.join(__dirname, '../content/index.html');
+const loginPage = path.join(__dirname, '../content/login.html');
 const successPage = path.join(__dirname, '../content/success.html');
 
 async function createWindow() {

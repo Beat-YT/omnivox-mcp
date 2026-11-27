@@ -9,26 +9,47 @@
 </head>
 
 <body>
-    <div class="container">
-        <div class="login-card">
-            <h1 class="title">Session captured</h1>
-            <p class="subtitle" id="hint">Download the session file and place it in your omnivox data folder (the data/
-                folder in the project, or your OMNIVOX_DATA_DIR)</p>
-
-            <button class="btn-primary" id="dl-config">Download session.json</button>
-        </div>
+    <div class="backdrop" aria-hidden="true">
+        <i class="orbit a"></i><i class="orbit b"></i><i class="orbit c"></i>
+        <i class="dot a"></i><i class="dot b"></i><i class="dot c"></i>
+        <span class="keycap lea">LÉA</span>
+        <span class="keycap mio">MIO</span>
+        <span class="keycap mcp">/mcp</span>
+        <span class="keycap rest">REST</span>
     </div>
 
-    <script>
-        const configBtn = document.getElementById('dl-config');
-        
-        configBtn.addEventListener('click', async () => {
-            const success = await AuthData.downloadSession();
-            if (success) {
-                configBtn.textContent = 'session.json saved';
-            }
-        });
-    </script>
+    <main class="shell">
+        <header class="brand">
+            <p class="wordmark">
+                <svg viewBox="0 0 100 100" aria-hidden="true">
+                    <g fill="#fff">
+                        <circle cx="50" cy="27" r="21" />
+                        <circle cx="73.8" cy="44.3" r="21" />
+                        <circle cx="64.7" cy="72.2" r="21" />
+                        <circle cx="35.3" cy="72.2" r="21" />
+                        <circle cx="26.2" cy="44.3" r="21" />
+                        <circle cx="50" cy="52" r="24" />
+                    </g>
+                    <circle cx="50" cy="52" r="13.5" fill="#f5821f" />
+                </svg>
+                <span>Omnivox <em>MCP</em></span>
+            </p>
+            <p class="tagline">Your own personal bridge to Omnivox</p>
+        </header>
+
+        <section class="panel">
+            <h1>Session captured</h1>
+            <p class="lede">Download the session file and place it in your omnivox data folder (the <code>data/</code>
+                folder in the project, or your <code>OMNIVOX_DATA_DIR</code>)</p>
+
+            <button type="button" class="btn" id="download">Download session.json</button>
+
+            <p class="note">Keep this file private. It holds your Omnivox session, so anyone who has it can use
+                your account. Do not share it or commit it.</p>
+        </section>
+    </main>
+
+    <script src="./success.js"></script>
 </body>
 
 </html>

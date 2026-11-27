@@ -40,9 +40,12 @@ The file is saved through a save dialog. Nothing is written to disk automaticall
 
 ```
 content/
-  index.html      Login form (identifier + date of birth)
+  login.html      Login form (identifier + date of birth)
+  login.js        Date field and form submit
   success.html    Post-auth page with the session.json download
+  success.js      Download button
   styles.css      Shared styling
+  fonts/          Figtree and JetBrains Mono, with their licenses
   ComNatifOvx.js  Omnivox's own native bridge JS (reference copy)
   App.js          Omnivox's bundled mobile app JS (reference copy)
 
