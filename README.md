@@ -17,22 +17,27 @@ Everything runs on your machine (or your server, or a container). One instance =
 
 ## Quick start
 
+**1. Clone and install**
+
 ```bash
-# 1. Clone and install
 git clone https://github.com/Beat-YT/omnivox-mcp.git
 cd omnivox-mcp
 npm install
+```
 
-# 2. Authenticate on a desktop with UI (first time only)
-cd omnivox-connection
-npm install && npm start
-# Log in through the Electron window, save session.json,
-# then place it in a folder named data/ at the project root (or your OMNIVOX_DATA_DIR)
+**2. Get your `session.json`** (first time only, on a desktop with a UI)
 
-# 3. Start the server
-cd ..
+On Windows, download `omnivox-connection.exe` from the [releases page](https://github.com/Beat-YT/omnivox-mcp/releases/latest) and run it: one portable file, nothing to install. On macOS or Linux, run the same app from source with `cd omnivox-connection && npm install && npm start`.
+
+Log in through its window, save `session.json`, and place it in a folder named `data/` at the project root (or your `OMNIVOX_DATA_DIR`).
+
+**3. Start the server**
+
+```bash
 npm start              # Express server on port 3000
 ```
+
+`session.json` is the only file you handle. When the server finds it at startup, it sets up its config and browser session from it, then deletes it. From then on the session lives in the data folder's browser profile.
 
 The server starts with MCP-over-HTTP at `/mcp?key=...`, the REST tool gateway, and the proxy. An access key is auto-generated at `data/accessKey.txt` — that's your password to the whole thing, treat it accordingly.
 
@@ -40,7 +45,7 @@ The server starts with MCP-over-HTTP at `/mcp?key=...`, the REST tool gateway, a
 
 ### Docker
 
-Prefer containers? Authenticate once with the Electron app, then copy the example compose file and set your data folder path:
+Prefer containers? Put your `session.json` in a data folder, then copy the example compose file and set your data folder path:
 
 ```bash
 cp docker-compose.example.yml docker-compose.yml
@@ -49,11 +54,12 @@ docker compose up -d
 ```
 
 The included [`docker-compose.example.yml`](docker-compose.example.yml) mounts your data folder into the container at `/data/omnivox`, exposes port 3000, sets a session-keeping refresh interval, and wires up a healthcheck. Your customized `docker-compose.yml` is gitignored.
+
 ### Re-authentication
 
-If your session expires or you want a different account, log in again with the Electron app, place the new `session.json` in your data folder and restart the server. On startup it wipes the browser profile, imports the new session into it, writes `config.json` and deletes `session.json`.
+If your session expires or you want a different account, log in again with the connection app, place the new `session.json` in your data folder and restart the server. That is all: a `session.json` in the data folder means "use this session instead", so the server erases its previous config and browser profile, sets itself up from the file, then deletes it. Your access key is kept.
 
-`npm run reset` clears `browser/`, `config.json`, and `accessKey.txt` from the data folder so the server starts fresh.
+`npm run reset` clears `browser/`, `config.json`, and `accessKey.txt` from the data folder so the server starts from nothing. You don't need it before installing a new `session.json`.
 
 ### Configuration
 
@@ -62,7 +68,7 @@ Set these as environment variables or in a `.env` file at the project root:
 | Variable | Default | Description |
 |---|---|---|
 | `PORT` | `3000` | Server port |
-| `OMNIVOX_DATA_DIR` | `data/` at the project root | Data directory for config, cookies, browser profile, and access key |
+| `OMNIVOX_DATA_DIR` | `data/` at the project root | Data directory: where you place `session.json`, and where the server keeps its config, browser profile, and access key |
 | `OMNIVOX_SESSION` | *(none)* | Contents of `session.json` (JSON or base64), for hosts where a volume isn't an option. Last resort: only used when there is no `session.json` and the `browser/` folder doesn't exist. |
 | `BROWSER_LAUNCH_ARGS` | *(none)* | Extra Chrome flags appended to the default launch arguments, space-separated. Useful in Docker where Chrome runs as root and needs `--no-sandbox --disable-setuid-sandbox`. |
 | `BROWSER_SLEEP` | `false` | When `true`, the browser closes after 5 minutes of inactivity and relaunches on the next request. Saves memory at the cost of a cold-start delay. Not recommended for Docker setups |
@@ -159,13 +165,14 @@ The short version: this behaves like a browser you left logged in on your own co
 
 ### Your password and 2FA are untouched
 
-- **You log in yourself, on the real login page.** The Electron app opens the official Omnivox login — password, 2-Step Verification, trusted-device prompt and all. This project never asks for, sees, stores, or replays your password or MFA codes.
+- **You log in yourself, on the real login page.** The connection app opens the official Omnivox login — password, 2-Step Verification, trusted-device prompt and all. This project never asks for, sees, stores, or replays your password or MFA codes.
 - **MFA keeps working.** Omnivox's 2-Step Verification is fully compatible: you complete it once during login, and the resulting session (including the trusted-device cookie) is stored exactly as any browser would store it. Nothing here bypasses, weakens, or automates any Omnivox security mechanism — requests run through Omnivox's own JavaScript, so challenge-response auth and session expiry work exactly as Skytech designed them.
 - **Keep MFA enabled.** This project works fine with it, and you should absolutely leave it on.
 
 ### What's stored, and where
 
 - **Session cookies and browser profile** — the data folder on your disk (`data/` in the project, gitignored), same as a logged-in browser. Nothing is sent anywhere else.
+- **`session.json`**: only until the server has imported it. It is deleted on the first start, and cookies are never kept as a JSON file after that.
 - **Access key** — `data/accessKey.txt`, auto-generated, protects every endpoint the server exposes.
 - **No external servers, no telemetry.** Everything runs on your machine or your server; all traffic goes directly between you and Omnivox. The codebase is open — audit it.
 

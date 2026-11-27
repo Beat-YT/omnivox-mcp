@@ -20,6 +20,8 @@ The browser session is kept in memory only. Nothing carries over between launche
 
 ## Usage
 
+On Windows, a prebuilt `omnivox-connection.exe` is on the [releases page](https://github.com/Beat-YT/omnivox-mcp/releases/latest): download it and run it, nothing to install. To run from source instead:
+
 ```bash
 cd omnivox-connection
 npm install
