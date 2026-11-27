@@ -1,5 +1,6 @@
 const { ipcMain } = require('electron');
 const { EventEmitter } = require('events');
+const { getRandomFreeDiskSpace, getWebViewVersion } = require('./devices');
 const staticCommands = require('../../shared/staticCommands.json');
 
 // Native half of the Omnivox bridge, see docs/native-bridge.md
@@ -35,6 +36,22 @@ class Bridge extends EventEmitter {
             case 'Application.GetDeviceInfo':
                 return this.appSession.device.deviceInfoMeta;
 
+            case 'Application.DeviceStats':
+                const diskSpace = this.appSession.device.diskSpace || 0;
+                const freeSpace = getRandomFreeDiskSpace(diskSpace);
+                const system = getRandomFreeDiskSpace(freeSpace, 0.3);
+                
+                return {
+                    totalDiskSpace: diskSpace,
+                    freeDiskSpace: freeSpace,
+                    externalTotalDiskSpace: diskSpace,
+                    externalFreeDiskSpace: freeSpace,
+                    systemTotalDiskSpace: system,
+                    systemFreeDiskSpace: 0,
+                    webViewVersionName: process.versions.chrome,
+                    webViewVersionCode: getWebViewVersion()
+                };
+
             case 'Storage.SetCodeUserAgent':
                 this.appSession.setUserCode(args.Code || '');
                 return { UserAgentRequete: this.applyUserAgent() };
@@ -50,7 +67,7 @@ class Bridge extends EventEmitter {
                 this.themeStore = { ...args };
                 return this.themeStore;
 
-            case 'Theme.GetTheme': 
+            case 'Theme.GetTheme':
                 return this.themeStore;
 
             case 'WebUI.SetDefaultPage': {

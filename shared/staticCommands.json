@@ -2,16 +2,6 @@
     "WebUI.IsOnline": {
         "IsOnline": "True"
     },
-    "Application.DeviceStats": {
-        "totalDiskSpace": 119185342464,
-        "freeDiskSpace": 72491089920,
-        "externalTotalDiskSpace": 119185342464,
-        "externalFreeDiskSpace": 72491089920,
-        "systemTotalDiskSpace": 3556769792,
-        "systemFreeDiskSpace": 587202560,
-        "webViewVersionName": "130.0.6723.83",
-        "webViewVersionCode": 672308300
-    },
     "Android.Notification.IsGooglePlayServicesAvailable": {
         "IsAvailable": "True",
         "IsBackgroundRestricted": "False"
